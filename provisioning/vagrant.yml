@@ -1,0 +1,9 @@
+- hosts: all
+  user: vagrant
+  sudo: yes
+  sudo_user: root
+  roles:
+  - common
+  - web
+  - worker
+  - mq
