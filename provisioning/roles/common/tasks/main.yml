@@ -1,0 +1,12 @@
+---
+
+- name: Ensure OpenSSl and libssl are the latest versions
+  apt: name={{ item }} update_cache=yes state=latest
+  with_items:
+    - openssl
+    - libssl-dev
+    - libssl-doc
+  tags: packages
+
+- name: Upgrade all APT packages
+  action: apt update_cache=yes upgrade=yes

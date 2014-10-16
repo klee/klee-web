@@ -1,0 +1,26 @@
+- name: Install nginx
+  apt: pkg=nginx state=latest
+
+- name: Remove the default site
+  command: rm -rf /etc/nginx/sites-enabled/default
+
+- name: Remove the sites config, if exists
+  command: rm -rf /etc/nginx/sites-enabled/default
+
+- name: Remove the default sites symlink, if exists
+  command: rm -rf /etc/nginx/sites-enabled/{{ app_name }}
+
+- name: Remove existing nginx conf
+  command: rm -rf /etc/nginx/nginx.conf
+
+- name: Configure nginx
+  template: src=nginx.conf.j2 dest=/etc/nginx/nginx.conf
+
+- name: Configure nginx for the app
+  template: src=sites-available_icecream.conf.j2 dest=/etc/nginx/sites-available/{{ app_name }} group=www-data owner=www-data force=yes
+
+- name: Enable the app
+  command: ln -s /etc/nginx/sites-available/{{ app_name }} /etc/nginx/sites-enabled/{{ app_name }}
+
+- name: Restart nginx
+  action: service name=nginx state=restarted

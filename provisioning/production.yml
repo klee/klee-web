@@ -1,0 +1,38 @@
+---
+# This playbook deploys the whole application stack for icecream
+
+# Apply common configuration to all hosts
+- hosts: all
+  user: ubuntu
+  sudo: yes
+  sudo_user: root
+  roles:
+  - common
+
+# Configure and deploy message queue servers.
+- hosts: queueservers
+  user: ubuntu
+  sudo: yes
+  sudo_user: root
+  vars_files:
+    - vars/secrets.yml
+  roles:
+  - mq
+
+# Configure and deploy the web servers.
+- hosts: webservers
+  user: ubuntu
+  sudo: yes
+  sudo_user: root
+  vars_files:
+    - vars/secrets.yml
+  roles:
+  - web
+
+# Configure and deploy the worker nodes.
+- hosts: workers
+  user: ubuntu
+  sudo: yes
+  sudo_user: root
+  roles:
+  - worker
