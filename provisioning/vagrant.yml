@@ -3,7 +3,9 @@
   sudo: yes
   sudo_user: root
   roles:
-  - common
-  - web
-  - worker
-  - mq
+    - common
+    - web
+    - worker
+    - mq
+  vars_files:
+    - vars/development.yml
