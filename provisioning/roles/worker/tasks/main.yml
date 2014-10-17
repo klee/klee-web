@@ -1,3 +1,5 @@
 ---
 
 - include: docker.yml tags=docker
+
+- include: python.yml tags=python
