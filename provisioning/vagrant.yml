@@ -4,8 +4,8 @@
   sudo_user: root
   roles:
     - common
+    - mq
     - web
     - worker
-    - mq
   vars_files:
     - vars/development.yml

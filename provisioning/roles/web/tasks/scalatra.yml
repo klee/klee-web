@@ -1,0 +1,17 @@
+---
+
+# Install JRE
+- apt: name=openjdk-7-jre-headless update_cache=yes state=present
+
+# Grab SBT deb
+- get_url: url=https://dl.bintray.com/sbt/debian/sbt-0.13.6.deb dest=/tmp
+
+# Install SBT
+- apt: deb=/tmp/sbt-0.13.6.deb
+
+# Run SBT development server
+- name: Setting up Scalatra (This make take a while...)
+  shell: ./sbt container:start
+  sudo_user: vagrant
+  args:
+   chdir: /titb/web/

@@ -7,7 +7,6 @@
 - apt_repository: repo='deb http://www.rabbitmq.com/debian/ testing main' state=present
 
 # Install RabbitMQ server
-<<<<<<< HEAD
 - apt: name=rabbitmq-server update_cache=yes state=present
 
 # Set up rabbitmq vhost
@@ -21,6 +20,3 @@
                  read_priv=.*
                  write_priv=.*
                  state=present
-=======
-- apt: name=rabbitmq-server update_cache=yes state=present
->>>>>>> 718ca41e21778c063c2db527ff1e59fe6646de4b

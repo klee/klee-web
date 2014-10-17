@@ -11,6 +11,3 @@
 
 # Install requirements for task runner
 - pip: requirements=/titb/worker/requirements.txt virtualenv=/worker_data/env
-
-# Copy environment file with credentials
-- template: src=environment.j2 dest=/etc/environment 

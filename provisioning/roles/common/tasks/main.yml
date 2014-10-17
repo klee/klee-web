@@ -10,3 +10,7 @@
 
 - name: Upgrade all APT packages
   action: apt update_cache=yes upgrade=yes
+
+# Copy environment file with credentials
+- name: Copying environment variable file
+  template: src=environment.j2 dest=/etc/environment 

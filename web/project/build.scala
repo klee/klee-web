@@ -9,7 +9,7 @@ object KleeMiddleLayerBuild extends Build {
   val Organization = "com.kleegroup"
   val Name = "Klee Middle Layer"
   val Version = "0.1"
-  val ScalaVersion = "2.11.0"
+  val ScalaVersion = "2.11.1"
   val ScalatraVersion = "2.3.0"
 
   lazy val project = Project (

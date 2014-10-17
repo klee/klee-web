@@ -6,6 +6,3 @@
 
 - name: restart iptables
   service: name=iptables state=restarted
-
-- name: reload monit
-  command: monit reload

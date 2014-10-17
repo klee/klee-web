@@ -1,1 +1,3 @@
 ---
+
+- include: scalatra.yml tags=scalatra
