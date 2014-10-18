@@ -7,3 +7,4 @@ stdout_logfile=/titb_flask/logs/uwsgi.log
 redirect_stderr=true
 user=web
 stopsignal=QUIT
+{{ 'environment=DEVELOPMENT="1"' if development }}
