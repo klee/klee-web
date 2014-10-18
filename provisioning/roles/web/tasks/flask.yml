@@ -1,0 +1,29 @@
+---
+
+# Install python dev
+- apt: name=python-dev update_cache=yes state=present
+
+# Install virtualenv
+- apt: name=python-virtualenv update_cache=yes state=present
+
+# Install supervisor
+- apt: name=supervisor update_cache=yes state=present
+
+# Create worker user
+- user: name=web shell=/bin/bash
+
+# Create folder for web files
+- file: path=/titb_flask/ owner=web group=web state=directory
+
+# Create folder for web log files
+- file: path=/titb_flask/logs owner=web group=web state=directory
+
+# Install requirements for task runner
+- pip: requirements=/titb/web/requirements.txt virtualenv=/titb_flask/env/
+  sudo_user: web
+
+- name: Copy supervisor config file
+  template: src=supervisor_web.conf.j2 dest=/etc/supervisor/conf.d/titb_flask.conf
+
+- name: Start flask process
+  shell: supervisorctl reload

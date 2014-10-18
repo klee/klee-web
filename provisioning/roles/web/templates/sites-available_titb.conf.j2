@@ -1,0 +1,13 @@
+server {
+    listen       80;
+    server_name  _;
+    location / { try_files $uri @titb; }
+    location @titb {
+      include uwsgi_params;
+      uwsgi_pass unix:/tmp/uwsgi.sock;
+    }
+
+    location /static/ {
+      alias /titb/web/static/;
+    }
+}
