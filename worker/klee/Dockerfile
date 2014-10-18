@@ -52,5 +52,26 @@ RUN make check
 RUN make unittests
 RUN sudo make install
 
+#Remove unnecessary files
+RUN rm /src/*.tgz && rm /src/*.tar.bz2
+RUN rm -rf /src/klee-uclibc
+RUN rm -rf /src/stp
+RUN rm -rf /src/llvm-2.9
+RUN rm -rf /src/llvm-gcc4.2-2.9-x86_64-linux/lib32
+RUN rm -rf /src/llvm-gcc4.2-2.9-x86_64-linux/man
+RUN rm -rf /src/llvm-gcc4.2-2.9-x86_64-linux/share
+RUN rm -rf /src/llvm-gcc4.2-2.9-x86_64-linux/info
+RUN rm -rf /src/llvm-gcc4.2-2.9-x86_64-linux/include
+RUN rm -rf /src/klee/examples
+RUN rm -rf /src/klee/autoconf
+RUN rm -rf /src/klee/docs
+RUN rm -rf /src/klee/lib
+RUN rm -rf /src/klee/runtime
+RUN rm -rf /src/klee/scripts
+RUN rm -rf /src/klee/test
+RUN rm -rf /src/klee/tools
+RUN rm -rf /src/klee/unittests
+RUN rm -rf /src/klee/utils
+
 #Return to homedir
-WORKDIR /src
+WORKDIR /root
