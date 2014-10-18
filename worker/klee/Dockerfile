@@ -49,6 +49,7 @@ WORKDIR /src/klee
 RUN ./configure --enable-posix-runtime --with-stp=/usr/local --with-llvm=/src/llvm-2.9/ --with-uclibc=/src/klee-uclibc/
 RUN make ENABLE_OPTIMIZED=1
 RUN make check
+RUN make test
 RUN make unittests
 RUN sudo make install
 
