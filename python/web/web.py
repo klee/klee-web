@@ -7,7 +7,7 @@ app = Flask(__name__)
 app.debug = os.environ.get("DEVELOPMENT") is not None
 app.config.update(
     BROKER_URL=os.environ.get("RABBITMQ_HOST"),
-    CELERY_RESULT_BACKEND='amqp'
+    CELERY_RESULT_BACKEND='rpc'
 )
 
 
