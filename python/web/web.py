@@ -7,7 +7,7 @@ app = Flask(__name__)
 app.debug = os.environ.get("DEVELOPMENT") is not None
 app.config.update(
     BROKER_URL=os.environ.get("RABBITMQ_HOST"),
-    RESULT_BACKEND=os.environ.get("RABBITMQ_HOST")
+    CELERY_RESULT_BACKEND='amqp'
 )
 
 
@@ -34,17 +34,22 @@ def add_together(a, b):
     return a + b
 
 
+@celery.task
+def submit_code(code):
+    return 'Done something with:\n{}'.format(code)
+
+
 @app.route('/', methods=['GET', 'POST'])
 def index():
     if request.method == 'POST':
         code = request.form['code']
-        # Do upload to celery
-        task = add_together.apply_async(5, 6)
+
+        # Submit task to queue
+        task = submit_code.delay(code)
         task_id = task.task_id
+        result = submit_code.AsyncResult(task_id).get(timeout=1.0)
 
-        result = add_together.AsyncResult(task_id).get(timeout=1.0)
-
-        return result
+        return render_template('result.html', result=result)
     else:
         return render_template('index.html')
 
