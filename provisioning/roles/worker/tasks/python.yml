@@ -10,4 +10,4 @@
 - file: path=/worker_data/ owner=worker group=worker state=directory
 
 # Install requirements for task runner
-- pip: requirements=/titb/worker/requirements.txt virtualenv=/worker_data/env
+- pip: requirements=/titb/python/requirements.txt virtualenv=/worker_data/env

@@ -19,7 +19,7 @@
 - file: path=/titb_flask/logs owner=web group=web state=directory
 
 # Install requirements for task runner
-- pip: requirements=/titb/web/requirements.txt virtualenv=/titb_flask/env/
+- pip: requirements=/titb/python/requirements.txt virtualenv=/titb_flask/env/
   sudo_user: web
 
 - name: Copy supervisor config file

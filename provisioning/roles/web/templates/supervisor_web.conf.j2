@@ -1,6 +1,6 @@
 [program:titb_flask]
 command=/titb_flask/env/bin/uwsgi -s /tmp/uwsgi.sock -w web:app -H /titb_flask/env/ --chmod-socket=666 {{ "--py-autoreload=1 --catch-exceptions" if development else ""}}
-directory=/titb/web/
+directory=/titb/python/web/
 autostart=true
 autorestart=true
 stdout_logfile=/titb_flask/logs/uwsgi.log
