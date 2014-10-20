@@ -27,3 +27,4 @@ In order to invoke KLEE (from within the virtual machine):
 
     sudo docker run -t -v PATH_TO_SOURCE_DIR:/code kleeweb/klee llvm-gcc -I /src/klee/include --emit-llvm -c -g /code/FILE.c -o /code/FILE.o
     sudo docker run -t -v PATH_TO_SOURCE_DIR:/code kleeweb/klee klee FILE.o
+\

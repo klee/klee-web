@@ -6,6 +6,7 @@ from ..worker.worker import submit_code
 app = Flask(__name__)
 app.debug = os.environ.get("DEVELOPMENT") is not None
 
+
 @app.route('/', methods=['GET', 'POST'])
 def index():
     if request.method == 'POST':

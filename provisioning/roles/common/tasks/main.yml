@@ -10,6 +10,7 @@
 
 - name: Upgrade all APT packages
   action: apt update_cache=yes upgrade=yes
+  when: not development
 
 # Copy environment file with credentials
 - name: Copying environment variable file

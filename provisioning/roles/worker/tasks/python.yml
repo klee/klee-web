@@ -18,6 +18,9 @@
 # Install supervisor
 - apt: name=supervisor update_cache=yes state=present
 
+- name: Start supervisor service
+  service: name=supervisor state=started
+
 # Create folder for worker log files
 - file: path={{ worker_log_dir }} owner=worker group=worker state=directory
 
