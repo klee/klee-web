@@ -20,7 +20,7 @@ To build the docker container:
     Keep note of the build number will be needed to run the image.
     
     #For a pre built image
-    sudo docker pull ains/klee 
+    sudo docker pull kleeweb/klee 
     #Or to build from scratch
     sudo docker build /titb/worker/klee/
     
