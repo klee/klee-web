@@ -1,0 +1,8 @@
+[queueservers]
+146.169.47.63
+
+[webservers]
+146.169.47.63
+
+[workers]
+146.169.47.63

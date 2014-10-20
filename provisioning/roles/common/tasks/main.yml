@@ -13,4 +13,14 @@
 
 # Copy environment file with credentials
 - name: Copying environment variable file
-  template: src=environment.j2 dest=/etc/environment 
+  template: src=environment.j2 dest=/etc/environment
+
+- name: Install core dependencies (git)
+  apt: name={{ item }} update_cache=yes state=latest
+  with_items:
+    - git
+  tags: coredeps
+
+- name: Clone TITB code
+  git: repo={{ git_repo }} dest=/titb accept_hostkey=yes
+  when: not development

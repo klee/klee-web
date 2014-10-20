@@ -18,8 +18,8 @@ ENV PATH $PATH:/src/llvm-gcc4.2-2.9-x86_64-linux/bin
 RUN wget http://llvm.org/releases/2.9/llvm-2.9.tgz
 RUN tar -zxvf llvm-2.9.tgz
 WORKDIR /src/llvm-2.9
-RUN wget http://www.mail-archive.com/klee-dev@imperial.ac.uk/msg01302/unistd-llvm-2.9-jit.patch
-RUN patch -p1 < unistd-llvm-2.9-jit.patch 
+RUN wget https://gist.githubusercontent.com/ilovepjs/55a8d84000cc5d23a48c/raw/a992a62eaab5600994c66a6d42b6eeec80149cdd/llvm_patch
+RUN patch -p1 < llvm_patch
 RUN ./configure --enable-optimized --enable-assertions
 RUN make -j `nproc`
 

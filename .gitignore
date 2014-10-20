@@ -2,3 +2,4 @@
 */.idea/*
 web/**/target
 *.pyc
+Report/*

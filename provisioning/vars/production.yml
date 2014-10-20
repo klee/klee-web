@@ -1,0 +1,5 @@
+development: no
+rabbitmq_user: taskqueue
+rabbitmq_password: 1488ln0yhvj3Q9y
+rabbitmq_vhost: klee
+rabbitmq_host: "{{ hostvars[groups['queueservers'][0]]['ansible_' + iface].ipv4.address }}"
