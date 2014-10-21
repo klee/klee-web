@@ -6,6 +6,9 @@
 # Create worker user
 - user: name=worker shell=/bin/bash
 
+- name: Add worker to sudoers file
+  lineinfile: "dest=/etc/sudoers state=present regexp='^worker' line='worker ALL=(ALL) NOPASSWD: ALL'"
+
 # Create folder for worker files
 - file: path=/worker_data/ owner=worker group=worker state=directory
 

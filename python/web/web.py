@@ -14,7 +14,7 @@ def index():
         # Submit task to queue
         task = submit_code.delay(code)
         task_id = task.task_id
-        result = submit_code.AsyncResult(task_id).get(timeout=1.0)
+        result = submit_code.AsyncResult(task_id).get(timeout=30.0)
 
         return render_template('result.html', result=result)
     else:
