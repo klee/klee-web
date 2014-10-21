@@ -2,18 +2,42 @@
 
 {% block title %}KLEE{% endblock %}
 
-{% block css %}{% endblock %}
+{% block css %}
+    <link href="//cdnjs.cloudflare.com/ajax/libs/codemirror/4.6.0/codemirror.min.css
+" rel="stylesheet">
+{% endblock %}
 
 {% block content %}
-	<h1>Enter your code</h1>
-	<form action="" method="POST">
-		<textarea name="code" placeholder="Code here..." rows="15" cols="80"></textarea>
-		<br />
-		<br />
-		<input type="submit" value="Submit" />
-	</form>
+    <div class="row">
+        <div class="col-md-12">
+            <div class="panel panel-default">
+                <div class="panel-heading">Enter your code</div>
+                <div class="panel-body">
+                    <form action="" method="POST">
+                        <textarea name="code" placeholder="Code here..." rows="25" cols="80"
+                                  class="form-control" id="code"></textarea>
+                        <br/>
+                        <br/>
+                        <input type="submit" value="Submit" class="btn btn-primary"/>
+                    </form>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
 
 {% endblock %}
 
-{% block js %}
+{% block javascript %}
+    <script src="//cdnjs.cloudflare.com/ajax/libs/codemirror/4.6.0/codemirror.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/codemirror/4.6.0/mode/clike/clike.min.js"></script>
+    <script type="text/javascript">
+        $(function () {
+            CodeMirror.fromTextArea($("#code").get(0), {
+                lineNumbers: true,
+                mode: "clike"
+            });
+        });
+    </script>
 {% endblock %}
