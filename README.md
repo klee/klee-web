@@ -8,7 +8,7 @@ Make sure you have virtualbox and vagrant installed.
 
 First clone the repo:
 
-    git clone https://github.com/ainsej/testing-in-the-browser.git
+    git clone https://github.com/klee-web/klee-web.git
     
 To ssh into the virtual machine:
    
@@ -22,7 +22,7 @@ To build the docker container:
     #For a pre built image
     sudo docker pull kleeweb/klee 
     #Or to build from scratch
-    sudo docker build /titb/worker/klee/
+    sudo docker build /titb/python/worker/klee/
     
 To run a file inside the container:
 
