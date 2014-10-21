@@ -3,3 +3,5 @@ rabbitmq_user: taskqueue
 rabbitmq_password: 1488ln0yhvj3Q9y
 rabbitmq_vhost: klee
 rabbitmq_host: localhost
+rabbitmq_port: 5672
+rabbitmq_broker_url: "amqp://{{ rabbitmq_user }}:{{ rabbitmq_password }}@{{ rabbitmq_host }}:{{ rabbitmq_port }}/{{ rabbitmq_vhost }}"

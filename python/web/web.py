@@ -1,43 +1,10 @@
 import os
 
 from flask import Flask, request, render_template
-from celery import Celery
+from ..worker.worker import submit_code
 
 app = Flask(__name__)
 app.debug = os.environ.get("DEVELOPMENT") is not None
-app.config.update(
-    BROKER_URL=os.environ.get("RABBITMQ_HOST"),
-    CELERY_RESULT_BACKEND='rpc'
-)
-
-
-def make_celery(app):
-    celery = Celery(app.import_name, broker=app.config['BROKER_URL'])
-    celery.conf.update(app.config)
-    TaskBase = celery.Task
-
-    class ContextTask(TaskBase):
-        abstract = True
-
-        def __call__(self, *args, **kwargs):
-            with app.app_context():
-                return TaskBase.__call__(self, *args, **kwargs)
-
-    celery.Task = ContextTask
-    return celery
-
-celery = make_celery(app)
-
-
-@celery.task
-def add_together(a, b):
-    return a + b
-
-
-@celery.task
-def submit_code(code):
-    return 'Done something with:\n{}'.format(code)
-
 
 @app.route('/', methods=['GET', 'POST'])
 def index():

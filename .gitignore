@@ -1,5 +1,5 @@
 .vagrant/*
-*/.idea/*
+.idea/
 web/**/target
 *.pyc
 Report/*

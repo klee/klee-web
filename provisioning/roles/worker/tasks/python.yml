@@ -11,3 +11,15 @@
 
 # Install requirements for task runner
 - pip: requirements=/titb/python/requirements.txt virtualenv=/worker_data/env
+
+# Install supervisor
+- apt: name=supervisor update_cache=yes state=present
+
+# Create folder for worker log files
+- file: path=/worker_data/logs owner=worker group=worker state=directory
+
+- name: Copy supervisor config file
+  template: src=supervisor_worker.conf.j2 dest=/etc/supervisor/conf.d/titb_worker.conf
+
+- name: Start flask process
+  shell: supervisorctl reload
