@@ -4,7 +4,7 @@ Testing in the browser
 Getting started on development
 ===============================
 
-Make sure you have virtualbox and vagrant installed.
+Make sure you have [VirtualBox](https://www.virtualbox.org/wiki/Downloads), [Vagrant](https://www.vagrantup.com/downloads.html), and [Ansible](http://docs.ansible.com/intro_installation.html) installed.
 
 First clone the repo:
 
@@ -13,7 +13,9 @@ First clone the repo:
 Start the development virtual machine (this may take a while on the first run):
     vagrant up
 
-The kleeweb/klee image is grabbed using docker pull when provisioning occurs.
+After provisioning has completed klee-web will be available at [http://192.168.33.10](http://192.168.33.10)
+
+The [kleeweb/klee](https://registry.hub.docker.com/u/kleeweb/klee/) image is grabbed using docker pull when provisioning occurs.
 If you need to make modifications to the Dockerfile and build it from scratch 
 then run the following.
 
