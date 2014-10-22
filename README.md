@@ -26,8 +26,6 @@ To build the docker container:
     
 To run a file inside the container:
 
-(This isn't 100% correct will edit it shortly but still useful for now)
-
     sudo docker run -it -v PATH_TO_FILE:/code IMAGE bash
     llvm-gcc -I /src/klee/include --emit-llvm -c -g /code/FILE.c
     klee FILE.o
