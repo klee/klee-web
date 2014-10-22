@@ -1,9 +1,9 @@
 [program:worker]
-command=/worker_data/env/bin/celery -A worker worker {{ "--autoreload" if development else ""}}
-directory=/titb/python/worker/
+command={{ worker_virtualenv }}/bin/celery -A worker worker {{ "--autoreload" if development else ""}}
+directory={{ src_dir }}/python/worker/
 autostart=true
 autorestart=true
-stdout_logfile=/worker_data/logs/celery_worker.log
+stdout_logfile={{ worker_log_dir }}/worker.log
 redirect_stderr=true
 user=worker
 stopsignal=QUIT

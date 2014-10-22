@@ -8,6 +8,6 @@ server {
     }
 
     location /static/ {
-      alias /titb/python/web/static/;
+      alias {{ src_dir }}/python/web/static/;
     }
 }

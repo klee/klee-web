@@ -1,0 +1,4 @@
+---
+worker_working_dir: /src/worker
+worker_log_dir: "{{ worker_working_dir }}/logs"
+worker_virtualenv: "{{ worker_working_dir }}/env"

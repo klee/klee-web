@@ -10,16 +10,16 @@
   lineinfile: "dest=/etc/sudoers state=present regexp='^worker' line='worker ALL=(ALL) NOPASSWD: ALL'"
 
 # Create folder for worker files
-- file: path=/worker_data/ owner=worker group=worker state=directory
+- file: path={{ worker_working_dir }} owner=worker group=worker state=directory
 
 # Install requirements for task runner
-- pip: requirements=/titb/python/requirements.txt virtualenv=/worker_data/env
+- pip: requirements={{ src_dir }}/python/requirements.txt virtualenv={{ worker_virtualenv }}
 
 # Install supervisor
 - apt: name=supervisor update_cache=yes state=present
 
 # Create folder for worker log files
-- file: path=/worker_data/logs owner=worker group=worker state=directory
+- file: path={{ worker_log_dir }} owner=worker group=worker state=directory
 
 - name: Copy supervisor config file
   template: src=supervisor_worker.conf.j2 dest=/etc/supervisor/conf.d/titb_worker.conf

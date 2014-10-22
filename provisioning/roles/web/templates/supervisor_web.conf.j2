@@ -1,9 +1,9 @@
-[program:titb_flask]
-command=/titb_flask/env/bin/uwsgi -s /tmp/uwsgi.sock -w python.web.web:app -H /titb_flask/env/ --chmod-socket=666 {{ "--py-autoreload=1 --catch-exceptions" if development else ""}}
-directory=/titb/
+[program:web]
+command={{ web_virtualenv }}/bin/uwsgi -s /tmp/uwsgi.sock -w python.web.web:app -H {{ web_virtualenv }} --chmod-socket=666 {{ "--py-autoreload=1 --catch-exceptions" if development else ""}}
+directory={{ src_dir }}
 autostart=true
 autorestart=true
-stdout_logfile=/titb_flask/logs/uwsgi.log
+stdout_logfile={{ web_log_dir }}/web.log
 redirect_stderr=true
 user=web
 stopsignal=QUIT

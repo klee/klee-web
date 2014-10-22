@@ -3,3 +3,4 @@
 
 iface: '{{ ansible_default_ipv4.interface }}'
 git_repo: git@github.com:ainsej/testing-in-the-browser.git
+src_dir: /titb

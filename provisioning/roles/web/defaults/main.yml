@@ -1,0 +1,4 @@
+---
+web_working_dir: /src/web
+web_log_dir: "{{ web_working_dir }}/logs"
+web_virtualenv: "{{ web_working_dir }}/env"

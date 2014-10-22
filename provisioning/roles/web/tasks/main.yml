@@ -1,5 +1,4 @@
 ---
 
-- include: core.yml tags=core
 - include: flask.yml tags=flask
 - include: nginx.yml tags=nginx
