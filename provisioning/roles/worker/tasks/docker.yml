@@ -1,13 +1,16 @@
 ---
 
-# Ensure we can use the https trnasport for apt-get
-- apt: name=apt-transport-https update_cache=yes state=present
+- name: Ensure we can use the https trnasport for apt-get
+  apt: name=apt-transport-https update_cache=yes state=present
 
-# Add Docker signing key
-- apt_key: id=A88D21E9 keyserver=keyserver.ubuntu.com state=present
+- name: Add Docker signing key
+  apt_key: id=A88D21E9 keyserver=keyserver.ubuntu.com state=present
 
-# Add Docker debian repository
-- apt_repository: repo='deb https://get.docker.io/ubuntu docker main' state=present
+- name: Add Docker debian repository
+  apt_repository: repo='deb https://get.docker.io/ubuntu docker main' state=present
 
-# Install Docker
-- apt: name=lxc-docker update_cache=yes state=present
+- name: Install Docker
+  apt: name=lxc-docker update_cache=yes state=present
+
+- name: Get KLEE image from Docker Hub (this may take a while...)
+  command: docker pull kleeweb/klee
