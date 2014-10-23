@@ -13,9 +13,12 @@
             <div class="panel panel-default">
                 <div class="panel-heading">Enter your code</div>
                 <div class="panel-body">
-                    <form action="" method="POST">
+                    <form action="/" method="POST" enctype="multipart/form-data">
                         <textarea name="code" placeholder="Code here..." rows="25" cols="80"
                                   class="form-control" id="code"></textarea>
+                        <br/>
+                        <br/>
+                        <input name="file" type="file">
                         <br/>
                         <br/>
                         <input type="submit" value="Submit" class="btn btn-primary"/>
