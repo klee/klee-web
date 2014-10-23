@@ -7,9 +7,8 @@
 {% block content %}
 	<h1>Your result</h1>
 	<br/>
-	<pre>
-		{{ result }}
-	</pre>
+	<pre>{{ result.klee_output }}</pre>
+    <a href="{{ result.url }}">{{ result.url }}</a>
 
 {% endblock %}
 
