@@ -3,6 +3,9 @@
 # Install virtualenv
 - apt: name=python-virtualenv update_cache=yes state=present
 
+- name: Install python-dev package
+  apt: name=python-dev update_cache=yes state=present
+
 # Create worker user
 - user: name=worker shell=/bin/bash
 

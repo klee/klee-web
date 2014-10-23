@@ -3,9 +3,7 @@
 
 # Apply common configuration to all hosts
 - hosts: all
-  user: guest
-  sudo: yes
-  sudo_user: root
+  user: root
   vars_files:
   - vars/secrets.yml
   - vars/production.yml
@@ -14,9 +12,7 @@
 
 # Configure and deploy message queue servers.
 - hosts: queueservers
-  user: guest
-  sudo: yes
-  sudo_user: root
+  user: root
   vars_files:
     - vars/secrets.yml
     - vars/production.yml
@@ -25,9 +21,7 @@
 
 # Configure and deploy the web servers.
 - hosts: webservers
-  user: guest
-  sudo: yes
-  sudo_user: root
+  user: root
   vars_files:
     - vars/secrets.yml
     - vars/production.yml
@@ -36,9 +30,7 @@
 
 # Configure and deploy the worker nodes.
 - hosts: workers
-  user: guest
-  sudo: yes
-  sudo_user: root
+  user: root
   vars_files:
   - vars/secrets.yml
   - vars/production.yml
