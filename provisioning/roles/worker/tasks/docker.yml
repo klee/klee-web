@@ -11,6 +11,3 @@
 
 - name: Install Docker
   apt: name=lxc-docker update_cache=yes state=present
-
-- name: Get KLEE image from Docker Hub (this may take a while...)
-  command: docker pull kleeweb/klee

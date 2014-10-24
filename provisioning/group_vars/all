@@ -2,5 +2,5 @@
 # Variables here are applicable to all host groups
 
 iface: '{{ ansible_default_ipv4.interface }}'
-git_repo: git@github.com:ainsej/testing-in-the-browser.git
+git_repo: https://github.com/klee-web/klee-web.git
 src_dir: /titb

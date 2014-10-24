@@ -2,3 +2,4 @@
 
 - include: flask.yml tags=flask
 - include: nginx.yml tags=nginx
+- include: deploy.yml tags=deploy

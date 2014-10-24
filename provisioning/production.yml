@@ -1,6 +1,4 @@
 ---
-# This playbook deploys the whole application stack for icecream
-
 # Apply common configuration to all hosts
 - hosts: all
   user: root

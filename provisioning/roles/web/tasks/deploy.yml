@@ -1,0 +1,12 @@
+# Install requirements for task runner
+- pip: requirements={{ src_dir }}/python/requirements.txt virtualenv={{ web_virtualenv }}
+  sudo_user: web
+
+- name: Copy supervisor config file
+  template: src=supervisor_web.conf.j2 dest=/etc/supervisor/conf.d/web.conf
+
+- name: Start flask process
+  shell: supervisorctl reload
+
+- name: Restart web process
+  shell: supervisorctl restart web
