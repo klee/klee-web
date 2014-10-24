@@ -1,8 +1,9 @@
-PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games"
-RABBITMQ_HOST={{ rabbitmq_host }}
-RABBITMQ_USERNAME={{ rabbitmq_user }}
-RABBITMQ_PASSWORD={{ rabbitmq_password }}
-RABBITMQ_VHOST={{ rabbitmq_vhost }}
-RABBITMQ_PORT={{ rabbitmq_port }}
-BROKER_URL={{ rabbitmq_broker_url }}
-{{ "DEVELOPMENT=1" if development else "" }}
+export RABBITMQ_HOST={{ rabbitmq_host }}
+export RABBITMQ_USERNAME={{ rabbitmq_user }}
+export RABBITMQ_PASSWORD={{ rabbitmq_password }}
+export RABBITMQ_VHOST={{ rabbitmq_vhost }}
+export RABBITMQ_PORT={{ rabbitmq_port }}
+export BROKER_URL={{ rabbitmq_broker_url }}
+export AWS_ACCESS_KEY={{ aws_access_key }}
+export AWS_SECRET_KEY={{ aws_secret_key }}
+{{ "export DEVELOPMENT=1" if development else "" }}

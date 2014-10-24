@@ -1,5 +1,5 @@
 [program:worker]
-command={{ worker_virtualenv }}/bin/celery -A worker worker {{ "--autoreload" if development else ""}}
+command={{ python_runner }} {{ worker_virtualenv }}/bin/celery -A worker worker {{ "--autoreload" if development else ""}}
 directory={{ src_dir }}/python/worker/
 autostart=true
 autorestart=true
@@ -7,4 +7,4 @@ stdout_logfile={{ worker_log_dir }}/worker.log
 redirect_stderr=true
 user=worker
 stopsignal=QUIT
-environment=BROKER_URL="{{ rabbitmq_broker_url }}"{{ ',DEVELOPMENT="1",CELERYD_FSNOTIFY="stat"' if development else ''}}
+environment={{ 'CELERYD_FSNOTIFY="stat"' if development else ''}}

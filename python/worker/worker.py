@@ -28,7 +28,8 @@ def compress_output(file_name, tempdir):
 
 
 def upload_result(file_name, tempdir):
-    conn = S3Connection()
+    conn = S3Connection(os.environ['AWS_ACCESS_KEY'],
+                        os.environ['AWS_SECRET_KEY'])
     bucket = conn.get_bucket('klee-output')
 
     k = Key(bucket)
@@ -60,7 +61,10 @@ def submit_code(self, code):
 
             return {'klee_output': klee_output.strip(), 'url': url}
     except subprocess.CalledProcessError as e:
-        return "KLEE run failed with: {}".format(e.output)
+        return {
+            'klee_output': "KLEE run failed with: {}".format(e.output),
+            'url': ''
+        }
     finally:
         # Workaround for docker writing files as root.
         # Set owner of tmpdir back to current user.

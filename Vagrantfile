@@ -32,6 +32,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.vm.provision "ansible" do |ansible|
     ansible.playbook = "provisioning/vagrant.yml"
     ansible.verbose = "vvvv"
+    ansible.ask_vault_pass = true
   end
 
   config.vm.provider "virtualbox" do |v|

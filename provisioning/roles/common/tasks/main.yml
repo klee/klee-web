@@ -5,7 +5,16 @@
   when: not development
 
 - name: Copying environment variable file
-  template: src=environment.j2 dest=/etc/environment
+  template: src=environment.j2 dest=/etc/profile.d/klee-web-environment.sh
+
+- name: Make working directory
+  file: path={{ working_dir }} state=directory
+
+- name: Create python runner script
+  template: src=python_runner.sh.j2 dest={{ python_runner }}
+
+- name: Make runner script executable
+  file: path={{ python_runner }} mode=0755
 
 - name: Install core dependencies (git)
   apt: name={{ item }} update_cache=yes state=latest

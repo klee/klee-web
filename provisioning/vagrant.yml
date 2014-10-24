@@ -8,4 +8,5 @@
     - web
     - worker
   vars_files:
+    - vars/secrets.yml
     - vars/development.yml
