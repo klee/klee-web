@@ -1,6 +1,6 @@
 Testing in the browser
 =======================
-
+[![Build Status](https://travis-ci.org/klee-web/klee-web.svg?branch=master)](https://travis-ci.org/klee-web/klee-web)
 Getting started on development
 ===============================
 
