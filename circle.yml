@@ -1,0 +1,21 @@
+---
+
+machine:
+  services:
+    - docker
+    - rabbitmq-server
+    
+dependencies:
+  pre:
+    - sudo apt-get update -qq
+    - sudo apt-get install -qq python-apt python-pycurl
+    - sudo apt-get install aptitude -y
+    - sudo ln -s /home/ubuntu/klee-web/ /titb
+    - sudo pip install ansible
+    - sudo pip install flake8
+
+test:
+  override:
+    - flake8 --max-complexity 12 .
+    - ansible-playbook -i localhost, --syntax-check provisioning/vagrant.yml
+    - ansible-playbook -i localhost, --connection=local --sudo -vvvv provisioning/vagrant.yml

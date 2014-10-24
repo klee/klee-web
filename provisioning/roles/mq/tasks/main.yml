@@ -9,8 +9,11 @@
 # Install RabbitMQ server
 - apt: name=rabbitmq-server update_cache=yes state=present
 
+- name: Start RabbitMQ server
+  service: name=rabbitmq-server state=started
+
 # Set up rabbitmq vhost
-- rabbitmq_vhost: name={{ rabbitmq_vhost }} state=present
+- rabbitmq_vhost: name={{ rabbitmq_vhost }} state=present node=rabbit@{{ ansible_hostname }}
 
 # Set up RabbitMQ user
 - rabbitmq_user: user={{ rabbitmq_user }}
@@ -20,3 +23,4 @@
                  read_priv=.*
                  write_priv=.*
                  state=present
+                 node=rabbit@{{ ansible_hostname }}

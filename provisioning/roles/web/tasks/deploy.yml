@@ -7,6 +7,3 @@
 
 - name: Start flask process
   shell: supervisorctl reload
-
-- name: Restart web process
-  shell: supervisorctl restart web

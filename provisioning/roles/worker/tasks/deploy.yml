@@ -11,6 +11,3 @@
 
 - name: Reload supervisor configuration
   shell: supervisorctl reload
-
-- name: Restart worker process
-  shell: supervisorctl restart worker

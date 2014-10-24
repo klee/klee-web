@@ -1,6 +1,6 @@
 Testing in the browser
 =======================
-[![Build Status](https://travis-ci.org/klee-web/klee-web.svg?branch=master)](https://travis-ci.org/klee-web/klee-web)
+[![Circle CI](https://circleci.com/gh/klee-web/klee-web.png?style=badge)](https://circleci.com/gh/klee-web/klee-web)
 Getting started on development
 ===============================
 
