@@ -5,6 +5,7 @@ import shutil
 from boto.s3.connection import S3Connection
 from boto.s3.key import Key
 from celery import Celery
+import requests
 
 celery = Celery(broker=os.environ["BROKER_URL"], backend="rpc")
 
@@ -41,8 +42,20 @@ def upload_result(file_name, tempdir):
     return url
 
 
+def send_email(email, url):
+    mailgun_url = "sandboxf39013a9ad7c47f3b621a94023230030.mailgun.org"
+    requests.post(
+        "https://api.mailgun.net/v2/{}/messages".format(mailgun_url),
+        auth=("api", os.environ['MAILGUN_API_KEY']),
+        data={"from": "Klee <postmaster@{}>".format(mailgun_url),
+              "to": "User <{}>".format(email),
+              "subject": "Klee Submission Output",
+              "text": "Your Klee submission output can be "
+                      "accessed here: {}".format(url)})
+
+
 @celery.task(name='submit_code', bind=True)
-def submit_code(self, code):
+def submit_code(self, code, email):
     task_id = self.request.id
     tempdir = tempfile.mkdtemp(prefix=task_id)
     try:
@@ -58,6 +71,8 @@ def submit_code(self, code):
             klee_output = run_klee(docker_command)
             compress_output(os.path.join(tempdir, file_name), tempdir)
             url = upload_result(file_name, tempdir)
+
+            send_email(email, url)
 
             return {'klee_output': klee_output.strip(), 'url': url}
     except subprocess.CalledProcessError as e:
