@@ -13,6 +13,12 @@ dependencies:
     - sudo ln -s /home/ubuntu/klee-web/ /titb
     - sudo pip install ansible
     - sudo pip install flake8
+  cache_directories:
+    - "~/docker"
+  override:
+    - if [[ -e ~/docker/image.tar ]]; then docker load -i ~/docker/image.tar; fi
+    - docker build -t kleeweb/klee python/worker/klee
+    - mkdir -p ~/docker; docker save kleeweb/klee > ~/docker/image.tar
 
 test:
   pre:
