@@ -1,5 +1,7 @@
-Testing in the browser
+Klee Web
 =======================
+[Try it out on staging here!](http://178.62.108.169/)
+
 [![Circle CI](https://circleci.com/gh/klee-web/klee-web.png?style=badge)](https://circleci.com/gh/klee-web/klee-web)
 Getting started on development
 ===============================
