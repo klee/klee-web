@@ -20,4 +20,10 @@ test:
   override:
     - flake8 --max-complexity 12 .
     - ansible-playbook -i localhost, --syntax-check --vault-password-file=/home/ubuntu/.vault_password provisioning/vagrant.yml
-    - ansible-playbook -i localhost, --connection=local --sudo -vvvv --vault-password-file=/home/ubuntu/.vault_password provisioning/vagrant.yml
+    - ansible-playbook -i localhost, --connection=local --vault-password-file=/home/ubuntu/.vault_password provisioning/vagrant.yml
+
+deployment:
+  staging:
+    branch: master
+    commands:
+      - ansible-playbook -i provisioning/hosts --vault-password-file=/home/ubuntu/.vault_password provisioning/deploy.yml
