@@ -7,3 +7,5 @@ src_dir: /titb
 working_dir: /src
 python_runner: "{{ working_dir }}/python_runner.sh"
 ci: no
+db_name: klee_web
+db_user: klee_web

@@ -1,0 +1,77 @@
+{% extends "klee_web/base.html" %}
+
+{% block title %}KLEE{% endblock %}
+
+{% block css %}
+    <link href="//cdnjs.cloudflare.com/ajax/libs/codemirror/4.6.0/codemirror.min.css
+" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+    <div class="row">
+        <div class="col-md-12">
+            <div class="panel panel-default">
+                <div class="panel-heading">Submit a KLEE Job</div>
+                <div class="panel-body">
+                    {% for error in form.non_field_errors %}
+                        <div class="alert alert-danger" role="alert">
+                            {{ error }}
+                        </div>
+                    {% endfor %}
+                    <form action="" method="POST" enctype="multipart/form-data"
+                          class="{% if messages %} has-error {% endif %}">
+                        {% csrf_token %}
+
+                        <div class="form-group">
+                            <label for="{{ form.email.id }}">Email (Optional)
+                                address</label>
+                            <input type="email" class="form-control"
+                                   id="{{ form.email.id_for_label }}"
+                                   name="{{ form.email.name }}"
+                                   placeholder="Enter email">
+                            {{ form.email.errors }}
+                        </div>
+
+                        <div class="form-group">
+                            <label for="{{ form.code.id }}">Code:</label>
+
+                            <textarea name="{{ form.code.name }}"
+                                      placeholder="Code here..."
+                                      rows="25" cols="80"
+                                      class="form-control"
+                                      id="{{ form.code.id_for_label }}"></textarea>
+                            {{ form.code.errors }}
+                        </div>
+
+                        <div class="form-group">
+                            <label for="{{ form.file.id }}">File upload
+                                (optional):</label>
+                            <input name="{{ form.file.name }}"
+                                   id="{{ form.file.id_for_label }}"
+                                   class="form-control" type="file">
+                            {{ form.file.errors }}
+
+                        </div>
+                        <input type="submit" value="Submit Job"
+                               class="btn btn-primary"/>
+                    </form>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block javascript %}
+    <script src="//cdnjs.cloudflare.com/ajax/libs/codemirror/4.6.0/codemirror.min.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/codemirror/4.6.0/mode/clike/clike.min.js"></script>
+    <script type="text/javascript">
+        $(function () {
+            CodeMirror.fromTextArea($("#{{ form.code.id_for_label }}").get(0), {
+                lineNumbers: true,
+                mode: "clike"
+            });
+        });
+    </script>
+{% endblock %}

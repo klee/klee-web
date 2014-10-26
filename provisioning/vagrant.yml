@@ -5,6 +5,7 @@
   roles:
     - common
     - mq
+    - db
     - web
     - worker
   vars_files:

@@ -1,13 +1,13 @@
-{% extends "layout.html" %}
+{% extends "klee_web/base.html" %}
 
 {% block title %}Result{% endblock %}
 
 {% block css %}{% endblock %}
 
 {% block content %}
-	<h1>Your result</h1>
-	<br/>
-	<pre>{{ result.klee_output }}</pre>
+    <h1>Your result</h1>
+    <br/>
+    <pre>{{ result.klee_output }}</pre>
     <a href="{{ result.url }}">{{ result.url }}</a>
 
 {% endblock %}
