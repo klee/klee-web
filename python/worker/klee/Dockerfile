@@ -18,7 +18,7 @@ RUN mkdir /src && cd /src && \
     cd /src/llvm-2.9 && \
     wget https://gist.githubusercontent.com/ilovepjs/55a8d84000cc5d23a48c/raw/a992a62eaab5600994c66a6d42b6eeec80149cdd/llvm_patch && \
     patch -p1 < llvm_patch && \
-    ./configure --enable-optimized --disable-assertions --enable-targets=host-only && \
+    ./configure --enable-optimized --enable-assertions --enable-targets=host-only && \
     make -j `nproc` && \
     rm -rf /src/llvm-gcc4.2-2.9-x86_64-linux/man && \
     rm -rf /src/llvm-gcc4.2-2.9-x86_64-linux/share && \
@@ -33,12 +33,16 @@ RUN mkdir /src && cd /src && \
     cd /src  && \
     git clone --depth 1 --branch klee_0_9_29 https://github.com/klee/klee-uclibc.git && \
     cd /src/klee-uclibc/ && \
-    ./configure --with-llvm-config /src/llvm-2.9/Release/bin/llvm-config --make-llvm-lib && \
+    ./configure --with-llvm-config /src/llvm-2.9/Release+Asserts/bin/llvm-config --make-llvm-lib && \
     make -j`nproc` && \
     cd /src && git clone https://github.com/klee/klee.git && \
     cd /src/klee && \
     ./configure --enable-posix-runtime --with-stp=/usr/local --with-llvm=/src/llvm-2.9/ --with-uclibc=/src/klee-uclibc/ && \
     make ENABLE_OPTIMIZED=1 && \
+    make check  && \
+    make test && \
+    make unittests && \
+    sudo make install && \
     rm -rf /src/klee-uclibc && \
     rm -rf /src/stp && \
     rm -rf /src/klee/examples && \
@@ -54,8 +58,4 @@ RUN mkdir /src && cd /src && \
     rm -rf /src/llvm-gcc4.2-2.9-x86_64-linux/lib32 && \
     rm -rf /src/llvm-gcc4.2-2.9-x86_64-linux/include && \
     rm -rf /src/llvm-2.9 && \
-    make check  && \
-    make test && \
-    make unittests && \
-    sudo make install && \
     cd /root
