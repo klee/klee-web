@@ -13,17 +13,28 @@
             <div class="panel panel-default">
                 <div class="panel-heading">Enter your code</div>
                 <div class="panel-body">
-                    <form action="/" method="POST" enctype="multipart/form-data">
-                        <textarea name="code" placeholder="Code here..." rows="25" cols="80"
-                                  class="form-control" id="code"></textarea>
-                        <br/>
-                        <br/>
-                        <input name="file" type="file">
-                        <br/>
-                        <br/>
-                        <input type="submit" value="Submit" class="btn btn-primary"/>
-                    </form>
-
+                    {% with messages = get_flashed_messages() %}
+                        <form action="/" method="POST" enctype="multipart/form-data" class="{% if messages %} has-error {% endif %}">
+                            <textarea name="code" placeholder="Code here..." rows="25" cols="80"
+                                      class="form-control" id="code"></textarea>
+                            <br/>
+                            <br/>
+                            <input name="file" type="file">
+                            <br/>
+                            <br/>
+                            {% if messages %}
+                                {% for message in messages %}
+                                    <div class="alert alert-danger" role="alert">
+                                        Invalid Email Address
+                                    </div>
+                                {% endfor %}
+                            {% endif %}
+                            Email: <input name="email" type="text" class="{% if messages %} form-control {% endif %}">
+                            <br/>
+                            <br/>
+                            <input type="submit" value="Submit" class="btn btn-primary"/>
+                        </form>
+                    {% endwith %}
                 </div>
             </div>
 

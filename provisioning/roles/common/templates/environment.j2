@@ -6,4 +6,6 @@ export RABBITMQ_PORT={{ rabbitmq_port }}
 export BROKER_URL={{ rabbitmq_broker_url }}
 export AWS_ACCESS_KEY={{ aws_access_key }}
 export AWS_SECRET_KEY={{ aws_secret_key }}
+export MAILGUN_API_KEY={{ mailgun_api_key }}
+export FLASK_SECRET_KEY={{ flask_secret_key }}
 {{ "export DEVELOPMENT=1" if development else "" }}
