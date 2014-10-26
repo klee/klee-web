@@ -8,7 +8,7 @@
     - vars/production.yml
     - roles/web/defaults/main.yml
   tasks:
-    - include: roles/common/tasks/clone.yml
+    - include: roles/common/tasks/deploy.yml
     - include: roles/web/tasks/deploy.yml
 
 # Configure and deploy the worker nodes.
@@ -19,5 +19,5 @@
     - vars/production.yml
     - roles/worker/defaults/main.yml
   tasks:
-    - include: roles/common/tasks/clone.yml
+    - include: roles/common/tasks/deploy.yml
     - include: roles/worker/tasks/deploy.yml
