@@ -2,6 +2,7 @@
 
 - name: Get KLEE image from Docker Hub (this may take a while...)
   command: docker pull kleeweb/klee
+  when: not ci
 
 - name: Install requirements for task runner
   pip: requirements={{ src_dir }}/python/requirements.txt virtualenv={{ worker_virtualenv }}

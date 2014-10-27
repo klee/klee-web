@@ -6,3 +6,4 @@ git_repo: https://github.com/klee-web/klee-web.git
 src_dir: /titb
 working_dir: /src
 python_runner: "{{ working_dir }}/python_runner.sh"
+ci: no
