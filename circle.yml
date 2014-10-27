@@ -13,6 +13,7 @@ dependencies:
     - sudo ln -s /home/ubuntu/klee-web/ /titb
     - sudo pip install ansible
     - sudo pip install flake8
+    - sudo pip install httpie
   cache_directories:
     - "~/docker"
   override:
@@ -27,7 +28,7 @@ test:
     - flake8 --max-complexity 12 .
     - ansible-playbook -i localhost, --syntax-check --vault-password-file=/home/ubuntu/.vault_password provisioning/vagrant.yml
     - ansible-playbook -i localhost, --connection=local --vault-password-file=/home/ubuntu/.vault_password -e ci=yes provisioning/vagrant.yml
-
+    - sleep 10; http --check-status http://localhost/ > /dev/null
 
 deployment:
   staging:
