@@ -17,6 +17,15 @@
   roles:
   - mq
 
+# Configure and deploy message database servers.
+- hosts: dbservers
+  user: root
+  vars_files:
+    - vars/secrets.yml
+    - vars/production.yml
+  roles:
+  - db
+
 # Configure and deploy the web servers.
 - hosts: webservers
   user: root

@@ -4,3 +4,4 @@ web/**/target
 *.pyc
 Report/*
 .DS_Store
+python/web/static/*

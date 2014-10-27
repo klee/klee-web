@@ -5,5 +5,30 @@
 - name: Copy supervisor config file
   template: src=supervisor_web.conf.j2 dest=/etc/supervisor/conf.d/web.conf
 
-- name: Start flask process
+- name: Run the Django syncdb command
+  shell: . {{ web_virtualenv }}/bin/activate
+         && . /etc/profile.d/klee-web-environment.sh
+         && cd {{ web_application_path }}
+         && python manage.py syncdb --noinput
+
+- name: Run Django South migrations
+  shell: . {{ web_virtualenv }}/bin/activate
+         && . /etc/profile.d/klee-web-environment.sh
+         && cd {{ web_application_path }}
+         && python manage.py migrate --noinput
+
+- name: Run Django collectstatic
+  shell: . {{ web_virtualenv }}/bin/activate
+         && . /etc/profile.d/klee-web-environment.sh
+         && cd {{ web_application_path }}
+         && python manage.py collectstatic --noinput
+
+- name: Create development admin user
+  shell: . {{ web_virtualenv }}/bin/activate
+         && . /etc/profile.d/klee-web-environment.sh
+         && cd {{ web_application_path }}
+         && python manage.py update_admin_user --username=admin --password=development
+  when: development
+
+- name: Start django process
   shell: supervisorctl reload

@@ -1,6 +1,6 @@
 [program:web]
-command={{ python_runner }} {{ web_virtualenv }}/bin/uwsgi -s /tmp/uwsgi.sock -w python.web.web:app -H {{ web_virtualenv }} --chmod-socket=666 {{ "--py-autoreload=1 --catch-exceptions" if development else ""}}
-directory={{ src_dir }}
+command={{ python_runner }} {{ web_virtualenv }}/bin/uwsgi -s /tmp/uwsgi.sock -w web.wsgi:application -H {{ web_virtualenv }} --chmod-socket=666 {{ "--py-autoreload=1 --catch-exceptions" if development else ""}}
+directory={{ src_dir }}/python/web/
 autostart=true
 autorestart=true
 stdout_logfile={{ web_log_dir }}/web.log

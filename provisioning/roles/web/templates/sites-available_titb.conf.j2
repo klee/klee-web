@@ -6,8 +6,10 @@ server {
       include uwsgi_params;
       uwsgi_pass unix:/tmp/uwsgi.sock;
     }
-
+    
+    {% if not development %}
     location /static/ {
       alias {{ src_dir }}/python/web/static/;
     }
+    {% endif %}
 }
