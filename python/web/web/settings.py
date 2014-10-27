@@ -28,7 +28,7 @@ DEBUG = os.environ.get("DEVELOPMENT") is not None
 
 TEMPLATE_DEBUG = os.environ.get("DEVELOPMENT") is not None
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition

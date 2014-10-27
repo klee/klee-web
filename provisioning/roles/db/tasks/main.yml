@@ -9,10 +9,17 @@
     - python-psycopg2
   tags: packages
 
+- name: Copy valid pg_hba.conf
+  template: src=pg_hba.conf.j2 dest=/etc/postgresql/9.3/main/pg_hba.conf
+
+- name: Copy valid postgresql.conf
+  template: src=postgresql.conf.j2 dest=/etc/postgresql/9.3/main/postgresql.conf
+
 - name: Ensure the PostgreSQL service is running
-  service: name=postgresql state=started enabled=yes
+  service: name=postgresql state=restarted enabled=yes
 
 - name: Ensure database is created
+  sudo: yes
   sudo_user: postgres
   postgresql_db: name={{ db_name }}
                  encoding='UTF-8'
@@ -22,6 +29,7 @@
                  state=present
 
 - name: Ensure user has access to the database
+  sudo: yes
   sudo_user: postgres
   postgresql_user: db={{ db_name }}
                    name={{ db_user }}
@@ -30,6 +38,7 @@
                    state=present
 
 - name: Ensure user does not have unnecessary privileges
+  sudo: yes
   sudo_user: postgres
   postgresql_user: name={{ db_user }}
                    role_attr_flags=NOSUPERUSER,NOCREATEDB
