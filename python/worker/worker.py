@@ -62,8 +62,9 @@ def submit_code(self, code, email):
             f.write(code)
             f.flush()
 
-            docker_command = ['sudo', 'docker', 'run', '-t', '-v',
-                              '{}:/code'.format(tempdir), 'kleeweb/klee']
+            docker_command = ['sudo', 'docker', 'run', '-t',
+                              '-v', '{}:/code'.format(tempdir),
+                              '--net="none"', 'kleeweb/klee']
 
             file_name = 'klee-output-{}.tar.gz'.format(task_id)
 
