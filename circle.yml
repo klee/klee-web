@@ -13,6 +13,12 @@ dependencies:
     - sudo ln -s /home/ubuntu/klee-web/ /titb
     - sudo pip install ansible
     - sudo pip install flake8
+  cache_directories:
+    - "~/docker"
+  override:
+    - if [[ -e ~/docker/image.tar ]]; then docker load -i ~/docker/image.tar; fi
+    - docker build -t kleeweb/klee python/worker/klee
+    - mkdir -p ~/docker; docker save kleeweb/klee > ~/docker/image.tar
 
 test:
   pre:
@@ -20,10 +26,15 @@ test:
   override:
     - flake8 --max-complexity 12 .
     - ansible-playbook -i localhost, --syntax-check --vault-password-file=/home/ubuntu/.vault_password provisioning/vagrant.yml
-    - ansible-playbook -i localhost, --connection=local --vault-password-file=/home/ubuntu/.vault_password provisioning/vagrant.yml
+    - ansible-playbook -i localhost, --connection=local --vault-password-file=/home/ubuntu/.vault_password -e ci=yes provisioning/vagrant.yml
+
 
 deployment:
   staging:
     branch: master
     commands:
+      - sed "s/<EMAIL>/$DOCKER_EMAIL/;s/<AUTH>/$DOCKER_AUTH/" \
+          < .dockercfg.template > ~/.dockercfg
+      - docker push kleeweb/klee
       - ansible-playbook -i provisioning/hosts --vault-password-file=/home/ubuntu/.vault_password provisioning/deploy.yml
+
