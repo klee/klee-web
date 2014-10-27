@@ -23,9 +23,8 @@ def run_klee(docker_command):
 
 
 def compress_output(file_name, tempdir):
-    tar_command = ['tar', '-zcvf', file_name,
-                   os.path.join(tempdir, 'klee-out-0')]
-    subprocess.check_output(tar_command)
+    tar_command = ['tar', '-zcvf', file_name, 'klee-out-0']
+    subprocess.check_output(tar_command, cwd=tempdir)
 
 
 def upload_result(file_name, tempdir):
