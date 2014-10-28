@@ -7,4 +7,5 @@ urlpatterns = [
         name='worker_config'),
     url(r'^task/list/(?P<type>\w+)?',
         'klee_admin.views.task_list', name='task_list'),
+    url(r'^task/kill$', 'klee_admin.views.kill_task', name='kill_task'),
 ]
