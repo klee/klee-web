@@ -5,6 +5,7 @@ class SubmitJobForm(forms.Form):
     code = forms.CharField(widget=forms.Textarea, required=False)
     email = forms.EmailField(required=False)
     file = forms.FileField(required=False)
+    args = forms.CharField(required=False)
 
     def clean(self):
         cleaned_data = super(SubmitJobForm, self).clean()

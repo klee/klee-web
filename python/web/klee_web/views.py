@@ -11,12 +11,13 @@ def index(request):
         if form.is_valid():
             code = form.cleaned_data["code"]
             email = form.cleaned_data["email"]
+            args = form.cleaned_data["args"]
 
             uploaded_file = request.FILES.get('file')
             if uploaded_file:
                 code = uploaded_file.read()
 
-            task = submit_code.delay(code, email)
+            task = submit_code.delay(code, email, args)
 
             result = submit_code.AsyncResult(task.task_id).get(timeout=30.0)
             return render(request, "klee_web/result.html", {
