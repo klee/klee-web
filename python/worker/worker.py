@@ -2,20 +2,28 @@ import os
 import tempfile
 import subprocess
 import shutil
+import shlex
+
+import requests
+
 from boto.s3.connection import S3Connection
 from boto.s3.key import Key
 from celery import Celery
-import requests
 
 celery = Celery(broker=os.environ["BROKER_URL"], backend="rpc")
 
 
-def run_klee(docker_command):
+def run_klee(docker_command, args):
     llvm_command = ['/src/llvm-gcc4.2-2.9-x86_64-linux/bin/llvm-gcc',
                     '-I', '/src/klee/include', '--emit-llvm', '-c', '-g',
                     '/code/result.c',
                     '-o', '/code/result.o']
-    klee_command = ["klee", "/code/result.o"]
+
+    split_args = shlex.split(args)
+    klee_command = ["klee"]
+    if split_args:
+        klee_command += ['--posix-runtime']
+    klee_command += ["/code/result.o"] + shlex.split(args)
 
     subprocess.check_output(docker_command + llvm_command)
     klee_output = subprocess.check_output(docker_command + klee_command)
@@ -54,7 +62,7 @@ def send_email(email, url):
 
 
 @celery.task(name='submit_code', bind=True)
-def submit_code(self, code, email):
+def submit_code(self, code, email, args):
     task_id = self.request.id
     tempdir = tempfile.mkdtemp(prefix=task_id)
     try:
@@ -68,7 +76,7 @@ def submit_code(self, code, email):
 
             file_name = 'klee-output-{}.tar.gz'.format(task_id)
 
-            klee_output = run_klee(docker_command)
+            klee_output = run_klee(docker_command, args)
             compress_output(os.path.join(tempdir, file_name), tempdir)
             url = upload_result(file_name, tempdir)
 

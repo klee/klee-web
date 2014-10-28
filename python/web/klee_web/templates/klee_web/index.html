@@ -52,6 +52,17 @@
                             {{ form.file.errors }}
 
                         </div>
+
+                        <div class="form-group">
+                            <label for="{{ form.args.id }}">Program arguments
+                                (Optional)</label>
+                            <input type="text" class="form-control"
+                                   id="{{ form.args.id_for_label }}"
+                                   name="{{ form.args.name }}"
+                                   placeholder="Enter any extra arguments to pass to KLEE.">
+                            {{ form.args.errors }}
+                        </div>
+
                         <input type="submit" value="Submit Job"
                                class="btn btn-primary"/>
                     </form>
