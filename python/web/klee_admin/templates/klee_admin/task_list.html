@@ -1,0 +1,41 @@
+{% extends "klee_admin/base.html" %}
+
+{% block title %}KLEE Web Admin{% endblock %}
+
+{% block css %}
+{% endblock %}
+
+{% block content %}
+<ul class="nav nav-tabs nav-justified" role="tablist">
+  <li role="presentation" class="active"><a href="{% url 'klee_admin:task_list' 'active' %}">Active</a></li>
+  <li role="presentation" class="scheduled"><a href="{% url 'klee_admin:task_list' 'scheduled' %}">Scheduled</a></li>
+  <li role="presentation" class="reserved"><a href="{% url 'klee_admin:task_list' 'reserved' %}">Reserved</a></li>
+</ul>
+<table class="table table-hover">
+<thead>
+<tr>
+    <th>Task ID</th>
+    <th>IP Address</th>
+    <th>Worker</th>
+    <th>Submit time</th>
+    <th>Running time</th>
+</tr>
+</thead>
+<tbody>
+{% for mach, task_list in tasks.iteritems %}
+    {% for task in task_list %}
+        <tr>
+            <td> {{ task.id }} </td>
+            <td> {{ task.ip_address }} </td>
+            <td> {{ mach }} </td>
+            <td> {{ task.submit_time }} </td>
+            <td> {{ task.running_time.0 }} minutes, {{ task.running_time.1 }} seconds  </td>
+        </tr>
+    {% endfor %}
+{% endfor %}
+</tbody>
+</table>
+{% endblock %}
+
+{% block javascript %}
+{% endblock %}

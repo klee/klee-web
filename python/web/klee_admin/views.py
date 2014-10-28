@@ -6,6 +6,9 @@ from decorators import group_required
 from forms import AdminConfigForm
 from worker.worker import celery
 from worker.worker_config import WorkerConfig
+from klee_web.models import Task
+import celery_stats
+import datetime
 
 HUMAN_READABLE_FIELD_NAMES = {
     "timeout": "Timeout",
@@ -58,3 +61,30 @@ def worker_list(request):
             "uptime_stats": uptime_stats
         }
     )
+
+
+@group_required("admin")
+def task_list(request, type):
+    if type == 'active':
+        tasks = celery_stats.active_tasks()
+    elif type == 'scheduled':
+        tasks = celery_stats.scheduled_tasks()
+    elif type == 'reserved':
+        tasks = celery_stats.reserved_tasks()
+    else:
+        tasks = celery_stats.active_tasks()
+
+    if tasks:
+        for mach in tasks:
+            for task in tasks[mach]:
+                db_task = Task.objects.filter(task_id=task['id']).first()
+
+                if db_task:
+                    task['ip_address'] = db_task.ip_address
+                    task['submit_time'] = db_task.created_at
+
+                    time = datetime.datetime.utcnow() - db_task.created_at
+                    running_time = divmod(time.days * 86400 + time.seconds, 60)
+                    task['running_time'] = running_time
+
+    return render(request, "klee_admin/task_list.html", {'tasks': tasks})
