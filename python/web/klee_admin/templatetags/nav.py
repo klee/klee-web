@@ -18,7 +18,6 @@ def current_url_equals(context, url_name, **kwargs):
     except:
         pass
     matches = resolved and resolved.url_name == url_name
-    print(resolved.url_name)
     if matches and kwargs:
         for key in kwargs:
             kwarg = kwargs.get(key)
