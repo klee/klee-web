@@ -2,7 +2,7 @@ from django import forms
 
 
 class SubmitJobForm(forms.Form):
-    code = forms.CharField(widget=forms.Textarea, required=False)
+    code = forms.CharField(required=False)
     email = forms.EmailField(required=False)
     file = forms.FileField(required=False)
     args = forms.CharField(required=False)

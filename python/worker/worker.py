@@ -4,6 +4,7 @@ import subprocess
 import shutil
 import shlex
 import re
+import json
 
 import requests
 
@@ -34,6 +35,15 @@ def get_uptime_stats(state):
         'loadavg_5min': uptime_matches.group(4),
         'loadavg_15min': uptime_matches.group(5),
     }
+
+
+# Uses a task id to create a separate channel
+# for each job
+def send_notification(endpoint, channel, data):
+    requests.post(
+        endpoint,
+        data={'channel': channel, 'data': json.dumps(data)}
+    )
 
 
 def run_klee(docker_command, args):
@@ -85,8 +95,9 @@ def send_email(email, url):
 
 
 @celery.task(name='submit_code', bind=True)
-def submit_code(self, code, email, args):
+def submit_code(self, code, email, args, endpoint):
     task_id = self.request.id
+    send_notification(endpoint, task_id, {'message': 'Submitting code'})
     tempdir = tempfile.mkdtemp(prefix=task_id)
     try:
         with open(os.path.join(tempdir, "result.c"), 'a+') as f:
@@ -99,18 +110,37 @@ def submit_code(self, code, email, args):
 
             file_name = 'klee-output-{}.tar.gz'.format(task_id)
 
+            send_notification(
+                endpoint, task_id,
+                {'message': 'Analysing with KLEE'}
+            )
+
             klee_output = run_klee(docker_command, args)
+
+            send_notification(
+                endpoint, task_id, {'message': 'Compressing result'})
             compress_output(os.path.join(tempdir, file_name), tempdir)
+
+            send_notification(
+                endpoint, task_id, {'message': 'Uploading result'})
             url = upload_result(file_name, tempdir)
 
             send_email(email, url)
+            send_notification(endpoint, task_id, {'message': 'Done'})
 
-            return {'klee_output': klee_output.strip(), 'url': url}
-    except subprocess.CalledProcessError as e:
-        return {
-            'klee_output': "KLEE run failed with: {}".format(e.output),
-            'url': ''
-        }
+            send_notification(
+                endpoint,
+                task_id,
+                data={
+                    'message': 'Result',
+                    'result': {
+                        'output': klee_output.strip(),
+                        'url': url
+                    }
+                }
+            )
+    except subprocess.CalledProcessError:
+        send_notification(endpoint, task_id, {'message': 'An error occurred.'})
     finally:
         # Workaround for docker writing files as root.
         # Set owner of tmpdir back to current user.
