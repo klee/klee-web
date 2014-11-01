@@ -9,13 +9,13 @@
   - common
 
 # Configure and deploy message queue servers.
-- hosts: queueservers
+- hosts: redisservers
   user: root
   vars_files:
     - vars/secrets.yml
     - vars/production.yml
   roles:
-  - mq
+  - redis
 
 # Configure and deploy message database servers.
 - hosts: dbservers

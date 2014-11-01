@@ -1,16 +1,14 @@
-export RABBITMQ_HOST={{ rabbitmq_host }}
-export RABBITMQ_USERNAME={{ rabbitmq_user }}
-export RABBITMQ_PASSWORD={{ rabbitmq_password }}
-export RABBITMQ_VHOST={{ rabbitmq_vhost }}
-export RABBITMQ_PORT={{ rabbitmq_port }}
+export REDIS_HOST={{ redis_host }}
+export REDIS_DB_NUMBER={{ redis_db_number }}
+export REDIS_PORT={{ redis_port }}
 
-export BROKER_URL={{ rabbitmq_broker_url }}
+export CELERY_BROKER_URL={{ celery_broker_url }}
 
 export AWS_ACCESS_KEY={{ aws_access_key }}
 export AWS_SECRET_KEY={{ aws_secret_key }}
 
 export MAILGUN_API_KEY={{ mailgun_api_key }}
-export FLASK_SECRET_KEY={{ flask_secret_key }}
+export DJANGO_SECRET_KEY="{{ django_secret_key }}"
 
 export DB_USER={{ db_user }}
 export DB_PASSWORD={{ db_password }}

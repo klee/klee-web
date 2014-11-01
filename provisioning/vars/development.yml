@@ -1,10 +1,8 @@
 development: yes
-rabbitmq_user: taskqueue
-rabbitmq_password: development
-rabbitmq_vhost: klee
-rabbitmq_host: localhost
-rabbitmq_port: 5672
-rabbitmq_broker_url: "amqp://{{ rabbitmq_user }}:{{ rabbitmq_password }}@{{ rabbitmq_host }}:{{ rabbitmq_port }}/{{ rabbitmq_vhost }}"
+redis_host: 127.0.0.1
+redis_port: 6379
+redis_db_number: 0
+celery_broker_url: "redis://{{ redis_host }}:{{ redis_port }}/{{ redis_db_number }}"
 
 db_host: localhost
 db_port: 5432
