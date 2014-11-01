@@ -1,8 +1,9 @@
 development: no
-rabbitmq_vhost: klee
-rabbitmq_host: "{{ hostvars[groups['queueservers'][0]]['ansible_' + iface].ipv4.address }}"
-rabbitmq_port: 5672
-rabbitmq_broker_url: "amqp://{{ rabbitmq_user }}:{{ rabbitmq_password }}@{{ rabbitmq_host }}:{{ rabbitmq_port }}/{{ rabbitmq_vhost }}"
+
+redis_host: "{{ hostvars[groups['redisservers'][0]]['ansible_' + private_iface].ipv4.address }}"
+redis_port: 6379
+redis_db_number: 0
+celery_broker_url: "redis://{{ redis_host }}:{{ redis_port }}/{{ redis_db_number }}"
 
 db_host: "{{ hostvars[groups['dbservers'][0]]['ansible_' + iface].ipv4.address }}"
 db_port: 5432

@@ -10,7 +10,8 @@ from boto.s3.connection import S3Connection
 from boto.s3.key import Key
 from celery import Celery
 
-celery = Celery(broker=os.environ["BROKER_URL"], backend="rpc")
+
+celery = Celery(broker=os.environ["CELERY_BROKER_URL"], backend="rpc")
 
 
 def run_klee(docker_command, args):
