@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/1.7/ref/settings/
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os
 import sys
+import django.conf.global_settings as global_settings
 
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
@@ -29,6 +30,11 @@ DEBUG = os.environ.get("DEVELOPMENT") is not None
 TEMPLATE_DEBUG = os.environ.get("DEVELOPMENT") is not None
 
 ALLOWED_HOSTS = ['*']
+
+TEMPLATE_CONTEXT_PROCESSORS = \
+    global_settings.TEMPLATE_CONTEXT_PROCESSORS + (
+        "django.core.context_processors.request",
+    )
 
 
 # Application definition
