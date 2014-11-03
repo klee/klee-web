@@ -3,6 +3,7 @@ import tempfile
 import subprocess
 import shutil
 import shlex
+import re
 
 import requests
 
@@ -10,8 +11,29 @@ from boto.s3.connection import S3Connection
 from boto.s3.key import Key
 from celery import Celery
 
-
 celery = Celery(broker=os.environ["CELERY_BROKER_URL"], backend="rpc")
+
+from celery.worker.control import Panel
+
+
+@Panel.register
+def get_uptime_stats(state):
+    uptime_pattern = re.compile(
+        r"up\s+(.*?),\s+([0-9]+) "
+        r"users?,\s+load averages?: "
+        r"([0-9]+\.[0-9][0-9]),?\s+([0-9]+\.[0-9][0-9])"
+        r",?\s+([0-9]+\.[0-9][0-9])")
+
+    uptime_output = subprocess.check_output("uptime")
+    uptime_matches = uptime_pattern.search(uptime_output)
+
+    return {
+        'uptime': uptime_matches.group(1),
+        'users': uptime_matches.group(2),
+        'loadavg_1min': uptime_matches.group(3),
+        'loadavg_5min': uptime_matches.group(4),
+        'loadavg_15min': uptime_matches.group(5),
+    }
 
 
 def run_klee(docker_command, args):

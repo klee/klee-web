@@ -7,7 +7,7 @@ urlpatterns = patterns(
     '',
     url(r'^$', 'klee_web.views.index', name='index'),
     url(r'^admin/', include(admin.site.urls)),
-    url(r'^manage/', include('klee_admin.urls')),
+    url(r'^manage/', include('klee_admin.urls', namespace="klee_admin")),
     url(r'^accounts/login/$', views.login,
         {'template_name': 'klee_admin/login.html'}),
 )
