@@ -38,7 +38,7 @@ app.controller('MainCtrl',
         };
 
         $scope.processForm = function (submission) {
-            $scope.progress.push('Start!');
+            $scope.progress.push('Job queued!');
             $http
                 // Send data to submit endpoint
                 .post('/submit/', submission)
@@ -58,6 +58,19 @@ app.controller('MainCtrl',
                                 $scope.progress.push(data.message);
                             }
                         });
+
+                        channel.bind('job_complete', function (response) {
+                            data = angular.fromJson(response.data);
+                            $scope.result = data.result;
+                        });
+
+                        channel.bind('job_failed', function (response) {
+                            data = angular.fromJson(response.data);
+                            $scope.result = {
+                                'output': data.output
+                            };
+                        });
+
                     }
                 )
                 // We didn't even get a task back from submit
