@@ -22,8 +22,10 @@
           <div class="panel panel-default" ng-if="result | isNotEmpty" ng-cloak>
             <div class="panel-heading">Result</div>
             <div class="panel-body">
-              <p>You can pick up your analysed output here:</p>
-              <p><a ng-href="[[ result.url ]]">[[ result.url ]]</a></p>
+              <span ng-if="result.url | isNotEmpty">
+                  <p>You can pick up your analysed output here:</p>
+                  <p><a ng-href="[[ result.url ]]">[[ result.url ]]</a></p>
+              </span>
               <br />
               <p><strong>Output</strong>:</p>
               <pre>[[ result.output ]]</pre>
@@ -48,7 +50,7 @@
                             <label for="{{ form.code.id }}">Code:</label>
 
                             <ui-codemirror ng-model="submission.code" ui-codemirror-opts="editorOptions"></ui-codemirror>
-                            
+
                             {{ form.code.errors }}
                         </div>
 

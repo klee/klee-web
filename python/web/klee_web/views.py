@@ -17,7 +17,7 @@ def index(request):
 
 
 @require_POST
-def submit(request):
+def submit_job(request):
     data = json.loads(request.body)
 
     code = data.get("code")
@@ -43,6 +43,7 @@ def jobs_notify(request):
     if request.method == "POST":
         notify(
             request.POST.get('channel'),
+            request.POST.get('type'),
             request.POST.get('data')
         )
         return HttpResponse('Ok!')
