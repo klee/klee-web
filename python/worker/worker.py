@@ -41,6 +41,7 @@ def get_uptime_stats(state):
 
 
 MAILGUN_URL = "sandboxf39013a9ad7c47f3b621a94023230030.mailgun.org"
+ANSI_ESCAPE_PATTERN = re.compile(r'\x1b[^m]*m')
 
 
 def notify_on_entry(msg):
@@ -109,7 +110,9 @@ class WorkerRunner():
         subprocess.check_output(self.docker_command + llvm_command)
         klee_output = subprocess.check_output(
             self.docker_command + klee_command)
-        return klee_output
+
+        # Remove ANSI escape sequences from output
+        return ANSI_ESCAPE_PATTERN.sub('', klee_output)
 
     @staticmethod
     def send_email(email, output_url):
