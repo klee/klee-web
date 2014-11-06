@@ -11,10 +11,13 @@ import requests
 from boto.s3.connection import S3Connection
 from boto.s3.key import Key
 from celery import Celery
+from celery.exceptions import SoftTimeLimitExceeded
 
 celery = Celery(broker=os.environ["CELERY_BROKER_URL"], backend="rpc")
 
 from celery.worker.control import Panel
+
+JOB_TIME_LIMIT = 30
 
 
 @Panel.register
@@ -156,7 +159,16 @@ class WorkerRunner():
                                    {'output': ex.output})
 
 
-@celery.task(name='submit_code', bind=True)
+@celery.task(name='submit_code', bind=True, soft_time_limit=JOB_TIME_LIMIT)
 def submit_code(self, code, email, klee_args, endpoint):
     with WorkerRunner(self.request.id, endpoint) as runner:
-        runner.run(code, email, klee_args)
+        try:
+            runner.run(code, email, klee_args)
+        except SoftTimeLimitExceeded:
+            runner.send_notification(
+                'job_failed',
+                {
+                    'output': "Job exceeded time limit of "
+                              "{} seconds".format(JOB_TIME_LIMIT)
+                }
+            )
