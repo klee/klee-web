@@ -56,7 +56,7 @@ def notify_on_entry(msg):
 
 
 class WorkerRunner():
-    def __init__(self, task_id, callback_endpoint):
+    def __init__(self, task_id, callback_endpoint=None):
         self.task_id = task_id
         self.callback_endpoint = callback_endpoint
 
@@ -126,13 +126,14 @@ class WorkerRunner():
                           "accessed here: {}".format(output_url)})
 
     def send_notification(self, type, data):
-        payload = {
-            'channel': self.task_id,
-            'type': type,
-            'data': json.dumps(data)
-        }
+        if self.callback_endpoint:
+            payload = {
+                'channel': self.task_id,
+                'type': type,
+                'data': json.dumps(data)
+            }
 
-        requests.post(self.callback_endpoint, payload)
+            requests.post(self.callback_endpoint, payload)
 
     @notify_on_entry("Starting Job")
     def run(self, code, email, klee_args):
