@@ -47,6 +47,5 @@ class TestWorkerRunner(unittest.TestCase):
     def test_fail_on_invalid_syntax(self):
         self.run_klee_test('invalid_syntax', expect_failure=True)
 
-
 if __name__ == '__main__':
     unittest.main()
