@@ -1,0 +1,14 @@
+KLEE: NOTE: Using klee-uclibc : /usr/local/lib/klee-uclibc.bca
+KLEE: NOTE: Using model: /usr/local/lib/libkleeRuntimePOSIX.bca
+KLEE: output directory is "/code/klee-out-0"
+KLEE: WARNING: undefined reference to function: __xstat64
+KLEE: WARNING: undefined reference to function: lseek64
+KLEE: WARNING ONCE: calling external: syscall\(16, 0, [0-9]+, [0-9]+\)
+KLEE: WARNING ONCE: calling __user_main with extra arguments.
+KLEE: WARNING ONCE: calling external: __xstat64\(1, [0-9]+, [0-9]+\)
+hello!goodbye!
+
+
+KLEE: done: total instructions = 7[0-9]+
+KLEE: done: completed paths = 2
+KLEE: done: generated tests = 2

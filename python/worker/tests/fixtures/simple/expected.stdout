@@ -1,0 +1,8 @@
+KLEE: output directory is "/code/klee-out-0"
+KLEE: WARNING: undefined reference to function: puts
+KLEE: WARNING ONCE: calling external: puts(.*?)
+Hello world
+
+KLEE: done: total instructions = 9
+KLEE: done: completed paths = 1
+KLEE: done: generated tests = 1

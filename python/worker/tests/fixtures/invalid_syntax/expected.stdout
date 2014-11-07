@@ -1,0 +1,5 @@
+/code/result\.c:4:9: warning: missing terminating " character\s
+/code/result\.c: In function 'main':\s
+/code/result\.c:4: error: missing terminating " character\s
+/code/result\.c:5: error: expected expression before 'return'\s
+/code/result\.c:6: error: expected ';' before '}' token\s
