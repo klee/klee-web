@@ -1,6 +1,5 @@
 import json
 import re
-import shutil
 import shlex
 import subprocess
 import tempfile
@@ -9,6 +8,8 @@ import os
 import requests
 from boto.s3.connection import S3Connection
 from boto.s3.key import Key
+
+from exception import KleeRunFailure
 
 
 MAILGUN_URL = "sandboxf39013a9ad7c47f3b621a94023230030.mailgun.org"
@@ -36,9 +37,7 @@ class WorkerRunner():
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        subprocess.check_call(["sudo", "chown", "-R",
-                               "worker:worker", self.tempdir])
-        shutil.rmtree(self.tempdir)
+        subprocess.check_call(["sudo", "rm", "-rf", self.tempdir])
 
     @property
     def docker_command(self):
@@ -65,22 +64,40 @@ class WorkerRunner():
         url = k.generate_url(expires_in=0, query_auth=False)
         return url
 
-    @notify_on_entry("Analysing with KLEE")
-    def run_klee(self, klee_args):
+    def run_with_docker(self, command):
+        try:
+            return subprocess.check_output(self.docker_command + command)
+        except subprocess.CalledProcessError as ex:
+            raise KleeRunFailure(ex.output)
+
+    @staticmethod
+    def create_klee_command(klee_args):
+        split_args = shlex.split(klee_args)
+        klee_command = ["klee"]
+        if split_args:
+            klee_command += ['--posix-runtime', '-libc=uclibc']
+
+        return klee_command + ["/code/result.o"] + split_args
+
+    def run_llvm(self):
         llvm_command = ['/src/llvm-gcc4.2-2.9-x86_64-linux/bin/llvm-gcc',
                         '-I', '/src/klee/include', '--emit-llvm', '-c', '-g',
                         '/code/result.c',
                         '-o', '/code/result.o']
+        self.run_with_docker(llvm_command)
 
-        split_args = shlex.split(klee_args)
-        klee_command = ["klee"]
-        if split_args:
-            klee_command += ['--posix-runtime']
-        klee_command += ["/code/result.o"] + shlex.split(klee_args)
+    @notify_on_entry("Analysing with KLEE")
+    def run_klee(self, code, klee_args):
+        # Write code out to temporary directory
+        temp_code_file = os.path.join(self.tempdir, "result.c")
+        with open(temp_code_file, 'a+') as f:
+            f.write(code)
 
-        subprocess.check_output(self.docker_command + llvm_command)
-        klee_output = subprocess.check_output(
-            self.docker_command + klee_command)
+        # Compile code with LLVM-GCC
+        self.run_llvm()
+
+        # Analyse code with KLEE
+        klee_output = self.run_with_docker(self.create_klee_command(klee_args))
 
         # Remove ANSI escape sequences from output
         return ANSI_ESCAPE_PATTERN.sub('', klee_output)
@@ -96,38 +113,33 @@ class WorkerRunner():
                   "text": "Your Klee submission output can be "
                           "accessed here: {}".format(output_url)})
 
-    def send_notification(self, type, data):
+    def send_notification(self, notification_type, data):
         if self.callback_endpoint:
             payload = {
                 'channel': self.task_id,
-                'type': type,
+                'type': notification_type,
                 'data': json.dumps(data)
             }
-            print(self.callback_endpoint, payload)
             requests.post(self.callback_endpoint, payload)
 
     @notify_on_entry("Starting Job")
     def run(self, code, email, klee_args):
         try:
-            with open(os.path.join(self.tempdir, "result.c"), 'a+') as f:
-                f.write(code)
-                f.flush()
+            klee_output = self.run_klee(code, klee_args)
 
-                klee_output = self.run_klee(klee_args)
+            file_name = 'klee-output-{}.tar.gz'.format(self.task_id)
+            self.compress_output(os.path.join(self.tempdir, file_name))
 
-                file_name = 'klee-output-{}.tar.gz'.format(self.task_id)
-                self.compress_output(os.path.join(self.tempdir, file_name))
+            output_upload_url = self.upload_result(file_name)
+            if email:
+                self.send_email(email, output_upload_url)
 
-                output_upload_url = self.upload_result(file_name)
-                if email:
-                    self.send_email(email, output_upload_url)
+            self.send_notification('job_complete', {
+                'result': {
+                    'output': klee_output.strip(),
+                    'url': output_upload_url
+                }
+            })
 
-                self.send_notification('job_complete', {
-                    'result': {
-                        'output': klee_output.strip(),
-                        'url': output_upload_url
-                    }
-                })
-
-        except subprocess.CalledProcessError as ex:
-            self.send_notification('job_failed', {'output': ex.output})
+        except KleeRunFailure as ex:
+            self.send_notification('job_failed', {'output': ex.message})
