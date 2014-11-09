@@ -29,7 +29,7 @@ test:
     - ansible-playbook -i localhost, --syntax-check --vault-password-file=/home/ubuntu/.vault_password provisioning/vagrant.yml
     - ansible-playbook -i localhost, --connection=local --vault-password-file=/home/ubuntu/.vault_password -e ci=yes provisioning/vagrant.yml
     - sleep 10; http --check-status http://localhost/ > /dev/null
-    - (source /src/worker/env/bin/activate && cd /titb/python/ && python -m unittest discover -s worker/tests/ -p 'test_*.py')
+    - (source /src/worker/env/bin/activate && cd /titb/python/ && /src/python_runner.sh python -m unittest discover -s worker/tests/ -p 'test_*.py')
 
 deployment:
   staging:
