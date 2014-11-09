@@ -9,6 +9,9 @@ from worker.worker import submit_code
 from realtime import notify
 
 import json
+from worker.worker_config import WorkerConfig
+
+worker_config = WorkerConfig()
 
 
 def index(request):
@@ -28,11 +31,12 @@ def submit_job(request):
     if uploaded_file:
         code = uploaded_file.read()
 
-    task = submit_code.delay(
-        code,
-        email,
-        args,
-        request.build_absolute_uri(reverse('jobs_notify'))
+    task = submit_code.apply_async(
+        [code,
+         email,
+         args,
+         request.build_absolute_uri(reverse('jobs_notify'))],
+        soft_time_limit=worker_config.timeout
     )
 
     return HttpResponse(json.dumps({'task_id': task.task_id}))

@@ -8,10 +8,11 @@ from celery.worker.control import Panel
 from celery.exceptions import SoftTimeLimitExceeded
 
 from runner import WorkerRunner
-
-JOB_TIME_LIMIT = 30
+from worker_config import WorkerConfig
 
 celery = Celery(broker=os.environ["CELERY_BROKER_URL"], backend="rpc")
+
+worker_config = WorkerConfig()
 
 
 @Panel.register
@@ -34,7 +35,7 @@ def get_uptime_stats(state):
     }
 
 
-@celery.task(name='submit_code', bind=True, soft_time_limit=JOB_TIME_LIMIT)
+@celery.task(name='submit_code', bind=True)
 def submit_code(self, code, email, klee_args, endpoint):
     with WorkerRunner(self.request.id, endpoint) as runner:
         try:
@@ -44,6 +45,6 @@ def submit_code(self, code, email, klee_args, endpoint):
                 'job_failed',
                 {
                     'output': "Job exceeded time limit of "
-                              "{} seconds".format(JOB_TIME_LIMIT)
+                              "{} seconds".format(worker_config.timeout)
                 }
             )

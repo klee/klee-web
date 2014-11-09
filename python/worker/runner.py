@@ -10,10 +10,12 @@ from boto.s3.connection import S3Connection
 from boto.s3.key import Key
 
 from exception import KleeRunFailure
+from worker_config import WorkerConfig
 
 
 MAILGUN_URL = "sandboxf39013a9ad7c47f3b621a94023230030.mailgun.org"
 ANSI_ESCAPE_PATTERN = re.compile(r'\x1b[^m]*m')
+worker_config = WorkerConfig()
 
 
 def notify_on_entry(msg):
@@ -42,6 +44,9 @@ class WorkerRunner():
     @property
     def docker_command(self):
         return ['sudo', 'docker', 'run', '-t',
+                '-c={}'.format(worker_config.cpu_share),
+                '-m={0}{1}'.format(worker_config.memory_limit,
+                                   WorkerConfig.MEMORY_UNIT),
                 '-v', '{}:/code'.format(self.tempdir),
                 '--net="none"', 'kleeweb/klee']
 
