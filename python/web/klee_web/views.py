@@ -43,20 +43,26 @@ def submit_job(request):
     Task.objects.create(task_id=task.task_id,
                         email_address=email,
                         ip_address=get_client_ip(request),
-                        created_at=datetime.datetime.utcnow())
+                        created_at=datetime.datetime.now())
 
     return HttpResponse(json.dumps({'task_id': task.task_id}))
 
 
 @csrf_exempt
+@require_POST
 def jobs_notify(request):
-    if request.method == "POST":
-        notify(
-            request.POST.get('channel'),
-            request.POST.get('type'),
-            request.POST.get('data')
-        )
-        return HttpResponse('Ok!')
+    type = request.POST.get('type')
+    channel = request.POST.get('channel')
+    notify(
+        channel,
+        type,
+        request.POST.get('data')
+    )
+    if type == 'job_complete' or type == 'job_failed':
+        task = Task.objects.get(task_id=request.POST.get('channel'))
+        task.completed_at = datetime.datetime.now()
+        task.save()
+    return HttpResponse('Ok!')
 
 
 def get_client_ip(request):

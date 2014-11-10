@@ -1,12 +1,13 @@
 from django.contrib import messages
 from django.core.urlresolvers import reverse
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, Http404
 from django.shortcuts import render
 from decorators import group_required
 from forms import AdminConfigForm
 from worker.worker import celery
 from worker.worker_config import WorkerConfig
 from klee_web.models import Task
+import json
 import celery_stats
 import datetime
 
@@ -66,25 +67,56 @@ def worker_list(request):
 @group_required("admin")
 def task_list(request, type):
     if type == 'active':
+        curr_page = 'active'
         tasks = celery_stats.active_tasks()
-    elif type == 'scheduled':
-        tasks = celery_stats.scheduled_tasks()
-    elif type == 'reserved':
-        tasks = celery_stats.reserved_tasks()
+        if not tasks:
+            raise Http404
+        all_tasks = get_tasks(tasks)
+    elif type == 'waiting':
+        curr_page = 'waiting'
+        redis_tasks = celery_stats.redis_queue()
+        reserved_tasks = celery_stats.reserved_tasks()
+        if not redis_tasks and not reserved_tasks:
+            raise Http404
+        all_tasks = get_tasks(reserved_tasks)
+        for w in redis_tasks:
+            w = json.loads(w)
+            task = {'mach': 'Pending', 'id': w['properties']['correlation_id']}
+            get_extra_attrs(task)
+            all_tasks.append(task)
+    elif type == 'done':
+        curr_page = 'done'
+        tasks = Task.objects.filter(completed_at__isnull=False).values()
+        all_tasks = []
+        for task in tasks:
+            time = task['completed_at'] - task['created_at']
+            running_time = divmod(time.days * 86400 + time.seconds, 60)
+            task['running_time'] = running_time
+            task['mach'] = 'Not applicable'
+            all_tasks.append(task)
     else:
-        tasks = celery_stats.active_tasks()
+        raise Http404
 
-    if tasks:
-        for mach in tasks:
-            for task in tasks[mach]:
-                db_task = Task.objects.filter(task_id=task['id']).first()
+    attrs = {'tasks': all_tasks, 'page': curr_page}
+    return render(request, "klee_admin/task_list.html", attrs)
 
-                if db_task:
-                    task['ip_address'] = db_task.ip_address
-                    task['submit_time'] = db_task.created_at
 
-                    time = datetime.datetime.utcnow() - db_task.created_at
-                    running_time = divmod(time.days * 86400 + time.seconds, 60)
-                    task['running_time'] = running_time
+def get_tasks(tasks):
+    all_tasks = []
+    for mach in tasks:
+        for task in tasks[mach]:
+            task['mach'] = mach
+            get_extra_attrs(task)
+            all_tasks.append(task)
+    return all_tasks
 
-    return render(request, "klee_admin/task_list.html", {'tasks': tasks})
+
+def get_extra_attrs(task):
+    db_task = Task.objects.filter(task_id=task['id']).first()
+    if db_task:
+        task['ip_address'] = db_task.ip_address
+        task['created_at'] = db_task.created_at
+
+        time = datetime.datetime.now() - db_task.created_at
+        running_time = divmod(time.days * 86400 + time.seconds, 60)
+        task['running_time'] = running_time
