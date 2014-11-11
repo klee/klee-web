@@ -1,7 +1,7 @@
 import os
 import pusher
 
-pusher = pusher.Pusher(
+p = pusher.Pusher(
     app_id='94725',
     key=os.environ['PUSHER_KEY'],
     secret=os.environ['PUSHER_SECRET']
@@ -9,4 +9,7 @@ pusher = pusher.Pusher(
 
 
 def notify(channel, notification_type, data):
-    pusher[channel].trigger(notification_type, {'data': data})
+    try:
+        p[channel].trigger(notification_type, {'data': data})
+    except Exception as e:
+        print e
