@@ -6,6 +6,7 @@ from decorators import group_required
 from forms import AdminConfigForm
 from worker.worker import celery
 from worker.worker_config import WorkerConfig
+import klee_tasks
 
 HUMAN_READABLE_FIELD_NAMES = {
     "timeout": "Timeout",
@@ -58,3 +59,15 @@ def worker_list(request):
             "uptime_stats": uptime_stats
         }
     )
+
+
+@group_required("admin")
+def task_list(request, type='active'):
+    task_map = {
+        'active': klee_tasks.active_tasks(),
+        'waiting': klee_tasks.all_waiting_tasks(),
+        'done': klee_tasks.done_tasks()
+    }
+
+    attrs = {'tasks': task_map[type], 'page': type}
+    return render(request, "klee_admin/task_list.html", attrs)
