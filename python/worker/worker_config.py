@@ -20,7 +20,7 @@ class WorkerConfig():
 
     @property
     def timeout(self):
-        return self.get_config("timeout", default=0)
+        return self.get_config("timeout", default=30)
 
     def get_config(self, key, default=None):
         value = self.r.get("{}:{}".format(WorkerConfig.NAMESPACE, key))
