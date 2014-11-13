@@ -55,8 +55,6 @@ class WorkerRunner():
     def docker_command(self):
         return ['sudo', 'docker', 'run', '-t',
                 '-c={}'.format(worker_config.cpu_share),
-                '-m={0}{1}'.format(worker_config.memory_limit,
-                                   WorkerConfig.MEMORY_UNIT),
                 '-v', '{}:/code'.format(self.tempdir),
                 '--net="none"', 'kleeweb/klee']
 
