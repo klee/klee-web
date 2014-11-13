@@ -13,13 +13,13 @@
   <div ng-controller="MainCtrl">
 
         <div class="col-md-4">
-          <div class="panel panel-default">
+          <div class="panel panel-default" id="main-panel">
             <div class="panel-heading">Progress</div>
             <div class="panel-body">
               <p class="label label-success" ng-repeat="step in progress" style="display: block; padding-top: 8px; padding-bottom: 8px;" ng-cloak>[[ step ]]</p>
             </div>
           </div>
-          <div class="panel panel-default" ng-if="result | isNotEmpty" ng-cloak>
+          <div class="panel panel-default" id="result-panel" ng-if="result | isNotEmpty" ng-cloak>
             <div class="panel-heading">Result</div>
             <div class="panel-body">
               <span ng-if="result.url | isNotEmpty">
@@ -28,7 +28,7 @@
               </span>
               <br />
               <p><strong>Output</strong>:</p>
-              <pre>[[ result.output ]]</pre>
+              <pre id="result-output">[[ result.output ]]</pre>
             </div>
           </div>
         </div>
@@ -49,7 +49,7 @@
                         <div class="form-group">
                             <label for="{{ form.code.id_for_label }}">Code:</label>
 
-                            <ui-codemirror ng-model="submission.code" ui-codemirror-opts="editorOptions"></ui-codemirror>
+                            <ui-codemirror id="codemirror" ng-model="submission.code" ui-codemirror-opts="editorOptions"></ui-codemirror>
 
                             {{ form.code.errors }}
                         </div>
