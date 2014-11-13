@@ -25,7 +25,7 @@ test:
   pre:
     - echo $VAULT_PASSWORD > /home/ubuntu/.vault_password
   override:
-    - flake8 --max-complexity 12 .
+    - flake8 --max-complexity 12 --exclude=*/migrations/* .
     - ansible-playbook -i localhost, --syntax-check --vault-password-file=/home/ubuntu/.vault_password provisioning/vagrant.yml
     - ansible-playbook -i localhost, --connection=local --vault-password-file=/home/ubuntu/.vault_password -e ci=yes provisioning/vagrant.yml
     - sleep 10; http --check-status http://localhost/ > /dev/null
