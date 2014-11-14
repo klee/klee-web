@@ -3,7 +3,6 @@ import os
 import string
 
 sys.path.append(os.path.abspath("../python/"))
-print sys.path
 from worker.runner import WorkerRunner
 
 with WorkerRunner('test') as runner:

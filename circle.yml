@@ -12,8 +12,6 @@ dependencies:
     - sudo apt-get install aptitude -y
     - sudo ln -s /home/ubuntu/klee-web/ /titb
     - sudo pip install ansible
-    - sudo pip install flake8
-    - sudo pip install httpie
   cache_directories:
     - "~/docker"
   override:
@@ -24,13 +22,10 @@ dependencies:
 test:
   pre:
     - echo $VAULT_PASSWORD > /home/ubuntu/.vault_password
-  override:
-    - flake8 --max-complexity 12 --exclude=*/migrations/* .
     - ansible-playbook -i localhost, --syntax-check --vault-password-file=/home/ubuntu/.vault_password provisioning/vagrant.yml
     - ansible-playbook -i localhost, --connection=local --vault-password-file=/home/ubuntu/.vault_password -e ci=yes provisioning/vagrant.yml
-    - sleep 10; http --check-status http://localhost/ > /dev/null
-    - (source /src/worker/env/bin/activate && cd /titb/python/ && /src/python_runner.sh python -m unittest discover -s worker/tests/ -p 'test_*.py')
-    - mocha /titb/webdriver/test/webdriver.js
+  override:
+    - ./run_tests.sh
 
 deployment:
   staging:

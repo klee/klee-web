@@ -1,0 +1,11 @@
+{
+  "name": "E2E-Tests",
+  "description": "End-To-End tests for KLEE Web",
+  "version": "0.0.1",
+  "dependencies": {
+    "nightmare": "1.6.5",
+    "mocha": "2.0.1",
+    "phantomjs": "1.9.12",
+    "should": "4.3.0"
+  }
+}

@@ -5,3 +5,5 @@ web/**/target
 Report/*
 .DS_Store
 python/web/static/*
+**/node_modules/*
+npm-debug.log
