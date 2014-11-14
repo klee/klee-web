@@ -20,13 +20,13 @@ it('test all', function(done1) {
               path.join(outputDir, path.basename(fileName, '.c') + ".txt"),
               'utf8',
               function (err, expected) {
-                var n = new nightmare();
+                var n = new nightmare({timeout: 15000});
                 n.goto("http://localhost")
                   // Type in the code we want to pass to KLEE
                   .evaluate(updateCode, function(res){}, input)
                   .click('input[type=submit]')
                   // Wait till result-panel comes up
-                  .wait("#result-panel")
+                  .wait("#result-output")
                   // Retrieve the result and check if the expected result matches
                   .evaluate(getResult, function(actual) {
                       actual.should.match(expected)
@@ -53,12 +53,6 @@ function updateCode(newCode) {
   scope.submission.code = newCode;
   scope.$apply();
   return true;
-}
-
-function resultHasArrived() {
-  var panel = $("#main-panel").get(0);
-  var scope = angular.element(panel).scope();
-  return !jQuery.isEmptyObject(scope.result)
 }
 
 function getResult() {

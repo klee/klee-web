@@ -1,23 +1,37 @@
 ---
 
+- pip: name=flake8
+
+- pip: name=httpie
+
 - name: "Add chris-lea/node.js"
   apt_repository: repo='ppa:chris-lea/node.js'
+  when: not ci
+  tags: nodejs
 
 - name: "Install node.js"
   apt: name=nodejs update_cache=yes
+  when: not ci
+  tags: nodejs
+
+- name: "NPM Path"
+  command: npm config set prefix ~/npm
+  when: not ci
+  sudo: no
+  tags: nodejs
+
+- name: Source add NPM directory to path
+  sudo: no
+  lineinfile: >
+    dest=~/.profile
+    line="export PATH="$PATH:$HOME/npm/bin""
+  when: not ci
+  tags: nodejs
 
 - name: "Install phantomjs"
   sudo: no
   npm: name=phantomjs global=yes
 
-- name: "Install nightmare"
+- name: "Install E2E test dependencies"
+  npm: path={{ src_dir }}/webdriver/test
   sudo: no
-  npm: name=nightmare global=yes
-
-- name: "Install should"
-  sudo: no
-  npm: name=should global=yes
-
-- name: "Install mocha"
-  sudo: no
-  npm: name=mocha global=yes
