@@ -32,6 +32,10 @@
   sudo: no
   npm: name=phantomjs global=yes
 
+- name: "Install mocha"
+  sudo: no
+  npm: name=mocha global=yes
+
 - name: "Install E2E test dependencies"
   npm: path={{ src_dir }}/webdriver/test
   sudo: no
