@@ -30,6 +30,12 @@ In order to invoke KLEE (from within the virtual machine):
     sudo docker run -t -v PATH_TO_SOURCE_DIR:/code kleeweb/klee llvm-gcc -I /src/klee/include --emit-llvm -c -g /code/FILE.c -o /code/FILE.o
     sudo docker run -t -v PATH_TO_SOURCE_DIR:/code kleeweb/klee klee FILE.o
 
+
+In order to see any server side changes (from within the virtual machine):
+
+    sudo supervisorctl reload
+    
+
 Running tests!
 ===========================
 Before submitting a pull request it's a good idea to run our test suite locally with the following command
