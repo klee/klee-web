@@ -6,6 +6,7 @@ from decorators import group_required
 from forms import AdminConfigForm
 from worker.worker import celery
 from worker.worker_config import WorkerConfig
+
 import klee_tasks
 
 HUMAN_READABLE_FIELD_NAMES = {
@@ -62,10 +63,17 @@ def worker_list(request):
 
 
 @group_required("admin")
+def kill_task(request):
+    klee_tasks.kill_task(request.POST['task_id'])
+    return HttpResponseRedirect(
+        reverse('klee_admin:task_list', args=(request.POST['type'],)))
+
+
+@group_required("admin")
 def task_list(request, type='active'):
     task_map = {
         'active': klee_tasks.active_tasks(),
-        'waiting': klee_tasks.all_waiting_tasks(),
+        'waiting': klee_tasks.waiting_tasks(),
         'done': klee_tasks.done_tasks()
     }
 

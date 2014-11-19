@@ -15,24 +15,38 @@
             href="{% url 'klee_admin:task_list' 'done' %}">Done</a></li>
 </ul>
 <table class="table table-hover">
-    <thead>
-    <tr>
-        <th>Task ID</th>
-        <th>IP Address</th>
-        <th>Worker</th>
-        <th>Submit time</th>
-        <th>Running time</th>
-    </tr>
-    </thead>
-    <tbody>
+<thead>
+<tr>
+    <th>Task ID</th>
+    <th>IP Address</th>
+    <th>Worker</th>
+    <th>Submit time</th>
+    <th>Running time</th>
+    {% if page == 'active' or page == 'waiting' %}
+        <th>Terminate</th>
+    {% endif %}
+</tr>
+</thead>
+<tbody>
     {% for task in tasks %}
-    <tr>
-        <td> {{ task.id }}</td>
-        <td> {{ task.ip_address }}</td>
-        <td> {{ task.mach }}</td>
-        <td> {{ task.created_at }}</td>
-        <td> {{ task.running_time.0 }} minutes, {{ task.running_time.1 }} seconds</td>
-    </tr>
+        <tr>
+            <td>{{ task.id }}</td>
+            <td>{{ task.ip_address }}</td>
+            <td>{{ task.ip_address }}</td>
+            <td>{{ task.mach }}</td>
+            <td>{{ task.created_at }}</td>
+            <td>{{ task.running_time.0 }} minutes, {{ task.running_time.1 }} seconds</td>
+            {% if page == 'active' or page == 'waiting' %}
+                <form role="form" method="post" action="{% url 'klee_admin:kill_task' %}">
+                    {% csrf_token %}
+                    <td>
+                     <input type="hidden" name="type" value="{{page}}">
+                     <input type="hidden" name="task_id" value="{{task.id}}">
+                     <button type="submit" class="btn btn-sm btn-danger" name='kill-btn'>Kill</button>
+                    </td>
+                </form>
+            {% endif %}
+        </tr>
     {% endfor %}
     </tbody>
 </table>

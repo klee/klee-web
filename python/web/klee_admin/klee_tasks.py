@@ -1,3 +1,4 @@
+import itertools
 from worker.worker import celery
 from klee_web.models import Task
 from copy import deepcopy
@@ -11,19 +12,21 @@ import datetime
 # Returns tasks registered to workers.
 def registered_tasks(workers=None):
     i = celery.control.inspect(workers)
-    return i.registered() or {}
+    tasks = i.registered() or {}
+    return remove_killed_tasks(tasks)
 
 
 # Returns currently executing tasks.
 def active_tasks(workers=None):
     i = celery.control.inspect(workers)
     tasks = i.active() or {}
-    return populate_task_data(tasks)
+    return populate_task_data(remove_killed_tasks(tasks))
 
 
 def scheduled_tasks(workers=None):
     i = celery.control.inspect(workers)
-    return i.scheduled() or {}
+    tasks = i.scheduled() or {}
+    return remove_killed_tasks(tasks)
 
 
 def active_queues(workers=None):
@@ -39,7 +42,8 @@ def get_workers():
 # Returns tasks taken off the queue by a worker, waiting to be executed.
 def reserved_tasks(workers=None):
     i = celery.control.inspect(workers)
-    return i.reserved() or {}
+    tasks = i.reserved() or {}
+    return remove_killed_tasks(tasks)
 
 
 # Returns tasks in redis queue, not given to a worker.
@@ -50,9 +54,14 @@ def redis_queue():
 
 
 # Returns tasks in redis queue and reserved by worker.
-def all_waiting_tasks():
+def waiting_tasks():
     return populate_task_data(reserved_tasks()) +\
         map(get_task_from_redis, redis_queue())
+
+
+def revoked_tasks(workers=None):
+    i = celery.control.inspect(workers)
+    return i.revoked()
 
 
 def done_tasks():
@@ -62,13 +71,12 @@ def done_tasks():
 
 def populate_task_data(tasks):
     all_tasks = []
-    for mach in tasks:
-        for t in tasks[mach]:
-            task = {
-                'id': t['id'],
-                'mach': mach
-            }
-            all_tasks.append(get_db_attrs(task))
+    for t in tasks:
+        task = {
+            'id': t['id'],
+            'mach': t['mach']
+        }
+        all_tasks.append(get_db_attrs(task))
     return all_tasks
 
 
@@ -108,3 +116,23 @@ def populate_completed_task(db_task):
     running_time = divmod(time.days * 86400 + time.seconds, 60)
     task['running_time'] = running_time
     return task
+
+
+def kill_task(task_id):
+    Task.objects.filter(task_id=task_id).delete()
+    celery.control.revoke(task_id, terminate=True, signal='SIGKILL')
+
+
+def remove_killed_tasks(tasks, workers=None):
+    revoked = revoked_tasks(workers).values()
+    set_revoked = set(itertools.chain.from_iterable(revoked))
+
+    def is_revoked(task):
+        return not task['id'] in set_revoked
+
+    for mach, ts in tasks.items():
+        for t in ts:
+            t['mach'] = mach
+
+    all_tasks = [filter(is_revoked, v) for (k, v) in tasks.items()]
+    return itertools.chain.from_iterable(all_tasks)
