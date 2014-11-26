@@ -130,21 +130,21 @@ class WorkerRunner():
             }
             requests.post(self.callback_endpoint, payload)
 
-    @notify_on_entry("Checking for failing tests")
-    def get_failing_tests(self):
+    def get_failed_tests(self):
         klee_out_path = os.path.join(self.tempdir, 'klee-out-0')
-        return failing_tests.failing(self.tempdir, klee_out_path)
+        return failing_tests.get_failed_tests(self.tempdir, klee_out_path)
 
     @notify_on_entry("Starting Job")
     def run(self, code, email, klee_args):
         try:
             klee_output = self.run_klee(code, klee_args)
+            failed_tests = self.get_failed_tests()
+
 
             file_name = 'klee-output-{}.tar.gz'.format(self.task_id)
             compressed_output_path = os.path.join(self.tempdir, file_name)
             self.compress_output(compressed_output_path)
             output_upload_url = self.upload_result(compressed_output_path)
-            failing = self.get_failing_tests()
 
             if email:
                 self.send_email(email, output_upload_url)
@@ -153,7 +153,7 @@ class WorkerRunner():
                 'result': {
                     'output': klee_output.strip(),
                     'url': output_upload_url,
-                    'failing': failing
+                    'failing': failed_tests
                 }
             })
 

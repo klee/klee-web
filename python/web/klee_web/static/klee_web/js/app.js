@@ -27,7 +27,7 @@ app.controller('MainCtrl',
 
         $scope.views = {
             main: true,
-            failing: false
+            results: false
         };
 
         $scope.switchTab = function(tab) {
@@ -35,7 +35,7 @@ app.controller('MainCtrl',
                 $scope.views[view] = false;
             }
             $scope.views[tab] = true;
-        }
+        };
 
         $scope.submission = {
             code: '#include <stdio.h>\nint main()\n{\n\tprintf("Hello world\\n");\n\treturn 0;\n}'
@@ -80,6 +80,7 @@ app.controller('MainCtrl',
 
                         channel.bind('job_complete', function (response) {
                             data = angular.fromJson(response.data);
+                            $scope.progress.push('Done!');
                             $scope.result = data.result;
                         });
 

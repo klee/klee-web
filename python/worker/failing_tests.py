@@ -4,7 +4,7 @@ import linecache
 
 
 # Returns a list containing information about failing tests.
-def failing(base_dir, results_dir):
+def get_failed_tests(base_dir, results_dir):
     failing_tests = [f for f in os.listdir(results_dir) if f.endswith('.err')]
     return [get_info(base_dir, results_dir, f) for f in failing_tests]
 
@@ -35,4 +35,4 @@ def get_line_no(line):
 
 def get_line(line_no, base_dir):
     file_path = os.path.join(base_dir, 'result.c')
-    return linecache.getline(file_path, line_no)
+    return linecache.getline(file_path, line_no).strip()

@@ -8,110 +8,129 @@
 {% endblock %}
 
 {% block content %}
-<div ng-app="app">
+    <div ng-app="app">
 
-  <div ng-controller="MainCtrl">
+        <div ng-controller="MainCtrl">
 
-        <div class="col-md-4">
-          <div class="panel panel-default" id="main-panel">
-            <div class="panel-heading">Progress</div>
-            <div class="panel-body">
-              <p class="label label-success" ng-repeat="step in progress" style="display: block; padding-top: 8px; padding-bottom: 8px;" ng-cloak>[[ step ]]</p>
-            </div>
-          </div>
-          <div class="panel panel-default" id="result-panel" ng-if="result | isNotEmpty" ng-cloak>
-            <div class="panel-heading">Result</div>
-            <div class="panel-body">
-              <span ng-if="result.url | isNotEmpty">
-                <p>You can pick up your analysed output here:</p>
-                <p><a ng-href="[[ result.url ]]">[[ result.url ]]</a></p>
-              </span>
-              <br/>
-              <p><strong>Output</strong>:</p>
-              <pre id="result-output">[[ result.output ]]</pre>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-md-8">
-            <ul class="nav nav-tabs">
-                <li role="presentation" ng-class="{'active': views.main}">
-                    <a ng-click="switchTab('main')">Submit a KLEE Job</a>
-                </li>
-                <li role="presentation" ng-show="result.failing | isNotEmpty " ng-class="{'active': views.failing}">
-                    <a ng-click="switchTab('failing')">View failing tests</a>
-                </li>
-            </ul>
-            <div class="panel-body" ng-show="views.main">
-                {% for error in form.non_field_errors %}
-                    <div class="alert alert-danger" role="alert">
-                        {{ error }}
+            <div class="col-md-4">
+                <div class="panel panel-default" id="main-panel">
+                    <div class="panel-heading">Progress</div>
+                    <div class="panel-body">
+                        <p class="label label-success"
+                           ng-repeat="step in progress"
+                           style="display: block; padding-top: 8px; padding-bottom: 8px;"
+                           ng-cloak>[[ step ]]</p>
                     </div>
-                {% endfor %}
-                <form ng-submit="processForm(submission)" enctype="multipart/form-data"
-                      class="{% if messages %} has-error {% endif %}" ng-cloak>
-                    {% csrf_token %}
-
-                    <div class="form-group">
-                        <label for="{{ form.code.id_for_label }}">Code:</label>
-
-                        <ui-codemirror id="codemirror" ng-model="submission.code" ui-codemirror-opts="editorOptions"></ui-codemirror>
-
-                        {{ form.code.errors }}
-                    </div>
-
-                    <div class="row">
-                      <div class="form-group col-sm-6">
-                          <label for="{{ form.file.id_for_label }}">File upload
-                              (optional):</label>
-                          <input name="{{ form.file.name }}"
-                                ng-model="submission.file"
-                                id="{{ form.file.id_for_label }}"
-                                class="form-control" type="file">
-                          {{ form.file.errors }}
-
-                      </div>
-
-                      <div class="form-group col-sm-6">
-                          <label for="{{ form.args.id_for_label }}">Program arguments
-                              (Optional)</label>
-                          <input type="text" class="form-control"
-                                 id="{{ form.args.id_for_label }}"
-                                 name="{{ form.args.name }}"
-                                 ng-model="submission.args"
-                                 placeholder="Enter any extra arguments to pass to KLEE.">
-                          {{ form.args.errors }}
-                      </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="{{ form.email.id_for_label }}">Email (Optional)
-                            address</label>
-                        <input type="email" class="form-control"
-                               id="{{ form.email.id_for_label }}"
-                               name="{{ form.email.name }}"
-                               ng-model="submission.email"
-                               placeholder="Enter email">
-                        {{ form.email.errors }}
-                    </div>
-
-                    <input type="submit" value="Submit Job"
-                           class="btn btn-primary"/>
-                </form>
-            </div>
-
-            <div class="panel-body" ng-show="views.failing">
-                <h3>Invalid Tests</h3>
-                <div ng-repeat="fail in result.failing">
-                    <h5>[[ fail.reason ]]</h5>
-                    <code>Line [[ fail.line_no ]]: [[ fail.line ]]</code>
                 </div>
             </div>
+
+            <div class="col-md-8">
+                <ul class="nav nav-tabs">
+                    <li role="presentation" ng-class="{'active': views.main}">
+                        <a ng-click="switchTab('main')">Submit a KLEE Job</a>
+                    </li>
+                    <li role="presentation" ng-show="result | isNotEmpty "
+                        ng-class="{'active': views.results}">
+                        <a ng-click="switchTab('results')">View run results</a>
+                    </li>
+                </ul>
+                <div class="panel-body" ng-show="views.main">
+                    {% for error in form.non_field_errors %}
+                        <div class="alert alert-danger" role="alert">
+                            {{ error }}
+                        </div>
+                    {% endfor %}
+                    <form ng-submit="processForm(submission)"
+                          enctype="multipart/form-data"
+                          class="{% if messages %} has-error {% endif %}"
+                          ng-cloak>
+                        {% csrf_token %}
+
+                        <div class="form-group">
+                            <label for="{{ form.code.id_for_label }}">Code:</label>
+
+                            <ui-codemirror id="codemirror"
+                                           ng-model="submission.code"
+                                           ui-codemirror-opts="editorOptions"></ui-codemirror>
+
+                            {{ form.code.errors }}
+                        </div>
+
+                        <div class="row">
+                            <div class="form-group col-sm-6">
+                                <label for="{{ form.file.id_for_label }}">File
+                                    upload
+                                    (optional):</label>
+                                <input name="{{ form.file.name }}"
+                                       ng-model="submission.file"
+                                       id="{{ form.file.id_for_label }}"
+                                       class="form-control" type="file">
+                                {{ form.file.errors }}
+
+                            </div>
+
+                            <div class="form-group col-sm-6">
+                                <label for="{{ form.args.id_for_label }}">Program
+                                    arguments
+                                    (Optional)</label>
+                                <input type="text" class="form-control"
+                                       id="{{ form.args.id_for_label }}"
+                                       name="{{ form.args.name }}"
+                                       ng-model="submission.args"
+                                       placeholder="Enter any extra arguments to pass to KLEE.">
+                                {{ form.args.errors }}
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="{{ form.email.id_for_label }}">Email
+                                (Optional)
+                                address</label>
+                            <input type="email" class="form-control"
+                                   id="{{ form.email.id_for_label }}"
+                                   name="{{ form.email.name }}"
+                                   ng-model="submission.email"
+                                   placeholder="Enter email">
+                            {{ form.email.errors }}
+                        </div>
+
+                        <input type="submit" value="Submit Job"
+                               class="btn btn-primary"/>
+                    </form>
+                </div>
+
+                <div class="panel-body" ng-show="views.results" ng-cloak>
+                    <h3>Run Results</h3>
+
+                    <div ng-if="result.url | isNotEmpty">
+                        <p>You can pick up your analysed output here:</p>
+
+                        <p><a ng-href="[[ result.url ]]">[[ result.url ]]</a>
+                        </p>
+                    </div>
+
+                    <pre id="result-output">[[ result.output ]]</pre>
+
+
+                    <div ng-if="result.failing | isNotEmpty">
+                        <h3>Failing tests</h3>
+
+                        <div class="panel panel-danger" ng-repeat="fail in result.failing">
+                            <div class="panel-heading">
+                                <h3 class="panel-title">[[ fail.reason ]]</h3>
+                            </div>
+                            <div class="panel-body">
+                                <strong>Line [[ fail.line_no ]]:</strong>
+                                <pre>[[  fail.line ]]</pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </div>
 
-  </div>
-
-</div>
+    </div>
 
 {% endblock %}
 
@@ -127,7 +146,7 @@
     <script src="//cdnjs.cloudflare.com/ajax/libs/codemirror/4.6.0/mode/clike/clike.min.js"></script>
 
     <script type="text/javascript">
-      window.pclient = new Pusher('19744474b2493510f861');
+        window.pclient = new Pusher('19744474b2493510f861');
     </script>
     <script src="/static/klee_web/js/app.js"></script>
 {% endblock %}
