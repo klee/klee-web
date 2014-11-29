@@ -23,7 +23,7 @@ class TestWorkerRunner(unittest.TestCase):
         with open(os.path.join(test_fixtures, 'input.c')) as f:
             code = f.read()
 
-        with open(os.path.join(test_fixtures, 'expected.stdout')) as f:
+        with open(os.path.join(test_fixtures, 'expected.stdout'), 'U') as f:
             expected_out = f.read()
 
         expected_regex = re.compile("{}$".format(expected_out), re.M)
@@ -31,8 +31,7 @@ class TestWorkerRunner(unittest.TestCase):
             self.assertRaisesRegexp(KleeRunFailure, expected_regex,
                                     self.runner.run_klee, code, args)
         else:
-            # Standardise the newlines between STDOUT and reading the File
-            stdout = self.runner.run_klee(code, args).replace('\r\n', '\n')
+            stdout = self.runner.run_klee(code, args)
             self.assertRegexpMatches(stdout, expected_regex)
 
     def test_simple_run(self):

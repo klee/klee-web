@@ -14,7 +14,16 @@ from storage.s3_storage import S3Storage
 
 
 ANSI_ESCAPE_PATTERN = re.compile(r'\x1b[^m]*m')
+LXC_MESSAGE_PATTERN = re.compile(r'lxc-start: .*')
 worker_config = WorkerConfig()
+
+
+def clean_stdout(s):
+    s = ANSI_ESCAPE_PATTERN.sub('', s)
+
+    # Remove LXC warnings where present (CircleCI)
+    s = LXC_MESSAGE_PATTERN.sub('', s)
+    return s.strip()
 
 
 def notify_on_entry(msg):
@@ -60,9 +69,10 @@ class WorkerRunner():
 
     def run_with_docker(self, command):
         try:
-            return subprocess.check_output(self.docker_command + command)
+            return subprocess.check_output(self.docker_command + command,
+                                           universal_newlines=True)
         except subprocess.CalledProcessError as ex:
-            raise KleeRunFailure(ex.output)
+            raise KleeRunFailure(clean_stdout(ex.output))
 
     @notify_on_entry("Compressing output")
     def compress_output(self, output_tar_filename):
@@ -74,8 +84,8 @@ class WorkerRunner():
         return self.storage.store_file(result_file_path)
 
     def run_llvm(self):
-        llvm_command = ['/src/llvm-gcc4.2-2.9-x86_64-linux/bin/llvm-gcc',
-                        '-I', '/src/klee/include', '--emit-llvm', '-c', '-g',
+        llvm_command = ['/usr/bin/clang-3.4',
+                        '-I', '/src/klee/include', '-emit-llvm', '-c', '-g',
                         '/code/result.c',
                         '-o', '/code/result.o']
         self.run_with_docker(llvm_command)
@@ -94,7 +104,7 @@ class WorkerRunner():
         klee_output = self.run_with_docker(self.create_klee_command(klee_args))
 
         # Remove ANSI escape sequences from output
-        return ANSI_ESCAPE_PATTERN.sub('', klee_output)
+        return clean_stdout(klee_output)
 
     def send_email(self, recipient, output_url):
         email_body = "Your KLEE submission output can be accessed here: {}" \

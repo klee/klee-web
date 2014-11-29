@@ -1,8 +1,8 @@
 KLEE: output directory is "/code/klee-out-0"
-KLEE: WARNING: undefined reference to function: puts
-KLEE: WARNING ONCE: calling external: puts(.*?)
+KLEE: WARNING: undefined reference to function: printf
+KLEE: WARNING ONCE: calling external: printf\([0-9]+\)
 Hello world
 
-KLEE: done: total instructions = 9
+KLEE: done: total instructions = [0-9]
 KLEE: done: completed paths = 1
 KLEE: done: generated tests = 1
