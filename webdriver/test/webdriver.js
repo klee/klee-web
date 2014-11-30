@@ -29,7 +29,7 @@ it('test all', function(done1) {
                   .wait("#result-output")
                   // Retrieve the result and check if the expected result matches
                   .evaluate(getResult, function(actual) {
-                      actual.should.match(expected)
+                      actual.replace(/(?:\r\n|\r|\n)/g, "\n").should.match(expected)
                       counter++;
                       if (counter == tests.length) {
                         // notify that all the assertions happened

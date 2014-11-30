@@ -1,5 +1,5 @@
 KLEE: output directory is "/code/klee-out-0"
 
-KLEE: done: total instructions = 51
+KLEE: done: total instructions = 30
 KLEE: done: completed paths = 3
 KLEE: done: generated tests = 3

@@ -1,5 +1,5 @@
-/code/result\.c:4:9: warning: missing terminating " character\s
-/code/result\.c: In function 'main':\s
-/code/result\.c:4: error: missing terminating " character\s
-/code/result\.c:5: error: expected expression before 'return'\s
-/code/result\.c:6: error: expected ';' before '}' token\s
+/code/result.c:4:9: warning: missing terminating '"' character \[-Winvalid-pp-token\]
+        printf\("Hello world\\n\);
+               \^
+/code/result.c:4:9: error: expected expression
+1 warning and 1 error generated.
