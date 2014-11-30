@@ -62,10 +62,20 @@ class WorkerRunner():
 
     @property
     def docker_command(self):
-        return ['sudo', 'docker', 'run', '-t',
-                '-c={}'.format(worker_config.cpu_share),
-                '-v', '{}:/code'.format(self.tempdir),
-                '--net="none"', 'kleeweb/klee']
+        return ['sudo', 'docker', 'run'] + self.docker_flags + ['kleeweb/klee']
+
+    @property
+    def docker_flags(self):
+        flags = ['-t',
+                 '-c={}'.format(worker_config.cpu_share),
+                 '-v', '{}:/code'.format(self.tempdir),
+                 '--net="none"']
+
+        # We have to disable cleanup on CircleCI (permissions issues)
+        if not os.environ.get("CI"):
+            flags += ['--rm=true']
+
+        return flags
 
     def run_with_docker(self, command):
         try:
