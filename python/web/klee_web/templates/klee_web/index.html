@@ -29,8 +29,8 @@
                     <li role="presentation" ng-class="{'active': views.main}">
                         <a ng-click="switchTab('main')">Submit a KLEE Job</a>
                     </li>
-                    <li role="presentation" ng-show="result | isNotEmpty "
-                        ng-class="{'active': views.results}">
+                    <li role="presentation" ng-if="result | isNotEmpty "
+                        ng-class="{'active': views.results}" id="result-tab" ng-cloak>
                         <a ng-click="switchTab('results')">View run results</a>
                     </li>
                 </ul>
@@ -95,7 +95,7 @@
                         </div>
 
                         <input type="submit" value="Submit Job"
-                               class="btn btn-primary"/>
+                               class="btn btn-primary" id="submit-job"/>
                     </form>
                 </div>
 

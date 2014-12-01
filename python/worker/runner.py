@@ -140,7 +140,6 @@ class WorkerRunner():
             klee_output = self.run_klee(code, klee_args)
             failed_tests = self.get_failed_tests()
 
-
             file_name = 'klee-output-{}.tar.gz'.format(self.task_id)
             compressed_output_path = os.path.join(self.tempdir, file_name)
             self.compress_output(compressed_output_path)
