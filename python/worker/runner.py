@@ -6,12 +6,12 @@ import tempfile
 import os
 
 import requests
+import failing_tests
 
 from exception import KleeRunFailure
 from worker_config import WorkerConfig
 from mailer.mailgun_mailer import MailgunMailer
 from storage.s3_storage import S3Storage
-
 
 ANSI_ESCAPE_PATTERN = re.compile(r'\x1b[^m]*m')
 LXC_MESSAGE_PATTERN = re.compile(r'lxc-start: .*')
@@ -130,10 +130,15 @@ class WorkerRunner():
             }
             requests.post(self.callback_endpoint, payload)
 
+    def get_failed_tests(self):
+        klee_out_path = os.path.join(self.tempdir, 'klee-out-0')
+        return failing_tests.get_failed_tests(self.tempdir, klee_out_path)
+
     @notify_on_entry("Starting Job")
     def run(self, code, email, klee_args):
         try:
             klee_output = self.run_klee(code, klee_args)
+            failed_tests = self.get_failed_tests()
 
             file_name = 'klee-output-{}.tar.gz'.format(self.task_id)
             compressed_output_path = os.path.join(self.tempdir, file_name)
@@ -146,7 +151,8 @@ class WorkerRunner():
             self.send_notification('job_complete', {
                 'result': {
                     'output': klee_output.strip(),
-                    'url': output_upload_url
+                    'url': output_upload_url,
+                    'failing': failed_tests
                 }
             })
 

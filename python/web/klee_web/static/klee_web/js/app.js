@@ -25,6 +25,18 @@ app.controller('MainCtrl',
         var pusher = $pusher(pclient);
         var channel_id = null;
 
+        $scope.views = {
+            main: true,
+            results: false
+        };
+
+        $scope.switchTab = function(tab) {
+            for (var view in $scope.views) {
+                $scope.views[view] = false;
+            }
+            $scope.views[tab] = true;
+        };
+
         $scope.submission = {
             code: '#include <stdio.h>\nint main()\n{\n\tprintf("Hello world\\n");\n\treturn 0;\n}'
         };
@@ -68,6 +80,7 @@ app.controller('MainCtrl',
 
                         channel.bind('job_complete', function (response) {
                             data = angular.fromJson(response.data);
+                            $scope.progress.push('Done!');
                             $scope.result = data.result;
                         });
 
