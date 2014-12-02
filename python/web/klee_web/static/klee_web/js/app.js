@@ -38,8 +38,18 @@ app.controller('MainCtrl',
         };
 
         $scope.submission = {
-            code: '#include <stdio.h>\nint main()\n{\n\tprintf("Hello world\\n");\n\treturn 0;\n}'
+            code: '#include <stdio.h>\nint main()\n{\n\tprintf("Hello world\\n");\n\treturn 0;\n}',
+            args: {
+              numFiles: 0,
+              sizeFiles: 0,
+              minStdinArgs: 0,
+              maxStdinArgs: 0,
+              sizeStdinArgs: 0
+            }
         };
+
+        $scope.inputFiles = false;
+        $scope.stdinArgs = false;
         $scope.progress = [];
         $scope.result = {};
 
@@ -50,6 +60,18 @@ app.controller('MainCtrl',
             mode: 'clike'
         };
 
+        $scope.resetInputFile = function () {
+          $scope.inputFiles = false;
+          $scope.submission.args.numFiles=0;
+          $scope.submission.args.sizeFiles=0;
+        }
+
+        $scope.resetStdin = function () {
+          $scope.stdinArgs = false;
+          $scope.submission.args.minStdinArgs = 0;
+          $scope.submission.args.maxStdinArgs = 0;
+          $scope.submission.args.sizeStdinArgs = 0;
+        }
         $scope.processForm = function (submission) {
             if (channel_id) {
                 pusher.unsubscribe(channel_id);
@@ -104,8 +126,7 @@ app.controller('MainCtrl',
     }
 );
 
-
-app.filter('isNotEmpty', function () {
+var isNotEmpty = function () {
     var bar;
     return function (obj) {
         for (bar in obj) {
@@ -114,5 +135,6 @@ app.filter('isNotEmpty', function () {
             }
         }
         return false;
-    };
-});
+    }
+  };
+app.filter('isNotEmpty', isNotEmpty);

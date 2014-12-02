@@ -57,31 +57,116 @@
                         </div>
 
                         <div class="row">
+                          <div class="form-group col-sm-6">
+                              <label for="{{ form.file.id_for_label }}">File upload
+                                  (optional):</label>
+                              <input name="{{ form.file.name }}"
+                                    ng-model="submission.file"
+                                    id="{{ form.file.id_for_label }}"
+                                    class="form-control" type="file">
+                              {{ form.file.errors }}
+
+                          </div>
                             <div class="form-group col-sm-6">
-                                <label for="{{ form.file.id_for_label }}">File
-                                    upload
-                                    (optional):</label>
-                                <input name="{{ form.file.name }}"
-                                       ng-model="submission.file"
-                                       id="{{ form.file.id_for_label }}"
-                                       class="form-control" type="file">
-                                {{ form.file.errors }}
-
+                              <label for="{{ form.min_stdin_args.id_for_label }}">
+                                Additional arguments (Optional):
+                              </label>
+                              <!--<ul style="list-style: none;">-->
+                              <ul>
+                                <span ng-hide="!stdinArgs" class="ng-hide">
+                                  <li>
+                                    <label for="{{ form.min_stdin_args.id_for_label }}">
+                                      Minimum number of standard arguments
+                                    </label>
+                                    <select class="form-control"
+                                            id="{{ form.min_stdin_args.id_for_label }}"
+                                            name="{{ form.min_stdin_args.name }}"
+                                            ng-model="submission.args.minStdinArgs"
+                                            placeholder=0>
+                                      {% for id, name in form.min_stdin_args.field.choices %}
+                                        <option value="{{ id }}"> {{ name }} </option>
+                                      {% endfor %}
+                                    </select>
+                                    {{ form.min_stdin_args.errors }}
+                                  </li>
+                                  <li>
+                                    <label for="{{ form.max_stdin_args.id_for_label }}">
+                                      Maximam number of standard arguments
+                                    </label>
+                                    <select class="form-control"
+                                            id="{{ form.max_stdin_args.id_for_label }}"
+                                            name="{{ form.max_stdin_args.name }}"
+                                            ng-model="submission.args.maxStdinArgs"
+                                            placeholder=0>
+                                      {% for id, name in form.max_stdin_args.field.choices %}
+                                        <option value="{{ id }}"> {{ name }} </option>
+                                      {% endfor %}
+                                    </select>
+                                    {{ form.max_stdin_args.errors }}
+                                  </li>
+                                  <li>
+                                    <label for="{{ form.size_stdin_args.id_for_label }}">
+                                      Size of standard arguments
+                                    </label>
+                                    <input type="number"
+                                           class="form-control"
+                                           id="{{ form.size_stdin_args.id_for_label }}"
+                                           name="{{ form.size_stdin_args.name }}"
+                                           ng-model="submission.args.sizeStdinArgs"
+                                           min="{{ form.size_stdin_args.field.min_value }}"
+                                           placeholder=0>
+                                    <a href ng-click="resetStdin()">delete</a>
+                                  </li>
+                                </span>
+                                <li ng-hide="stdinArgs"
+                                    class="ng-hide">
+                                  <a href ng-click="stdinArgs = true">
+                                    Specify stdin arguments
+                                  </a>
+                                  {{ form.size_stdin_args.errors }}
+                                </li>
+                                <span ng-hide="!inputFiles", class="ng-hide">
+                                  <li>
+                                    <label for="{{ form.num_files.id_for_label }}">
+                                      Number of symbolic files
+                                    </label>
+                                    <select class="form-control"
+                                          id="{{ form.num_files.id_for_label }}"
+                                          name="{{ form.num_files.name }}"
+                                          ng-model="submission.args.numFiles"
+                                          placeholder=0>
+                                      {% for id, name in form.max_stdin_args.field.choices %}
+                                        <option value="{{ id }}"> {{ name }} </option>
+                                      {% endfor %}
+                                    </select>
+                                    {{ form.num_files.errors }}
+                                  </li>
+                                  <li>
+                                    <label for="{{ form.size_files.id_for_label }}">
+                                      Size of symbolic files
+                                    </label>
+                                    <input type="number"
+                                           class="form-control"
+                                           id="{{ form.size_files.id_for_label }}"
+                                           name="{{ form.size_files.name }}"
+                                           ng-model="submission.args.sizeFiles"
+                                           min="{{ form.size_files.field.min_value }}"
+                                           placeholder=0>
+                                    {{ form.size_files.errors }}
+                                    <a href ng-click="resetInputFile()">
+                                       delete
+                                    </a>
+                                  </li>
+                                </span>
+                                <li ng-hide="inputFiles"
+                                    class="ng-hide">
+                                  <a href ng-click="inputFiles = true">
+                                    Specify input files
+                                  </a>
+                                </li>
+                              </ul>
                             </div>
-
-                            <div class="form-group col-sm-6">
-                                <label for="{{ form.args.id_for_label }}">Program
-                                    arguments
-                                    (Optional)</label>
-                                <input type="text" class="form-control"
-                                       id="{{ form.args.id_for_label }}"
-                                       name="{{ form.args.name }}"
-                                       ng-model="submission.args"
-                                       placeholder="Enter any extra arguments to pass to KLEE.">
-                                {{ form.args.errors }}
-                            </div>
-                        </div>
-
+                          </div>
                         <div class="form-group">
                             <label for="{{ form.email.id_for_label }}">Email
                                 (Optional)
