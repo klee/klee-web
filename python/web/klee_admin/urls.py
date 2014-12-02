@@ -8,4 +8,6 @@ urlpatterns = [
     url(r'^task/list/(?P<type>\w+)?',
         'klee_admin.views.task_list', name='task_list'),
     url(r'^task/kill$', 'klee_admin.views.kill_task', name='kill_task'),
+    url(r'^job/history$',
+        'klee_admin.views.get_job_history', name='get_job_history'),
 ]

@@ -1,6 +1,6 @@
 from django.contrib import messages
 from django.core.urlresolvers import reverse
-from django.http import HttpResponseRedirect
+from django.http import HttpResponseRedirect, HttpResponse
 from django.shortcuts import render
 from decorators import group_required
 from forms import AdminConfigForm
@@ -8,6 +8,9 @@ from worker.worker import celery
 from worker.worker_config import WorkerConfig
 
 import klee_tasks
+import datetime
+import usage_stats
+import json
 
 HUMAN_READABLE_FIELD_NAMES = {
     "timeout": "Timeout",
@@ -20,7 +23,25 @@ worker_configuration = WorkerConfig()
 
 @group_required("admin")
 def index(request):
-    return render(request, "klee_admin/index.html")
+    attrs = {
+        'total_done': len(klee_tasks.done_tasks()),
+        'avg_time': usage_stats.avg_job_duration(),
+        'jobs_per_day': usage_stats.avg_jobs_per_day(),
+        'today': datetime.datetime.now().strftime("%a %d/%m/%Y %H:%M")
+    }
+    return render(request, "klee_admin/index.html", attrs)
+
+
+@group_required("admin")
+def get_job_history(request):
+    days, job_count = usage_stats.last_seven_days()
+    attrs = {
+        'days': days,
+        'count': job_count,
+    }
+
+    return HttpResponse(json.dumps(attrs),
+                        content_type='application/json; charset=utf8')
 
 
 @group_required("admin")
@@ -74,7 +95,7 @@ def task_list(request, type='active'):
     task_map = {
         'active': klee_tasks.active_tasks(),
         'waiting': klee_tasks.waiting_tasks(),
-        'done': klee_tasks.done_tasks()
+        'done': klee_tasks.done_tasks(),
     }
 
     attrs = {
