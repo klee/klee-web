@@ -6,8 +6,81 @@
 {% endblock %}
 
 {% block content %}
-<h1>Welcome to the KLEE-Web Admin.</h1>
+    <h1>Welcome to the KLEE-Web Admin.</h1>
+
+
+    <div class="row">
+        <div class="col-lg-3">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    Average jobs per day: {{ jobs_per_day }}
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    Average time per job: {{ avg_time }}s
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    Total jobs submitted: {{ total_done }}
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    {{ today }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <h3>Number of jobs ran in the last 7 days</h3>
+    <canvas id="myChart" width="1000" height="400"></canvas>
+    <!-- Add a legend to show what it means -->
 {% endblock %}
 
 {% block javascript %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/0.2.0/Chart.min.js"></script>
+<script type="text/javascript">
+
+    var jobHistoryUrl = "{% url 'klee_admin:get_job_history' %}";
+    $.getJSON(jobHistoryUrl, function(result) {
+        console.log(result);
+        displayJobCountHistory(result.days, result.count);
+    });
+
+    var displayJobCountHistory = function(days, count) {
+        var ctx = document.getElementById("myChart").getContext("2d");
+        var data = {
+        labels: days,
+        datasets: [
+            {
+                label: "Jobs ran in last 7 days",
+                fillColor: "rgba(151,187,205,0.2)",
+                strokeColor: "rgba(151,187,205,1)",
+                pointColor: "rgba(151,187,205,1)",
+                pointStrokeColor: "#fff",
+                pointHighlightFill: "#fff",
+                pointHighlightStroke: "rgba(151,187,205,1)",
+                data: count
+            }
+        ]
+        };
+        var options = {
+            scaleSteps: Math.max.apply(null, count) + 2,
+            scaleStartValue: 0,
+            scaleStepWidth: 1,
+            scaleIntegersOnly: true,
+            scaleOverride: true
+        };
+        new Chart(ctx).Bar(data, options);
+    }
+</script>
 {% endblock %}
