@@ -1,0 +1,5 @@
+cert = /etc/stunnel/private.pem
+pid = /var/run/stunnel.pid
+[redis]
+accept = {{ redis_host_remote }}:{{ redis_port }}
+connect = 127.0.0.1:{{ redis_port }}

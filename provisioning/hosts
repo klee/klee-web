@@ -1,11 +1,15 @@
 [dbservers]
-178.62.50.142
+178.62.50.142 ansible_ssh_user=root
 
 [redisservers]
-178.62.50.142
+178.62.50.142 ansible_ssh_user=root
 
 [webservers]
-178.62.50.142
+178.62.50.142 ansible_ssh_user=root
 
 [workers]
-178.62.108.171
+146.169.46.144:55022 ansible_ssh_user=ubuntu
+146.169.46.206:55022 ansible_ssh_user=ubuntu
+146.169.46.244:55022 ansible_ssh_user=ubuntu
+146.169.46.102:55022 ansible_ssh_user=ubuntu
+146.169.46.212:55022 ansible_ssh_user=ubuntu

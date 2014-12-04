@@ -1,6 +1,4 @@
 ---
 
-- include: redis.yml
-
 - include: stunnel.yml
   when: "not development"
