@@ -25,15 +25,28 @@
             </div>
 
             <div class="col-md-8">
-                <ul class="nav nav-tabs">
-                    <li role="presentation" ng-class="{'active': views.main}">
-                        <a ng-click="switchTab('main')">Submit a KLEE Job</a>
-                    </li>
-                    <li role="presentation" ng-if="result | isNotEmpty "
-                        ng-class="{'active': views.results}" id="result-tab" ng-cloak>
-                        <a ng-click="switchTab('results')">View run results</a>
-                    </li>
-                </ul>
+                <div class="row">
+                    <div class="col-md-8">
+                        <ul class="nav nav-tabs col-md-8">
+                            <li role="presentation" ng-class="{'active': views.main}">
+                                <a ng-click="switchTab('main')">Submit a KLEE Job</a>
+                            </li>
+                            <li role="presentation" ng-if="result | isNotEmpty "
+                                ng-class="{'active': views.results}" id="result-tab" ng-cloak>
+                                <a ng-click="switchTab('results')">View run results</a>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="col-md-4">
+                        <select name="" id="" class="form-control" ng-model="selected"
+                                ng-hide="!examples"
+                                ng-options="key for key in exampleKeys"
+                                ng-change="change()">
+                        </select>
+                    </div>
+                </div>
+
                 <div class="panel-body" ng-show="views.main">
                     {% for error in form.non_field_errors %}
                         <div class="alert alert-danger" role="alert">
@@ -91,7 +104,7 @@
                                   </li>
                                   <li>
                                     <label for="{{ form.max_stdin_args.id_for_label }}">
-                                      Maximam number of standard arguments
+                                      Maximum number of standard arguments
                                     </label>
                                     <select class="form-control"
                                             id="{{ form.max_stdin_args.id_for_label }}"
@@ -115,17 +128,17 @@
                                            ng-model="submission.args.sizeStdinArgs"
                                            min="{{ form.size_stdin_args.field.min_value }}"
                                            placeholder=0>
-                                    <a href ng-click="resetStdin()">delete</a>
+                                    <a href ng-click="resetStdin()">Delete</a>
                                   </li>
                                 </span>
                                 <li ng-hide="stdinArgs"
                                     class="ng-hide">
                                   <a href ng-click="stdinArgs = true">
-                                    Specify stdin arguments
+                                    Add symbolic arguments
                                   </a>
                                   {{ form.size_stdin_args.errors }}
                                 </li>
-                                <span ng-hide="!inputFiles", class="ng-hide">
+                                <span ng-show="inputFiles" class="ng-show">
                                   <li>
                                     <label for="{{ form.num_files.id_for_label }}">
                                       Number of symbolic files
@@ -154,14 +167,14 @@
                                            placeholder=0>
                                     {{ form.size_files.errors }}
                                     <a href ng-click="resetInputFile()">
-                                       delete
+                                       Delete
                                     </a>
                                   </li>
                                 </span>
                                 <li ng-hide="inputFiles"
                                     class="ng-hide">
-                                  <a href ng-click="inputFiles = true">
-                                    Specify input files
+                                  <a href ng-click="inputFiles = true; submission.args.sizeFiles = 1; submission.args.numFiles = 1;">
+                                   Add symbolic files
                                   </a>
                                 </li>
                               </ul>
