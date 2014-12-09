@@ -37,15 +37,21 @@ app.controller('MainCtrl',
             $scope.views[tab] = true;
         };
 
-        $scope.submission = {
-            code: '#include <stdio.h>\nint main()\n{\n\tprintf("Hello world\\n");\n\treturn 0;\n}',
-            args: {
-              numFiles: 0,
-              sizeFiles: 0,
-              minStdinArgs: 0,
-              maxStdinArgs: 0,
-              sizeStdinArgs: 0
-            }
+        $scope.examples = null;
+
+        $http.get('/static/klee_web/js/exampleConfig').
+            success(function(data, status, headers, config) {
+                $scope.examples = data;
+                $scope.exampleKeys = Object.keys(data);
+                $scope.selected = "Hello World";
+                $scope.change();
+            }).error(function(data, status, headers, config) {
+                console.log("Error loading tutorial examples.");
+            });
+
+        $scope.change = function() {
+            $scope.submission = angular.copy($scope.examples[$scope.selected]);
+            $scope.inputFiles = !($scope.submission.args.numFiles == 0 && $scope.submission.args.sizeFiles == 0);
         };
 
         $scope.inputFiles = false;
