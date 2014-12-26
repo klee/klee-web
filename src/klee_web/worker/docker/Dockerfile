@@ -67,3 +67,6 @@ RUN mkdir /src && cd /src  && \
     rm -rf /src/llvm-gcc4.2-2.9-x86_64-linux/include && \
     rm -rf /src/llvm-2.9 && \
     cd /root
+
+RUN useradd worker
+USER worker

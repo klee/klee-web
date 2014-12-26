@@ -47,6 +47,8 @@ class WorkerRunner():
 
     def __enter__(self):
         self.tempdir = tempfile.mkdtemp(prefix=self.task_id)
+        subprocess.check_call(["sudo", "chmod", "777", self.tempdir])
+
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
