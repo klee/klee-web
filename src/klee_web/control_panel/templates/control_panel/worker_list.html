@@ -1,0 +1,37 @@
+{% extends "control_panel/base.html" %}
+
+{% block title %}KLEE Web Admin{% endblock %}
+
+{% block css %}
+{% endblock %}
+
+{% block content %}
+<table class="table table-hover">
+    <thead>
+    <tr>
+        <th>Hostname</th>
+        <th>Uptime</th>
+        <th>Load Average (1 min)</th>
+        <th>Load Average (5 mins)</th>
+        <th>Load Average (15 mins)</th>
+    </tr>
+    </thead>
+    <tbody>
+    {% for host in uptime_stats %}
+    {% for hostname, uptime_data in host.iteritems %}
+    <tr>
+        <td>{{ hostname }}</td>
+        <td>{{ uptime_data.uptime }}</td>
+        <td>{{ uptime_data.loadavg_1min }}</td>
+        <td>{{ uptime_data.loadavg_5min }}</td>
+        <td>{{ uptime_data.loadavg_15min }}</td>
+    </tr>
+    {% endfor %}
+    {% endfor %}
+    </tbody>
+</table>
+{{ result }}
+{% endblock %}
+
+{% block javascript %}
+{% endblock %}

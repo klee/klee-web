@@ -1,5 +1,5 @@
 # Install requirements for task runner
-- pip: requirements={{ src_dir }}/python/requirements.txt virtualenv={{ web_virtualenv }}
+- pip: requirements={{ application_dir }}/requirements.txt virtualenv={{ web_virtualenv }}
   sudo_user: web
 
 - name: Copy supervisor config file
@@ -8,25 +8,25 @@
 - name: Run the Django syncdb command
   shell: . {{ web_virtualenv }}/bin/activate
          && . /etc/profile.d/klee-web-environment.sh
-         && cd {{ web_application_path }}
+         && cd {{ application_dir }}
          && python manage.py syncdb --noinput
 
 - name: Run Django South migrations
   shell: . {{ web_virtualenv }}/bin/activate
          && . /etc/profile.d/klee-web-environment.sh
-         && cd {{ web_application_path }}
+         && cd {{ application_dir }}
          && python manage.py migrate --noinput
 
 - name: Run Django collectstatic
   shell: . {{ web_virtualenv }}/bin/activate
          && . /etc/profile.d/klee-web-environment.sh
-         && cd {{ web_application_path }}
+         && cd {{ application_dir }}
          && python manage.py collectstatic --noinput
 
 - name: Create development admin user
   shell: . {{ web_virtualenv }}/bin/activate
          && . /etc/profile.d/klee-web-environment.sh
-         && cd {{ web_application_path }}
+         && cd {{ application_dir }}
          && python manage.py update_admin_user --username=admin --password=development
   when: development
 

@@ -1,0 +1,53 @@
+{% extends "control_panel/base.html" %}
+
+{% block title %}KLEE Web Admin{% endblock %}
+
+{% block css %}
+{% endblock %}
+
+{% block content %}
+<h1>
+    KLEE Worker Configuration
+</h1>
+
+{% if messages %}
+<div class="messages">
+    {% for message in messages %}
+    <div class="alert alert-success">
+        {{ message }}
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<form method="post" role="form">
+    {% csrf_token %}
+
+    <div class="form-group">
+        <label for="{{ form.timeout.id_for_label }}">Timeout (s):</label>
+        <input type="number" name="{{ form.timeout.name }}" id="{{ form.timeout.id_for_label }}"
+               class="form-control" placeholder="{{ form.timeout.value }}"
+               min="{{ form.timeout.field.widget.attrs.min }}"/>
+    </div>
+
+    <div class="form-group">
+        <label for="{{ form.cpu_share.id_for_label }}">CPU Share (%):</label>
+        <input type="number" name="{{ form.cpu_share.name }}" id="{{ form.cpu_share.id_for_label }}"
+               class="form-control" placeholder="{{ form.cpu_share.value }}"
+               min="{{ form.cpu_share.field.widget.attrs.min }}" max="{{ form.cpu_share.field.widget.attrs.max }}"/>
+    </div>
+
+    <div class="form-group">
+        <label for="{{ form.memory_limit.id_for_label }}">Memory Limit (MB):</label>
+        <input type="number" name="{{ form.memory_limit.name }}" id="{{ form.memory_limit.id_for_label }}"
+               class="form-control" placeholder="{{ form.memory_limit.value }}"
+               min="{{ form.memory_limit.field.widget.attrs.min }}"
+               max="{{ form.memory_limit.field.widget.attrs.max }}"/>
+    </div>
+
+    <input type="submit" class="btn btn-primary"/>
+</form>
+{% endblock %}
+
+{% block javascript %}
+{% endblock %}

@@ -16,7 +16,7 @@ dependencies:
     - "~/docker"
   override:
     - if [[ -e ~/docker/image.tar ]]; then docker load -i ~/docker/image.tar; fi
-    - docker build -t kleeweb/klee python/worker/klee
+    - docker build -t kleeweb/klee /titb/src/klee_web/worker/docker
     - mkdir -p ~/docker; docker save kleeweb/klee > ~/docker/image.tar
 
 test:

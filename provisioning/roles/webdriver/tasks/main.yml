@@ -37,5 +37,5 @@
   npm: name=mocha global=yes
 
 - name: "Install E2E test dependencies"
-  npm: path={{ src_dir }}/webdriver/test
+  npm: path={{ application_dir }}/tests
   sudo: no

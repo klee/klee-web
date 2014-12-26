@@ -1,0 +1,56 @@
+{% extends "control_panel/base.html" %}
+
+{% block title %}KLEE Web Admin{% endblock %}
+
+{% block css %}
+{% endblock %}
+
+{% block content %}
+<ul class="nav nav-tabs nav-justified" role="tablist">
+    <li role="presentation" class="{% if page == 'active' %} active {% endif %}"><a
+            href="{% url 'klee_admin:task_list' 'active' %}">Active</a></li>
+    <li role="presentation" class="{% if page == 'waiting' %} active {% endif %}"><a
+            href="{% url 'klee_admin:task_list' 'waiting' %}">Waiting</a></li>
+    <li role="presentation" class="{% if page == 'done' %} active {% endif %}"><a
+            href="{% url 'klee_admin:task_list' 'done' %}">Done</a></li>
+</ul>
+<table class="table table-hover">
+<thead>
+<tr>
+    <th>Task ID</th>
+    <th>IP Address</th>
+    <th>Worker</th>
+    <th>Submit time</th>
+    <th>Running time</th>
+    {% if page == 'active' or page == 'waiting' %}
+        <th>Terminate</th>
+    {% endif %}
+</tr>
+</thead>
+<tbody>
+    {% for task in tasks %}
+        <tr>
+            <td>{{ task.id }}</td>
+            <td>{{ task.ip_address }}</td>
+            <td>{{ task.ip_address }}</td>
+            <td>{{ task.mach }}</td>
+            <td>{{ task.created_at }}</td>
+            <td>{{ task.running_time.0 }} minutes, {{ task.running_time.1 }} seconds</td>
+            {% if page == 'active' or page == 'waiting' %}
+                <form role="form" method="post" action="{% url 'klee_admin:kill_task' %}">
+                    {% csrf_token %}
+                    <td>
+                     <input type="hidden" name="type" value="{{page}}">
+                     <input type="hidden" name="task_id" value="{{task.id}}">
+                     <button type="submit" class="btn btn-sm btn-danger" name='kill-btn'>Kill</button>
+                    </td>
+                </form>
+            {% endif %}
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
+
+{% block javascript %}
+{% endblock %}

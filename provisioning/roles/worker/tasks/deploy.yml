@@ -5,7 +5,7 @@
   when: not ci
 
 - name: Install requirements for task runner
-  pip: requirements={{ src_dir }}/python/requirements.txt virtualenv={{ worker_virtualenv }}
+  pip: requirements={{ application_dir }}/requirements.txt virtualenv={{ worker_virtualenv }}
 
 - name: Copy supervisor config file
   template: src=supervisor_worker.conf.j2 dest=/etc/supervisor/conf.d/titb_worker.conf
