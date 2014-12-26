@@ -26,11 +26,13 @@ class Example(models.Model):
     def as_dict(self):
         return {
             'code': self.code,
-            'numFiles': self.num_files,
-            'sizeFiles': self.size_files,
-            'minStdinArgs': self.min_stdin_args,
-            'maxStdinArgs': self.max_stdin_args,
-            'sizeStdinArgs': self.size_files,
+            'args': {
+                'numFiles': self.num_files,
+                'sizeFiles': self.size_files,
+                'minStdinArgs': self.min_stdin_args,
+                'maxStdinArgs': self.max_stdin_args,
+                'sizeStdinArgs': self.size_files
+            }
         }
 
     def __unicode__(self):

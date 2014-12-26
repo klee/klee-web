@@ -21,6 +21,11 @@ app.config(function ($httpProvider, $interpolateProvider, $resourceProvider) {
 
 app.controller('MainCtrl',
     function ($scope, $http, $pusher) {
+        $scope.submission = {
+            code: '',
+            args: {}
+        };
+
         // Setup pusher 
         var pusher = $pusher(pclient);
         var channel_id = null;
@@ -30,7 +35,7 @@ app.controller('MainCtrl',
             results: false
         };
 
-        $scope.switchTab = function(tab) {
+        $scope.switchTab = function (tab) {
             for (var view in $scope.views) {
                 $scope.views[view] = false;
             }
@@ -39,20 +44,25 @@ app.controller('MainCtrl',
 
         $scope.examples = null;
 
-        $http.get('/examples').
-            success(function(data, status, headers, config) {
-                $scope.examples = data;
-                $scope.exampleKeys = Object.keys(data);
-                $scope.selected = "Hello World";
-                $scope.change();
-            }).error(function(data, status, headers, config) {
-                console.log("Error loading tutorial examples.");
-            });
-
-        $scope.change = function() {
+        $scope.change = function () {
             $scope.submission = angular.copy($scope.examples[$scope.selected]);
             $scope.inputFiles = !($scope.submission.args.numFiles == 0 && $scope.submission.args.sizeFiles == 0);
         };
+
+        $http.get('/examples').
+            success(function (data, status, headers, config) {
+                $scope.examples = data;
+                $scope.exampleKeys = Object.keys(data);
+
+
+                // Hack, TODO: add boolean for default value.
+                if ($scope.exampleKeys.length > 0) {
+                    $scope.selected = "Hello World";
+                    $scope.change();
+                }
+            }).error(function (data, status, headers, config) {
+                console.log("Error loading tutorial examples.");
+            });
 
         $scope.inputFiles = false;
         $scope.stdinArgs = false;
@@ -61,23 +71,24 @@ app.controller('MainCtrl',
 
         $scope.editorOptions = {
             viewportMargin: 5,
-            lineWrapping : true,
+            lineWrapping: true,
             lineNumbers: true,
             mode: 'clike'
         };
 
         $scope.resetInputFile = function () {
-          $scope.inputFiles = false;
-          $scope.submission.args.numFiles=0;
-          $scope.submission.args.sizeFiles=0;
-        }
+            $scope.inputFiles = false;
+            $scope.submission.args.numFiles = 0;
+            $scope.submission.args.sizeFiles = 0;
+        };
 
         $scope.resetStdin = function () {
-          $scope.stdinArgs = false;
-          $scope.submission.args.minStdinArgs = 0;
-          $scope.submission.args.maxStdinArgs = 0;
-          $scope.submission.args.sizeStdinArgs = 0;
-        }
+            $scope.stdinArgs = false;
+            $scope.submission.args.minStdinArgs = 0;
+            $scope.submission.args.maxStdinArgs = 0;
+            $scope.submission.args.sizeStdinArgs = 0;
+        };
+        
         $scope.processForm = function (submission) {
             if (channel_id) {
                 pusher.unsubscribe(channel_id);
@@ -90,43 +101,43 @@ app.controller('MainCtrl',
                 // Send data to submit endpoint
                 .post('/submit/', submission)
                 // We get a task id from submitting!
-                .success( 
-                    function (data, status, headers) {
-                        channel_id = data.task_id;
-                        var channel = pusher.subscribe(channel_id);
+                .success(
+                function (data, status, headers) {
+                    channel_id = data.task_id;
+                    var channel = pusher.subscribe(channel_id);
 
-                        channel.bind('notification', function (response) {
-                            data = angular.fromJson(response.data);
-                            
-                            // No guarantee of order? latency issues?
-                            if (data.result) {
-                                $scope.result = data.result;
-                            } else {
-                                $scope.progress.push(data.message);
-                            }
-                        });
+                    channel.bind('notification', function (response) {
+                        data = angular.fromJson(response.data);
 
-                        channel.bind('job_complete', function (response) {
-                            data = angular.fromJson(response.data);
-                            $scope.progress.push('Done!');
+                        // No guarantee of order? latency issues?
+                        if (data.result) {
                             $scope.result = data.result;
-                        });
+                        } else {
+                            $scope.progress.push(data.message);
+                        }
+                    });
 
-                        channel.bind('job_failed', function (response) {
-                            data = angular.fromJson(response.data);
-                            $scope.result = {
-                                'output': data.output
-                            };
-                        });
+                    channel.bind('job_complete', function (response) {
+                        data = angular.fromJson(response.data);
+                        $scope.progress.push('Done!');
+                        $scope.result = data.result;
+                    });
 
-                    }
-                )
+                    channel.bind('job_failed', function (response) {
+                        data = angular.fromJson(response.data);
+                        $scope.result = {
+                            'output': data.output
+                        };
+                    });
+
+                }
+            )
                 // We didn't even get a task back from submit
                 .error(
-                    function (data, status, headers) {
-                        console.debug('Error! ', data);
-                    }
-                );
+                function (data, status, headers) {
+                    console.debug('Error! ', data);
+                }
+            );
 
         };
     }
@@ -142,5 +153,5 @@ var isNotEmpty = function () {
         }
         return false;
     }
-  };
+};
 app.filter('isNotEmpty', isNotEmpty);

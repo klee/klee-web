@@ -1,6 +1,5 @@
 import json
 import re
-import shlex
 import subprocess
 import tempfile
 import os
@@ -56,13 +55,31 @@ class WorkerRunner():
         subprocess.check_call(["sudo", "rm", "-rf", self.tempdir])
 
     @staticmethod
-    def create_klee_command(klee_args):
-        split_args = shlex.split(klee_args)
+    def generate_arguments(klee_args):
+        result = []
+
+        num_files = klee_args.get('numFiles')
+        size_files = klee_args.get('numFiles')
+
+        if num_files and size_files:
+            result += ['--sym-files', str(num_files), str(size_files)]
+
+        min_stdin_args = klee_args.get('minStdinArgs')
+        max_stdin_args = klee_args.get('maxStdinArgs')
+        size_stdin_args = klee_args.get('sizeStdinArgs')
+        if min_stdin_args and max_stdin_args and size_stdin_args:
+            result += ['--sym-args', str(min_stdin_args),
+                       str(max_stdin_args), str(size_stdin_args)]
+
+        return result
+
+    @staticmethod
+    def create_klee_command(arg_list):
         klee_command = ["klee"]
-        if split_args:
+        if arg_list:
             klee_command += ['--posix-runtime', '-libc=uclibc']
 
-        return klee_command + ["/code/result.o"] + split_args
+        return klee_command + ["/code/result.o"] + arg_list
 
     @property
     def docker_command(self):
@@ -83,9 +100,9 @@ class WorkerRunner():
 
     def run_with_docker(self, command):
         try:
-            return subprocess\
+            return subprocess \
                 .check_output(self.docker_command + command,
-                              universal_newlines=True)\
+                              universal_newlines=True) \
                 .decode('utf-8')
         except subprocess.CalledProcessError as ex:
             raise KleeRunFailure(clean_stdout(ex.output))
@@ -143,7 +160,8 @@ class WorkerRunner():
     @notify_on_entry("Starting Job")
     def run(self, code, email, klee_args):
         try:
-            klee_output = self.run_klee(code, klee_args)
+            args = WorkerRunner.generate_arguments(klee_args)
+            klee_output = self.run_klee(code, args)
             failed_tests = self.get_failed_tests()
 
             file_name = 'klee-output-{}.tar.gz'.format(self.task_id)
