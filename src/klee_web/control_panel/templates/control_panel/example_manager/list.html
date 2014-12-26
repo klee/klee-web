@@ -1,0 +1,44 @@
+{% extends "control_panel/base.html" %}
+
+{% block title %}KLEE Web Admin{% endblock %}
+
+{% block css %}
+{% endblock %}
+
+{% block content %}
+    <table class="table table-striped">
+        <thead>
+        <tr>
+            <td>#</td>
+            <td>Example Name</td>
+            <td>Last Modified</td>
+            <td>Delete</td>
+        </tr>
+        </thead>
+        <tbody>
+        {% for example in examples %}
+            <tr>
+                <td>
+                    {{ forloop.counter }}
+                </td>
+                <td>
+                    <a href="{% url 'control_panel:example_update' example.pk %}">
+                        {{ example.name }}
+                    </a>
+                </td>
+                <td>{{ example.last_modified }}</td>
+                <td>
+                    <a href="{% url 'control_panel:example_delete' example.pk %}">
+                        <i class="glyphicon glyphicon-trash "></i>
+                    </a>
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+    <a href="{% url 'control_panel:example_create' %}">
+        <button class="btn btn-primary">Add new Example</button>
+    </a>
+
+{% endblock %}

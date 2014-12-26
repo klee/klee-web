@@ -39,7 +39,7 @@ app.controller('MainCtrl',
 
         $scope.examples = null;
 
-        $http.get('/static/frontend/js/exampleConfig').
+        $http.get('/examples').
             success(function(data, status, headers, config) {
                 $scope.examples = data;
                 $scope.exampleKeys = Object.keys(data);

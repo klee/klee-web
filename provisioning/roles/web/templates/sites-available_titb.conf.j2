@@ -9,7 +9,7 @@ server {
     
     {% if not development %}
     location /static/ {
-      alias {{ src_dir }}/python/web/static/;
+      alias {{ application_dir }}/static/;
     }
     {% endif %}
 }

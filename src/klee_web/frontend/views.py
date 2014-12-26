@@ -9,7 +9,7 @@ from django.views.decorators.http import require_POST
 
 from forms import SubmitJobForm
 from realtime import notify
-from models import Task
+from models import Task, Example
 from worker.worker_config import WorkerConfig
 from worker.worker import submit_code
 
@@ -77,6 +77,13 @@ def jobs_notify(request):
         task.completed_at = datetime.datetime.now()
         task.save()
     return HttpResponse('Ok!')
+
+
+def example_list(request):
+    examples = {
+        example.name: example.as_dict for example in Example.objects.all()
+    }
+    return HttpResponse(json.dumps(examples))
 
 
 def get_client_ip(request):

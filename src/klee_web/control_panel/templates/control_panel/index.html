@@ -50,7 +50,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/0.2.0/Chart.min.js"></script>
 <script type="text/javascript">
 
-    var jobHistoryUrl = "{% url 'klee_admin:get_job_history' %}";
+    var jobHistoryUrl = "{% url 'control_panel:get_job_history' %}";
     $.getJSON(jobHistoryUrl, function(result) {
         console.log(result);
         displayJobCountHistory(result.days, result.count);
