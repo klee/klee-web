@@ -4,6 +4,7 @@ import shlex
 import subprocess
 import tempfile
 import os
+import codecs
 
 import requests
 
@@ -82,8 +83,10 @@ class WorkerRunner():
 
     def run_with_docker(self, command):
         try:
-            return subprocess.check_output(self.docker_command + command,
-                                           universal_newlines=True)
+            return subprocess\
+                .check_output(self.docker_command + command,
+                              universal_newlines=True)\
+                .decode('utf-8')
         except subprocess.CalledProcessError as ex:
             raise KleeRunFailure(clean_stdout(ex.output))
 
@@ -107,7 +110,7 @@ class WorkerRunner():
     def run_klee(self, code, klee_args):
         # Write code out to temporary directory
         temp_code_file = os.path.join(self.tempdir, "result.c")
-        with open(temp_code_file, 'w') as f:
+        with codecs.open(temp_code_file, 'w', encoding='utf-8') as f:
             f.write(code)
 
         # Compile code with LLVM-GCC

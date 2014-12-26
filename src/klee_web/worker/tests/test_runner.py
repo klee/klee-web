@@ -1,6 +1,7 @@
 import re
 import os
 import unittest
+import codecs
 
 from worker.runner import WorkerRunner
 from worker.exception import KleeRunFailure
@@ -21,13 +22,15 @@ class TestWorkerRunner(unittest.TestCase):
     def run_klee_test(self, fixture_name, args='', expect_failure=False):
         test_fixtures = os.path.join(FIXTURE_DIR, fixture_name)
 
-        with open(os.path.join(test_fixtures, 'input.c')) as f:
+        with codecs.open(os.path.join(test_fixtures, 'input.c'),
+                         encoding='utf-8') as f:
             code = f.read()
 
-        with open(os.path.join(test_fixtures, 'expected.stdout'), 'U') as f:
+        with codecs.open(os.path.join(test_fixtures, 'expected.stdout'), 'U',
+                         encoding='utf-8') as f:
             expected_out = f.read()
 
-        expected_regex = re.compile("{}$".format(expected_out), re.M)
+        expected_regex = re.compile(u"{}$".format(expected_out), re.M)
         if expect_failure:
             self.assertRaisesRegexp(KleeRunFailure, expected_regex,
                                     self.runner.run_klee, code, args)
@@ -37,6 +40,9 @@ class TestWorkerRunner(unittest.TestCase):
 
     def test_simple_run(self):
         self.run_klee_test('simple')
+
+    def test_simple_unicode_run(self):
+        self.run_klee_test('simple_unicode')
 
     def test_symargs(self):
         self.run_klee_test('symargs', '--sym-args 1 1 1')
