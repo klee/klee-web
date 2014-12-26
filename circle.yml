@@ -33,5 +33,5 @@ deployment:
     commands:
       - sed "s/<EMAIL>/$DOCKER_EMAIL/;s/<AUTH>/$DOCKER_AUTH/" < /titb/.dockercfg.template > ~/.dockercfg
       - docker push kleeweb/klee
-      - ansible-playbook -i provisioning/hosts --vault-password-file=/home/ubuntu/.vault_password provisioning/deploy.yml
-
+      - ansible-playbook -i provisioning/hosts --vault-password-file=/home/ubuntu/.vault_password provisioning/deploy.yml:
+          timeout: 600
