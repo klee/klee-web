@@ -138,7 +138,12 @@
                                   </a>
                                   {{ form.size_stdin_args.errors }}
                                 </li>
-                                <span ng-show="inputFiles" class="ng-show">
+                                <li>
+                                <input type="checkbox"
+                                       ng-model="submission.args.stdin_enabled">
+                                Enable symbolic stdin
+                                </li>
+                                <span ng-show="submission.args.stdin_enabled" class="ng-show">
                                   <li>
                                     <label for="{{ form.num_files.id_for_label }}">
                                       Number of symbolic files
@@ -147,6 +152,7 @@
                                           id="{{ form.num_files.id_for_label }}"
                                           name="{{ form.num_files.name }}"
                                           ng-model="submission.args.numFiles"
+                                          ng-init="submission.args.numFiles = 0"
                                           placeholder=0>
                                       {% for id, name in form.max_stdin_args.field.choices %}
                                         <option value="{{ id }}"> {{ name }} </option>
@@ -163,19 +169,11 @@
                                            id="{{ form.size_files.id_for_label }}"
                                            name="{{ form.size_files.name }}"
                                            ng-model="submission.args.sizeFiles"
-                                           min="{{ form.size_files.field.min_value }}"
-                                           placeholder=0>
+                                           ng-init="submission.args.sizeFiles = 0"
+                                           min="{{ form.size_files.field.min_value }}">
                                     {{ form.size_files.errors }}
-                                    <a href ng-click="resetInputFile()">
-                                       Delete
-                                    </a>
                                   </li>
                                 </span>
-                                <li ng-hide="inputFiles"
-                                    class="ng-hide">
-                                  <a href ng-click="inputFiles = true; submission.args.sizeFiles = 1; submission.args.numFiles = 1;">
-                                   Add symbolic files
-                                  </a>
                                 </li>
                               </ul>
                             </div>
