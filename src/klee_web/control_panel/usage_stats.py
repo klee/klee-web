@@ -29,14 +29,21 @@ def avg_job_duration():
 
     seconds = duration.total_seconds()
 
-    return round(seconds / len(completed_tasks), 2)
+    num_completed_tasks = len(completed_tasks)
+    if num_completed_tasks > 0:
+        return round(seconds / num_completed_tasks, 2)
+    else:
+        return 0
 
 
 def avg_jobs_per_day():
-    earliest_day = \
-        Task.objects.all().aggregate(Min('created_at'))['created_at__min']
+    first_day = Task.objects.all() \
+        .aggregate(Min('created_at'))['created_at__min']
 
-    job_count = Task.objects.all().count()
-    total_days = (datetime.datetime.now() - earliest_day).days + 1
+    if first_day:
+        job_count = Task.objects.all().count()
+        total_days = (datetime.datetime.now() - first_day).days + 1
 
-    return job_count / total_days
+        return job_count / total_days
+    else:
+        return 0

@@ -5,6 +5,7 @@ web/**/target
 Report/*
 .DS_Store
 src/klee_web/static/*
+src/static/*
 **/node_modules/*
 npm-debug.log
 *.swp
