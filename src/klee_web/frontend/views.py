@@ -9,7 +9,7 @@ from django.views.decorators.http import require_POST
 
 from forms import SubmitJobForm
 from realtime import notify
-from models import Task
+from models import Task, Example
 from worker.worker_config import WorkerConfig
 from worker.worker import submit_code
 
@@ -22,25 +22,13 @@ def index(request):
     return render(request, "frontend/index.html", {"form": form})
 
 
-def parse_args(args):
-    result = ""
-    if args['numFiles'] or args['sizeFiles']:
-        result += '--sym-files {} {}'.format(args['numFiles'],
-                                             args['sizeFiles'])
-    if args['minStdinArgs'] or args['maxStdinArgs'] or args['sizeStdinArgs']:
-        result += ' --sym-args {} {} {}'.format(args['minStdinArgs'],
-                                                args['maxStdinArgs'],
-                                                args['sizeStdinArgs'])
-    return result
-
-
 @require_POST
 def submit_job(request):
     data = json.loads(request.body)
 
     code = data.get("code")
     email = data.get("email")
-    args = parse_args(data.get("args"))
+    args = data.get("args", {})
 
     uploaded_file = request.FILES.get('file')
     if uploaded_file:
@@ -77,6 +65,12 @@ def jobs_notify(request):
         task.completed_at = datetime.datetime.now()
         task.save()
     return HttpResponse('Ok!')
+
+
+def example_list(request):
+    examples = {
+        example.name: example.as_dict for example in Example.objects.all()}
+    return HttpResponse(json.dumps(examples))
 
 
 def get_client_ip(request):

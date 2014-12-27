@@ -16,7 +16,7 @@
           rel="stylesheet">
 
     <!-- Custom styles for this template -->
-    <link href="/klee_web/static/klee_web/css/style.css" rel="stylesheet">
+    <link href="/static/frontend/css/style.css" rel="stylesheet">
     {% block css %}
     {% endblock %}
 
@@ -53,16 +53,23 @@
         <div class="col-md-2">
             <ul class="nav nav-pills nav-stacked" role="tablist">
                 <li role="presentation" class="{% current 'index' %}">
-                    <a href="{% url 'klee_admin:index' %}">Home</a>
+                    <a href="{% url 'control_panel:index' %}">Home</a>
                 </li>
                 <li role="presentation" class="{% current 'worker_list' %}">
-                    <a href="{% url 'klee_admin:worker_list' %}">Worker List</a>
+                    <a href="{% url 'control_panel:worker_list' %}">Worker
+                        List</a>
                 </li>
                 <li role="presentation" class="{% current 'worker_config' %}">
-                    <a href="{% url 'klee_admin:worker_config' %}">Worker Config</a>
+                    <a href="{% url 'control_panel:worker_config' %}">Worker
+                        Config</a>
                 </li>
                 <li role="presentation" class="{% current 'task_list' %}">
-                    <a href="{% url 'klee_admin:task_list' 'active' %}">Task List</a>
+                    <a href="{% url 'control_panel:task_list' 'active' %}">Task
+                        List</a>
+                </li>
+                <li role="presentation" class="{% current 'example_list' %}">
+                    <a href="{% url 'control_panel:example_list' %}">Manage
+                        Examples</a>
                 </li>
             </ul>
         </div>

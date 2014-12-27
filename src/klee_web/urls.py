@@ -6,6 +6,7 @@ from django.contrib.auth import views
 urlpatterns = patterns(
     '',
     url(r'^$', 'frontend.views.index', name='index'),
+    url(r'^examples/$', 'frontend.views.example_list', name='example_list'),
     url(r'^admin/', include(admin.site.urls)),
     url(r'^manage/', include('control_panel.urls', namespace="control_panel")),
     url(r'^accounts/login/$', views.login,

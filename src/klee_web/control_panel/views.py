@@ -9,9 +9,9 @@ from django.shortcuts import render
 from decorators import group_required
 from forms import AdminConfigForm
 from worker.worker import celery
-from klee_web.manage import klee_tasks
-from klee_web.worker.worker_config import WorkerConfig
+from worker.worker_config import WorkerConfig
 import usage_stats
+import klee_tasks
 
 
 HUMAN_READABLE_FIELD_NAMES = {

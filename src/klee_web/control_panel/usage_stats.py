@@ -2,7 +2,7 @@ import datetime
 
 from django.db.models import Min
 
-from klee_web.web.models import Task
+from frontend.models import Task
 
 
 def last_seven_days():

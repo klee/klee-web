@@ -7,3 +7,4 @@ psycopg2==2.5.1
 redis==2.10.3
 pusher
 fakeredis==0.5.1
+django-bootstrap-form

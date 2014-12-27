@@ -2,6 +2,7 @@ import re
 import os
 import unittest
 import codecs
+import shlex
 
 from worker.runner import WorkerRunner
 from worker.exception import KleeRunFailure
@@ -31,11 +32,12 @@ class TestWorkerRunner(unittest.TestCase):
             expected_out = f.read()
 
         expected_regex = re.compile(u"{}$".format(expected_out), re.M)
+        arg_list = shlex.split(args)
         if expect_failure:
             self.assertRaisesRegexp(KleeRunFailure, expected_regex,
-                                    self.runner.run_klee, code, args)
+                                    self.runner.run_klee, code, arg_list)
         else:
-            stdout = self.runner.run_klee(code, args)
+            stdout = self.runner.run_klee(code, arg_list)
             self.assertRegexpMatches(stdout, expected_regex)
 
     def test_simple_run(self):
