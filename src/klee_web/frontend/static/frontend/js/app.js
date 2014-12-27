@@ -23,7 +23,10 @@ app.controller('MainCtrl',
     function ($scope, $http, $pusher) {
         $scope.submission = {
             code: '',
-            args: {}
+            args: {
+              numFiles:0,
+              sizeFiles:0
+            }
         };
 
         // Setup pusher 
@@ -46,7 +49,7 @@ app.controller('MainCtrl',
 
         $scope.change = function () {
             $scope.submission = angular.copy($scope.examples[$scope.selected]);
-            $scope.inputFiles = !($scope.submission.args.numFiles == 0 && $scope.submission.args.sizeFiles == 0);
+            $scope.submission.args.stdin_enabled = !($scope.submission.args.numFiles == 0 && $scope.submission.args.sizeFiles == 0);
         };
 
         $http.get('/examples').
@@ -64,7 +67,7 @@ app.controller('MainCtrl',
                 console.log("Error loading tutorial examples.");
             });
 
-        $scope.inputFiles = false;
+        $scope.submission.args.stdin_enabled = false;
         $scope.stdinArgs = false;
         $scope.progress = [];
         $scope.result = {};
@@ -74,12 +77,6 @@ app.controller('MainCtrl',
             lineWrapping: true,
             lineNumbers: true,
             mode: 'clike'
-        };
-
-        $scope.resetInputFile = function () {
-            $scope.inputFiles = false;
-            $scope.submission.args.numFiles = 0;
-            $scope.submission.args.sizeFiles = 0;
         };
 
         $scope.resetStdin = function () {
