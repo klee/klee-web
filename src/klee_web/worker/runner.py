@@ -58,10 +58,10 @@ class WorkerRunner():
     def generate_arguments(klee_args):
         result = []
 
-        num_files = klee_args.get('numFiles')
-        size_files = klee_args.get('numFiles')
-
-        if num_files and size_files:
+        stdin_enabled = klee_args.get('stdin_enabled')
+        if stdin_enabled:
+            num_files = klee_args.get('numFiles')
+            size_files = klee_args.get('sizeFiles')
             result += ['--sym-files', str(num_files), str(size_files)]
 
         min_stdin_args = klee_args.get('minStdinArgs')
