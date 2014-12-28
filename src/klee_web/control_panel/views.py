@@ -62,7 +62,7 @@ def worker_config(request):
             if updated:
                 messages.success(request, ", ".join(updated) + " updated")
 
-            return HttpResponseRedirect(reverse('klee_admin:worker_config'))
+            return HttpResponseRedirect(reverse('control_panel:worker_config'))
     else:
         timeout = worker_configuration.timeout
         cpu_share = worker_configuration.cpu_share
@@ -89,15 +89,16 @@ def worker_list(request):
 def kill_task(request):
     klee_tasks.kill_task(request.POST['task_id'])
     return HttpResponseRedirect(
-        reverse('klee_admin:task_list', args=(request.POST['type'],)))
+        reverse('control_panel:task_list', args=(request.POST['type'],)))
 
 
 @group_required("admin")
 def task_list(request, type='active'):
+
     task_map = {
-        'active': klee_tasks.active_tasks(),
-        'waiting': klee_tasks.waiting_tasks(),
-        'done': klee_tasks.done_tasks(),
+        'active': klee_tasks.active_tasks,
+        'waiting': klee_tasks.waiting_tasks,
+        'done': klee_tasks.done_tasks,
     }
 
     attrs = {

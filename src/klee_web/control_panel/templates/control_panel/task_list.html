@@ -8,11 +8,11 @@
 {% block content %}
 <ul class="nav nav-tabs nav-justified" role="tablist">
     <li role="presentation" class="{% if page == 'active' %} active {% endif %}"><a
-            href="{% url 'klee_admin:task_list' 'active' %}">Active</a></li>
+            href="{% url 'control_panel:task_list' 'active' %}">Active</a></li>
     <li role="presentation" class="{% if page == 'waiting' %} active {% endif %}"><a
-            href="{% url 'klee_admin:task_list' 'waiting' %}">Waiting</a></li>
+            href="{% url 'control_panel:task_list' 'waiting' %}">Waiting</a></li>
     <li role="presentation" class="{% if page == 'done' %} active {% endif %}"><a
-            href="{% url 'klee_admin:task_list' 'done' %}">Done</a></li>
+            href="{% url 'control_panel:task_list' 'done' %}">Done</a></li>
 </ul>
 <table class="table table-hover">
 <thead>
@@ -32,12 +32,11 @@
         <tr>
             <td>{{ task.id }}</td>
             <td>{{ task.ip_address }}</td>
-            <td>{{ task.ip_address }}</td>
             <td>{{ task.mach }}</td>
             <td>{{ task.created_at }}</td>
             <td>{{ task.running_time.0 }} minutes, {{ task.running_time.1 }} seconds</td>
             {% if page == 'active' or page == 'waiting' %}
-                <form role="form" method="post" action="{% url 'klee_admin:kill_task' %}">
+                <form role="form" method="post" action="{% url 'control_panel:kill_task' %}">
                     {% csrf_token %}
                     <td>
                      <input type="hidden" name="type" value="{{page}}">
