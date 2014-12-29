@@ -6,9 +6,10 @@
 
 - name: Install requirements for task runner
   pip: requirements={{ application_dir }}/requirements.txt virtualenv={{ worker_virtualenv }}
+  sudo_user: worker
 
 - name: Copy supervisor config file
-  template: src=supervisor_worker.conf.j2 dest=/etc/supervisor/conf.d/titb_worker.conf
+  template: src=supervisor_worker.conf.j2 dest=/etc/supervisor/conf.d/worker.conf
 
 - name: Reload supervisor configuration
   shell: supervisorctl reload

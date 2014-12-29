@@ -10,13 +10,14 @@ import requests
 from exception import KleeRunFailure
 from worker_config import WorkerConfig
 from mailer.mailgun_mailer import MailgunMailer
-from storage.s3_storage import S3Storage
-from processor.failed_test import FailedTestProcessor
 
+from processor.failed_test import FailedTestProcessor
+from processor.coverage import CoverageProcessor
+from processor.upload import UploadProcessor
 
 ANSI_ESCAPE_PATTERN = re.compile(r'\x1b[^m]*m')
 LXC_MESSAGE_PATTERN = re.compile(r'lxc-start: .*')
-PROCESSOR_PIPELINE = [FailedTestProcessor]
+
 worker_config = WorkerConfig()
 
 
@@ -40,15 +41,20 @@ def notify_on_entry(msg):
 
 
 class WorkerRunner():
+    DOCKER_MOUNT_DIR = '/code'
+    DOCKER_CODE_FILE = os.path.join(DOCKER_MOUNT_DIR, 'code.c')
+    DOCKER_OBJECT_FILE = os.path.join(DOCKER_MOUNT_DIR, 'code.o')
+    PROCESSOR_PIPELINE = [UploadProcessor, FailedTestProcessor,
+                          CoverageProcessor]
+
     def __init__(self, task_id, callback_endpoint=None):
         self.task_id = task_id
         self.callback_endpoint = callback_endpoint
         self.mailer = MailgunMailer()
-        self.storage = S3Storage()
 
     def __enter__(self):
         self.tempdir = tempfile.mkdtemp(prefix=self.task_id)
-        self.temp_code_file = os.path.join(self.tempdir, "result.c")
+        self.temp_code_file = os.path.join(self.tempdir, "code.c")
         subprocess.check_call(["sudo", "chmod", "777", self.tempdir])
 
         return self
@@ -81,17 +87,23 @@ class WorkerRunner():
         if arg_list:
             klee_command += ['--posix-runtime', '-libc=uclibc']
 
-        return klee_command + ["/code/result.o"] + arg_list
+        return klee_command + [WorkerRunner.DOCKER_OBJECT_FILE] + arg_list
 
-    @property
-    def docker_command(self):
-        return ['sudo', 'docker', 'run'] + self.docker_flags + ['kleeweb/klee']
+    def docker_command(self, env):
+        env_vars = []
+        if env:
+            for key, value in env.items():
+                env_vars.extend(['-e', "{}={}".format(key, value)])
+
+        flags = self.docker_flags + env_vars
+        return ['sudo', 'docker', 'run'] + flags + ['kleeweb/klee']
 
     @property
     def docker_flags(self):
         flags = ['-t',
                  '-c={}'.format(worker_config.cpu_share),
-                 '-v', '{}:/code'.format(self.tempdir),
+                 '-v', '{}:{}'.format(self.tempdir, self.DOCKER_MOUNT_DIR),
+                 '-w', self.DOCKER_MOUNT_DIR,
                  '--net="none"']
 
         # We have to disable cleanup on CircleCI (permissions issues)
@@ -100,29 +112,21 @@ class WorkerRunner():
 
         return flags
 
-    def run_with_docker(self, command):
+    def run_with_docker(self, command, env=None):
         try:
             return subprocess \
-                .check_output(self.docker_command + command,
+                .check_output(self.docker_command(env) + command,
                               universal_newlines=True) \
                 .decode('utf-8')
         except subprocess.CalledProcessError as ex:
-            raise KleeRunFailure(clean_stdout(ex.output))
-
-    @notify_on_entry("Compressing output")
-    def compress_output(self, output_tar_filename):
-        tar_command = ['tar', '-zcvf', output_tar_filename, 'klee-out-0']
-        subprocess.check_output(tar_command, cwd=self.tempdir)
-
-    @notify_on_entry("Uploading result")
-    def upload_result(self, result_file_path):
-        return self.storage.store_file(result_file_path)
+            message = "Error running {}:\n{}".format(
+                " ".join(command), clean_stdout(ex.output))
+            raise KleeRunFailure(message)
 
     def run_llvm(self):
         llvm_command = ['/usr/bin/clang-3.4',
                         '-I', '/src/klee/include', '-emit-llvm', '-c', '-g',
-                        '/code/result.c',
-                        '-o', '/code/result.o']
+                        self.DOCKER_CODE_FILE, '-o', self.DOCKER_OBJECT_FILE]
         self.run_with_docker(llvm_command)
 
     @notify_on_entry("Analysing with KLEE")
@@ -140,11 +144,6 @@ class WorkerRunner():
         # Remove ANSI escape sequences from output
         return clean_stdout(klee_output)
 
-    def send_email(self, recipient, output_url):
-        email_body = "Your KLEE submission output can be accessed here: {}" \
-            .format(output_url)
-        self.mailer.send_mail(recipient, "KLEE-Web Run Results", email_body)
-
     def send_notification(self, notification_type, data):
         if self.callback_endpoint:
             payload = {
@@ -160,22 +159,12 @@ class WorkerRunner():
             args = WorkerRunner.generate_arguments(klee_args)
             klee_output = self.run_klee(code, args)
 
-            file_name = 'klee-output-{}.tar.gz'.format(self.task_id)
-            compressed_output_path = os.path.join(self.tempdir, file_name)
-
-            self.compress_output(compressed_output_path)
-            output_upload_url = self.upload_result(compressed_output_path)
-
-            if email:
-                self.send_email(email, output_upload_url)
-
             result = {
                 'output': klee_output.strip(),
-                'url': output_upload_url,
             }
 
             # Run post-processing pipeline
-            for processor_cls in PROCESSOR_PIPELINE:
+            for processor_cls in self.PROCESSOR_PIPELINE:
                 processor = processor_cls(self)
                 result[processor.name] = processor.process()
 
@@ -184,4 +173,7 @@ class WorkerRunner():
             })
 
         except KleeRunFailure as ex:
+            print "KLEE Run Failed"
+            print ex.message
+
             self.send_notification('job_failed', {'output': ex.message})
