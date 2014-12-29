@@ -7,15 +7,16 @@ import codecs
 
 import requests
 
-import failing_tests
 from exception import KleeRunFailure
 from worker_config import WorkerConfig
 from mailer.mailgun_mailer import MailgunMailer
 from storage.s3_storage import S3Storage
+from processor.failed_test import FailedTestProcessor
 
 
 ANSI_ESCAPE_PATTERN = re.compile(r'\x1b[^m]*m')
 LXC_MESSAGE_PATTERN = re.compile(r'lxc-start: .*')
+PROCESSOR_PIPELINE = [FailedTestProcessor]
 worker_config = WorkerConfig()
 
 
@@ -47,6 +48,7 @@ class WorkerRunner():
 
     def __enter__(self):
         self.tempdir = tempfile.mkdtemp(prefix=self.task_id)
+        self.temp_code_file = os.path.join(self.tempdir, "result.c")
         subprocess.check_call(["sudo", "chmod", "777", self.tempdir])
 
         return self
@@ -126,8 +128,7 @@ class WorkerRunner():
     @notify_on_entry("Analysing with KLEE")
     def run_klee(self, code, klee_args):
         # Write code out to temporary directory
-        temp_code_file = os.path.join(self.tempdir, "result.c")
-        with codecs.open(temp_code_file, 'w', encoding='utf-8') as f:
+        with codecs.open(self.temp_code_file, 'w', encoding='utf-8') as f:
             f.write(code)
 
         # Compile code with LLVM-GCC
@@ -153,31 +154,33 @@ class WorkerRunner():
             }
             requests.post(self.callback_endpoint, payload)
 
-    def get_failed_tests(self):
-        klee_out_path = os.path.join(self.tempdir, 'klee-out-0')
-        return failing_tests.get_failed_tests(self.tempdir, klee_out_path)
-
     @notify_on_entry("Starting Job")
     def run(self, code, email, klee_args):
         try:
             args = WorkerRunner.generate_arguments(klee_args)
             klee_output = self.run_klee(code, args)
-            failed_tests = self.get_failed_tests()
 
             file_name = 'klee-output-{}.tar.gz'.format(self.task_id)
             compressed_output_path = os.path.join(self.tempdir, file_name)
+
             self.compress_output(compressed_output_path)
             output_upload_url = self.upload_result(compressed_output_path)
 
             if email:
                 self.send_email(email, output_upload_url)
 
+            result = {
+                'output': klee_output.strip(),
+                'url': output_upload_url,
+            }
+
+            # Run post-processing pipeline
+            for processor_cls in PROCESSOR_PIPELINE:
+                processor = processor_cls(self)
+                result[processor.name] = processor.process()
+
             self.send_notification('job_complete', {
-                'result': {
-                    'output': klee_output.strip(),
-                    'url': output_upload_url,
-                    'failing': failed_tests
-                }
+                'result': result
             })
 
         except KleeRunFailure as ex:
