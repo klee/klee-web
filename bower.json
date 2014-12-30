@@ -1,0 +1,21 @@
+{
+  "name": "klee-web",
+  "version": "0.0.0",
+  "homepage": "https://github.com/klee-web/klee-web",
+  "authors": [
+    "ben-chin <ben.chin101@gmail.com>"
+  ],
+  "moduleType": [
+    "node"
+  ],
+  "license": "MIT",
+  "private": true,
+  "dependencies": {
+    "jquery": "~2.1.3"
+  },
+  "devDependencies": {
+    "angular": "~1.3.8",
+    "underscore": "~1.7.0",
+    "bootstrap-sass-official": "~3.3.1"
+  }
+}
