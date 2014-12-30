@@ -10,3 +10,7 @@ src/static/*
 npm-debug.log
 *.swp
 **/*.swp
+src/components/
+.sass-cache/
+src/klee_web/frontend/static/frontend/dist
+src/sass/bootstrap/
