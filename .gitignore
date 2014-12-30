@@ -10,4 +10,3 @@ src/static/*
 npm-debug.log
 *.swp
 **/*.swp
-kleeenv/*
