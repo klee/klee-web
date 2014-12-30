@@ -10,6 +10,11 @@ from worker.worker import celery
 from frontend.models import Task
 
 
+def get_workers():
+    i = celery.control.inspect()
+    return i.registered().keys()
+
+
 # Returns tasks registered to workers.
 def registered_tasks(workers=None):
     i = celery.control.inspect(workers)
@@ -33,11 +38,6 @@ def scheduled_tasks(workers=None):
 def active_queues(workers=None):
     i = celery.control.inspect(workers)
     return i.active_queues()
-
-
-def get_workers():
-    i = celery.control.inspect()
-    return i.registered().keys()
 
 
 # Returns tasks taken off the queue by a worker, waiting to be executed.
