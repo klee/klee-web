@@ -25,11 +25,12 @@ app.controller('MainCtrl',
             code: '',
             args: {
               numFiles:0,
-              sizeFiles:0
+              sizeFiles:0,
+              coverage_enabled:false
             }
         };
 
-        // Setup pusher 
+        // Setup pusher
         var pusher = $pusher(pclient);
         var channel_id = null;
 

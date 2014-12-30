@@ -10,7 +10,9 @@ class CoverageProcessor():
     def __init__(self, runner):
         self.runner = runner
 
-    def process(self):
+    def process(self, args):
+        if args.get('coverage_enabled'):
+            return
         runner = self.runner
         mount_dir = runner.DOCKER_MOUNT_DIR
         coverage_obj_file = os.path.join(mount_dir, 'code_cov.o')

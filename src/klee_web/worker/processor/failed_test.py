@@ -38,7 +38,7 @@ class FailedTestProcessor():
         m = re.match(pattern, line)
         return m.group(1) if m else 0
 
-    def process(self):
+    def process(self, args):
         error_files = filter(lambda f: f.endswith('.err'),
                              os.listdir(self.klee_result_dir))
         return map(self.process_error_file, error_files)

@@ -21,7 +21,7 @@ class UploadProcessor():
     def upload_result(self, result_file_path):
         return self.storage.store_file(result_file_path)
 
-    def process(self):
+    def process(self, args):
         file_name = 'klee-output-{}.tar.gz'.format(self.runner.task_id)
         compressed_output_path = os.path.join(self.runner.tempdir, file_name)
 

@@ -166,7 +166,7 @@ class WorkerRunner():
             # Run post-processing pipeline
             for processor_cls in self.PROCESSOR_PIPELINE:
                 processor = processor_cls(self)
-                result[processor.name] = processor.process()
+                result[processor.name] = processor.process(klee_args)
 
             self.send_notification('job_complete', {
                 'result': result
