@@ -1,6 +1,7 @@
 var config = {
   lib: 'src/components',
   sass: 'src/sass',
+  app: 'src/appjs',
   frontend_dist: 'src/klee_web/frontend/static/frontend/dist'
 };
 
@@ -25,11 +26,51 @@ module.exports = function (grunt) {
         			{
         				expand: true,
         				cwd: '<%= config.lib %>/bootstrap-sass-official/assets/fonts',
-        				src: ['**/*'],
-        				dest: '<%= config.frontend_dist %>/fonts'
-        			}
+                        src: ['**/*'],
+                        dest: '<%= config.frontend_dist %>/fonts'
+                    },
+                    // Codemirror
+                    {
+                        expand: true,
+                        cwd: '<%= config.lib %>/codemirror/lib',
+        				src: 'codemirror.css',
+        				dest: '<%= config.frontend_dist %>/css/vendor/codemirror'
+        			},
+                    {
+                        expand: true,
+                        cwd: '<%= config.lib %>/codemirror/theme',
+                        src: ['*.css'],
+                        dest: '<%= config.frontend_dist %>/css/vendor/codemirror/theme'
+                    },
+                    // Angular Codemirror
+                    {
+                        expand: true,
+                        cwd: '<%= config.lib %>/angular-ui-codemirror',
+                        src: 'ui-codemirror.min.js',
+                        dest: '<%= config.frontend_dist %>/js/vendor'
+                    }
         		]
         	}
+        },
+        concat: {
+            dist: {
+                files: [
+                    {
+                        '<%= config.frontend_dist %>/js/vendor/angular-custom.min.js': 
+                            [
+                                '<%= bower.directory %>/angular/angular.min.js',
+                                '<%= bower.directory %>/angular-resource/angular-resource.min.js',
+                                '<%= bower.directory %>/angular-cookies/angular-cookies.min.js',
+                                '<%= bower.directory %>/angular-animate/angular-animate.min.js',
+                            ],
+                        '<%= config.frontend_dist %>/js/vendor/pusher-with-angular.min.js':
+                            [
+                                '<%= bower.directory %>/pusher/dist/pusher.min.js',
+                                '<%= bower.directory %>/pusher-angular/lib/pusher-angular.min.js',
+                            ]
+                    }
+                ]
+            }
         },
         uglify: {
         	dist: {
@@ -38,14 +79,20 @@ module.exports = function (grunt) {
         				'<%= bower.directory %>/jquery/jquery.js',
         				'<%= bower.directory %>/underscore/underscore.js',
         			],
-        			'<%= config.frontend_dist %>/js/lib.min.js': [
-        				'<%= bower.directory %>/jquery/jquery.js',
-        				'<%= bower.directory %>/underscore/underscore.js',
-        			],
-        			'<%= config.frontend_dist %>/js/vendor/bootstrap.min.js': [
-        				'<%= bower.directory %>/bootstrap-sass-official/assets/javascripts/bootstrap.js',
-        				'<%= bower.directory %>/bootstrap-sass-official/assets/javascripts/bootstrap/*.js',
-        			],
+                    '<%= config.frontend_dist %>/js/vendor/bootstrap.min.js': [
+                        '<%= bower.directory %>/bootstrap-sass-official/assets/javascripts/bootstrap.js',
+                        '<%= bower.directory %>/bootstrap-sass-official/assets/javascripts/bootstrap/*.js',
+                    ],
+                    '<%= config.frontend_dist %>/js/vendor/codemirror.min.js': [
+                        '<%= bower.directory %>/codemirror/lib/codemirror.js',
+                        // C syntax
+                        '<%= bower.directory %>/codemirror/mode/clike/clike.js',
+                    ],
+
+                    // Application JS
+        			'<%= config.frontend_dist %>/js/app.min.js': [
+                        '<%= config.app %>/app.js'
+                    ]
         		}
         	}
         },
@@ -78,11 +125,13 @@ module.exports = function (grunt) {
 
 	grunt.loadNpmTasks("grunt-contrib-sass");
 	grunt.loadNpmTasks("grunt-contrib-watch");
-	grunt.loadNpmTasks('grunt-contrib-copy');
+    grunt.loadNpmTasks('grunt-contrib-copy');
+	grunt.loadNpmTasks('grunt-contrib-concat');
 	grunt.loadNpmTasks('grunt-contrib-uglify');
 
 	grunt.registerTask('default', [
 		'copy',
+        'concat',
 		'uglify',
 		'sass',
 	]);

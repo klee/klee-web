@@ -3,8 +3,7 @@
 {% block title %}KLEE{% endblock %}
 
 {% block css %}
-    <link href="//cdnjs.cloudflare.com/ajax/libs/codemirror/4.6.0/codemirror.min.css
-" rel="stylesheet">
+    <link href="{{dist}}css/vendor/codemirror/codemirror.css" rel="stylesheet">
 {% endblock %}
 
 {% block content %}
@@ -231,18 +230,13 @@
 {% endblock %}
 
 {% block javascript %}
-    <script src="//js.pusher.com/2.2/pusher.min.js"></script>
-    <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.3.0/angular.min.js"></script>
-    <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.3.0/angular-resource.min.js"></script>
-    <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.3.0/angular-cookies.min.js"></script>
-    <script src="//ajax.googleapis.com/ajax/libs/angularjs/1.3.0/angular-animate.min.js"></script>
-    <script src="//cdn.jsdelivr.net/angular.pusher/latest/pusher-angular.min.js"></script>
-    <script src="static/frontend/js/vendor/ui-codemirror.min.js"></script>
-    <script src="//cdnjs.cloudflare.com/ajax/libs/codemirror/4.6.0/codemirror.min.js"></script>
-    <script src="//cdnjs.cloudflare.com/ajax/libs/codemirror/4.6.0/mode/clike/clike.min.js"></script>
+    <script src="{{dist}}js/vendor/angular-custom.min.js"></script>
+    <script src="{{dist}}js/vendor/pusher-with-angular.min.js"></script>
+    <script src="{{dist}}js/vendor/codemirror.min.js"></script>
+    <script src="{{dist}}js/vendor/ui-codemirror.min.js"></script>
 
     <script type="text/javascript">
         window.pclient = new Pusher('19744474b2493510f861');
     </script>
-    <script src="/static/frontend/js/app.js"></script>
+    <script src="{{dist}}js/app.min.js"></script>
 {% endblock %}
