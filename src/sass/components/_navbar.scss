@@ -1,0 +1,10 @@
+/* -----------------------------
+ *  Main navbar styles --------
+ * ----------------------------- */
+
+.topbar {
+	background-color: #FFF;
+	border-bottom: $border-width solid $nav-border-color;
+	height: $topbar-height;
+	z-index: 1;
+}

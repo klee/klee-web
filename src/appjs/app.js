@@ -78,8 +78,11 @@ app.controller('MainCtrl', [
             viewportMargin: 5,
             lineWrapping: true,
             lineNumbers: true,
-            mode: 'clike'
+            mode: 'clike',
+            theme: 'neo'
         };
+
+        console.log($scope.editorOptions);
 
         $scope.resetStdin = function () {
             $scope.stdinArgs = false;

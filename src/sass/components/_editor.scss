@@ -1,0 +1,39 @@
+.editor {
+	background-color: #FFF;
+
+	&> header {
+		background-color: $editor-header-bg-color;
+		border-bottom: $border-width solid $nav-border-color;
+
+		.run-klee-btn {
+			float: right;
+			margin-right: 20px;
+			margin-top: ($topbar-height - $k-btn-height) / 2;
+			width: 100px;
+			background-color: $run-klee-btn-bg-color;
+		}
+	}
+
+	.CodeMirror {
+		margin-top: - $topbar-height;
+		padding-top: $topbar-height;
+		height: 100%;
+
+		.CodeMirror-gutters {
+			background-color: $line-nums-bg-color;
+		}
+
+		.CodeMirror-gutter {
+			width: 40px;
+		}
+
+		.CodeMirror-linenumber {
+			padding-right: 5px;
+			color: $line-nums-color;
+		}
+
+		.CodeMirror-code {
+			padding-left: 15px;
+		}
+	}
+}

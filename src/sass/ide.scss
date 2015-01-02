@@ -1,0 +1,42 @@
+// Import variables
+@import "variables";
+
+.wrapper {
+	margin-right: - $sidebar-width;
+	float: left;
+}
+
+@import "components/sidebar";
+
+.content {
+	height: 100%;
+	margin-left: $sidebar-width;
+	min-width: 600px;
+}
+
+@import "components/navbar";
+
+.content-inner {
+	margin-top: - $topbar-height;
+	padding-top: $topbar-height;
+	height: 100%;
+	width: 100%;
+
+	.editor,
+	.results {
+		float: left;
+		width: 50%;
+		height: 100%;
+
+		&> header {
+			position: relative;
+			height: $topbar-height;
+			width: 100%;
+			z-index: 1;
+		}
+	}
+}
+
+@import "components/editor";
+@import "components/results";
+

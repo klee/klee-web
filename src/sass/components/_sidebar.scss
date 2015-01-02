@@ -1,0 +1,152 @@
+/* -----------------------------
+ *  Main sidebar styles --------
+ * ----------------------------- */
+
+.sidebar {
+	position: relative;
+	height: 100%;
+	width: $sidebar-width;
+	float: left;
+	background-color: $sidebar-bg-color;
+}
+
+// Current file area
+.sidebar {
+
+	&> header {
+		width: 100%;
+		height: $topbar-height;
+		background-color: $head-bg-color;
+		border-bottom: $border-width solid $head-border-color;
+	}
+
+	.current-file {
+		padding-top: 30px;
+		padding-bottom: 20px;
+		padding-left: 20px;
+		background-color: $current-files-bg-color;
+		border-bottom: $border-width solid $current-files-border-color;
+
+		&> header {
+			padding-left: 10px;
+
+			h3 {
+				font-size: 0.9em;
+				font-weight: 700;
+				text-transform: uppercase;
+				letter-spacing: 0.4px;
+				color: $dark-blue-header-color;
+			}
+		}
+
+		p {
+			padding-top: 10px;
+			padding-left: 20px;
+			color: #FFF;
+			font-size: 0.95em;
+
+			i {
+				padding-right: 10px;
+				font-size: 1.1em;
+
+			}
+		}
+	}
+}
+
+// Available files area
+.sidebar {
+
+	.available-files {
+		padding-top: 30px;
+		padding-bottom: 20px;
+
+		.add-file {
+			p {
+				padding-bottom: 10px;
+				
+				a {
+					padding-left: 20px;
+					font-size: 0.95em;
+					color: #FFF;
+
+					i {
+						margin-right: 10px;
+						font-size: 1.2em;
+					}
+
+					&:hover,
+					&:focus {
+						outline: 0;
+						cursor: pointer;
+					}
+				}
+			}
+		}
+
+		ul.files {
+
+			li {
+				padding: 8px 0;
+				a {
+					padding-top: 10px;
+					padding-left: 20px;
+					color: $off-white-body-color;
+					font-size: 0.95em;
+
+					i {
+						padding-right: 15px;
+						font-size: 1.1em;
+
+					}
+
+					&:hover {
+						color: #FFF;
+					}
+				}
+			}
+		}		
+	}
+}
+
+// Upload files area
+.sidebar {
+	.upload-file {
+		position: absolute;
+		bottom: 0;
+		width: 100%;
+		height: $topbar-height;
+		display: table;
+		border-top: $border-width solid $current-files-border-color;
+		background-color: $current-files-bg-color;
+		
+		h3 {
+			display: table-cell;
+			vertical-align: middle;
+			text-align: center;
+			font-size: 0.9em;
+			font-weight: 700;
+			text-transform: uppercase;
+			letter-spacing: 0.4px;
+			color: $dark-blue-header-color;
+
+			a {
+				color: $dark-blue-header-color;
+
+				i {
+					font-size: 1.3em;
+					margin-left: 15px;
+				}
+
+				&:hover {
+					color: #FFF;
+				}
+			}
+		}
+	}
+}
+
+
+
+
+

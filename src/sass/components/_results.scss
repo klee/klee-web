@@ -1,0 +1,58 @@
+.results {
+	background-color: $results-body-bg-color;
+	border-left: $border-width solid $vertical-sep-border-color;
+
+	&> header {
+		display: table;
+		background-color: $results-header-bg-color;
+		border-bottom: $border-width solid $results-header-border-color;
+		
+		h3 {
+			padding-top: 28px;
+			padding-left: 30px;
+			float: left;
+			vertical-align: middle;
+			font-size: 1.1em;
+			font-weight: 700;
+			text-transform: uppercase;
+			letter-spacing: 0.8px;
+			color: $dark-blue-header-color;
+		}
+
+		.action-box {
+			float: right;
+			height: $topbar-height;
+			width: $topbar-height;
+			border-left: $border-width solid $results-header-border-color;
+			display: table;
+
+			a {
+				width: 100%;
+				display: table-cell;
+				text-align: center;
+				vertical-align: middle;
+				color: $dark-active-color;
+				font-size: 1.5em;
+
+				&:hover {
+					color: lighten($dark-active-color, 10%);
+				}
+			}
+
+			&.download {
+				a { 
+					padding-top: 5px;
+				}
+			}
+		}
+	}
+}
+
+.results .results-inner {
+
+	&> header {
+		width: 100%;
+		height: $topbar-height;
+		border-bottom: $border-width solid $results-header-border-color;
+	}
+}

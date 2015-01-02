@@ -25,9 +25,22 @@ module.exports = function (grunt) {
         			// Copy Bootstrap assets to dist dirs
         			{
         				expand: true,
-        				cwd: '<%= config.lib %>/bootstrap-sass-official/assets/fonts',
+                        cwd: '<%= config.lib %>/bootstrap-sass-official/assets/fonts',
                         src: ['**/*'],
                         dest: '<%= config.frontend_dist %>/fonts'
+                    },
+                    // Elegant Icons
+                    {
+                        expand: true,
+        				cwd: '<%= config.lib %>/elegant-icons/fonts',
+                        src: ['*'],
+                        dest: '<%= config.frontend_dist %>/fonts'
+                    },
+                    {
+                        expand: true,
+                        cwd: '<%= config.lib %>/elegant-icons/css',
+                        src: ['style.css'],
+                        dest: '<%= config.frontend_dist %>/css/vendor/eleganticons'
                     },
                     // Codemirror
                     {
@@ -114,8 +127,20 @@ module.exports = function (grunt) {
         },
         watch: {
             sass: {
-                files: ['<%= config.sass %>/*.scss'],
+                files: [
+                    '<%= config.sass %>/*.scss',
+                    '<%= config.sass %>/components/*.scss',
+                ],
                 tasks: ['sass'],
+                options: {
+                    spawn: false
+                }
+            },
+            app: {
+                files: [
+                    '<%= config.app %>/*.js'
+                ],
+                tasks: ['uglify'],
                 options: {
                     spawn: false
                 }
