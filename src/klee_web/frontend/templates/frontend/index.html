@@ -4,10 +4,108 @@
 
 {% block css %}
     <link href="{{dist}}css/vendor/codemirror/codemirror.css" rel="stylesheet">
+    <link href="{{dist}}css/vendor/codemirror/theme/neo.css" rel="stylesheet">
+    <link href="{{dist}}css/ide.css" rel="stylesheet">
 {% endblock %}
 
 {% block content %}
-    <div ng-app="app">
+
+  <!-- Sidebar -->
+  <section class="sidebar">
+    <header>
+      
+    </header>
+
+    <div class="current-file">
+      <header>
+        <h3>Current file</h3>
+      </header>
+      <p><i class="icon_document_alt"></i> main.c</p>
+    </div>
+
+    <div class="available-files">
+      <div class="add-file">
+        <p>
+          <a href="#">
+            <i class="icon_plus"></i> Add file...
+          </a> 
+        </p>  
+      </div>
+      
+      <ul class="files">
+        <li>
+          <a href="#">
+            <i class="icon_document_alt"></i> badmalloc.c
+          </a>
+        </li>
+        <li>
+          <a href="#">
+            <i class="icon_document_alt"></i> doublefree.c
+          </a>
+        </li>
+      </ul>
+    </div>
+
+    <div class="upload-file">
+      <h3>
+        <a href="#">
+          Upload File 
+          <i class="icon_cloud-upload_alt"></i>
+        </a>
+      </h3>
+    </div>
+  </section>
+
+  <!-- Main container -->
+  <div class="content" ng-controller="MainCtrl">
+    <nav class="topbar">
+      <header>
+        <img src="" />
+      </header>
+    </nav>
+
+    <div class="content-inner">
+
+        <div class="editor">
+          <header>
+            <button class="btn k-btn run-klee-btn"> Run Klee</button>
+          </header>
+
+          <ui-codemirror id="codemirror"
+            ng-model="submission.code"
+            ui-codemirror-opts="editorOptions"></ui-codemirror>
+        </div>
+
+        <div class="results">
+          <header>
+            <h3>KLEE Results</h3>
+
+            <div class="download action-box">
+              <a href="#">
+                <i class="icon_cloud-download_alt"></i>
+              </a>
+            </div>
+
+            <div class="email action-box">
+              <a href="#">
+                <i class="icon_mail_alt"></i>
+              </a>
+            </div>
+
+          </header>
+
+          <div class="results-inner">
+            <header>
+            </header>
+
+          </div>
+        </div>
+
+    </div>
+  </div>
+
+    <!-- Real content -->
+    <!-- <div ng-app="app">
 
         <div ng-controller="MainCtrl">
 
@@ -84,7 +182,7 @@
                                 Additional arguments (Optional):
                               </label>
                               <!--<ul style="list-style: none;">-->
-                              <ul>
+                              <!-- <ul>
                                 <span ng-hide="!stdinArgs" class="ng-hide">
                                   <li>
                                     <label for="{{ form.min_stdin_args.id_for_label }}">
@@ -225,7 +323,8 @@
 
         </div>
 
-    </div>
+    </div> -->
+    <!-- end of content -->
 
 {% endblock %}
 
