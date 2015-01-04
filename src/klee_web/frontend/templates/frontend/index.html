@@ -109,29 +109,33 @@
 
           </header>
 
-          <div class="results-inner">
+          <div class="results-inner" ng-controller="ResultTabsCtrl">
             <header>
               <nav class="tabs">
                 <ul>
-                  <li class="active">
-                    <a href="#">Output</a>
+                  <li ng-class="{active: tabs.output.active}">
+                    <a href="#" ng-click="setTab('output')">Output</a>
                   </li>
-                  <li>
-                    <a href="#">Coverage</a>
+                  <li ng-class="{active: tabs.coverage.active}">
+                    <a href="#" ng-click="setTab('coverage')">Coverage</a>
                   </li>
                 </ul>
               </nav>
             </header>
 
             <div class="results-body">
+              <div class="tab-body">
 
-              <div class="klee-output">
+                <div class="tab-content-inner klee-output" ng-show="tabs.output.active">
+                  <pre class="progress-step" ng-repeat="step in progress track by $index" ng-cloak>[[ step ]]</pre>
+                  <pre>[[ result.output ]]</pre>
+                </div>
 
-                <pre class="progress-step" ng-repeat="step in progress track by $index" ng-cloak>[[ step ]]</pre>
-                <pre>[[ result.output ]]</pre>
-              
+                <div class="tab-content-inner klee-coverage" ng-show="tabs.coverage.active">
+                  <p>Todo</p>
+                </div>
+
               </div>
-
             </div>
           </div>
         </div>
