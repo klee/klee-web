@@ -73,6 +73,7 @@ app.controller('MainCtrl', [
         $scope.stdinArgs = false;
         $scope.progress = [];
         $scope.result = {};
+        $scope.submitted = false;
 
         $scope.editorOptions = {
             viewportMargin: 5,
@@ -93,6 +94,7 @@ app.controller('MainCtrl', [
         };
         
         $scope.processForm = function (submission) {
+            $scope.submitted = true;            
             if (channel_id) {
                 pusher.unsubscribe(channel_id);
             }
@@ -111,19 +113,14 @@ app.controller('MainCtrl', [
 
                         channel.bind('notification', function (response) {
                             data = angular.fromJson(response.data);
-
-                            // No guarantee of order? latency issues?
-                            if (data.result) {
-                                $scope.result = data.result;
-                            } else {
-                                $scope.progress.push(data.message);
-                            }
+                            $scope.progress.push(data.message);
                         });
 
                         channel.bind('job_complete', function (response) {
                             data = angular.fromJson(response.data);
                             $scope.progress.push('Done!');
                             $scope.result = data.result;
+                            $scope.submitted = false;
                         });
 
                         channel.bind('job_failed', function (response) {
@@ -131,6 +128,7 @@ app.controller('MainCtrl', [
                             $scope.result = {
                                 'output': data.output
                             };
+                            $scope.submitted = false;
                         });
 
                     }
@@ -143,6 +141,41 @@ app.controller('MainCtrl', [
                 );
 
         };
+    }]
+);
+
+app.controller('ResultTabsCtrl', [
+    '$scope',
+    function ($scope) {
+        $scope.tabs = {
+            output: {
+                active: true 
+            },
+            coverage: {
+                active: false
+            }
+        };
+
+        $scope.hideAllTabs = function () {
+            angular.forEach($scope.tabs, function (tab, name) {
+                $scope.tabs[name].active = false;
+            });
+        };
+
+        $scope.setTab = function (tab) {
+            if (tab in $scope.tabs) {
+                $scope.hideAllTabs();
+                $scope.tabs[tab].active = true;
+            }
+        };
+
+        // Switch tab back to output if we hit submit
+        $scope.$watch('submitted', function (submitted) {
+            if (submitted) {
+                $scope.setTab('output');     
+            }
+        });
+
     }]
 );
 

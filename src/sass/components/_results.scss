@@ -160,23 +160,37 @@
 		padding-top: $topbar-height;
 	}
 
-	.klee-output {
+	.tab-body {
+		position: relative;
 		height: 100%;
 		width: 100%;
-		padding-top: 30px;
 		overflow-y: auto;
 
+		.tab-content-inner {
+			height: 100%;
+			position: absolute;
+			width: 100%;
+			top: 0;
+			padding: 30px 40px;
+		}
+	}
+
+	.klee-output {
 		pre {
 			background: none;
 			border: none;
 			border-radius: 0;
-			padding: 35px 40px;
+			padding: 35px 0;
 			color: $console-output-color;
 
 			&.progress-step {
-				padding: 0 40px;
+				padding: 0;
 				color: $console-tab-color;
 			}
 		}
+	}
+
+	.klee-coverage {
+		p { color: #FFF; }
 	}
 }
