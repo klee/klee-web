@@ -31,7 +31,8 @@ class TestWorkerRunner(unittest.TestCase):
                          encoding='utf-8') as f:
             expected_out = f.read()
 
-        expected_regex = re.compile(u"{}$".format(expected_out), re.M)
+        flags = re.M | re.DOTALL | re.UNICODE
+        expected_regex = re.compile(u"{}$".format(expected_out), flags)
         arg_list = shlex.split(args)
         if expect_failure:
             self.assertRaisesRegexp(KleeRunFailure, expected_regex,

@@ -172,6 +172,12 @@
                                   </li>
                                 </span>
                                 </li>
+                                <li>
+                                  <input type="checkbox"
+                                         ng-model="submission.args.coverage_enabled">
+                                  Want coverage report
+                                </li>
+
                               </ul>
                             </div>
                           </div>
@@ -205,10 +211,10 @@
                     <pre id="result-output">[[ result.output ]]</pre>
 
 
-                    <div ng-if="result.failing | isNotEmpty">
+                    <div ng-if="result.failed_tests | isNotEmpty">
                         <h3>Failing tests</h3>
 
-                        <div class="panel panel-danger" ng-repeat="fail in result.failing">
+                        <div class="panel panel-danger" ng-repeat="fail in result.failed_tests">
                             <div class="panel-heading">
                                 <h3 class="panel-title">[[ fail.reason ]]</h3>
                             </div>

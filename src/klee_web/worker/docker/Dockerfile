@@ -68,5 +68,7 @@ RUN mkdir /src && cd /src  && \
     rm -rf /src/llvm-2.9 && \
     cd /root
 
+RUN ln -s /usr/lib/clang/3.4/lib/linux/libclang_rt.profile-x86_64.a /usr/lib/libprofile_rt.a
 RUN useradd worker
 USER worker
+ENV LD_LIBRARY_PATH /src/klee/Release+Asserts/lib/:$LD_LIBRARY_PATH
