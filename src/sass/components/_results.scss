@@ -49,10 +49,14 @@
 }
 
 .results .results-inner {
+	height: 100%;
+	margin-top: - $topbar-height;
+	padding-top: $topbar-height;
 
 	&> header {
 		width: 100%;
 		height: $topbar-height;
+		background-color: $results-body-bg-color;
 		border-bottom: $border-width solid $results-header-border-color;
 	
 		.tabs {
@@ -101,7 +105,18 @@
 		}
 	}
 
+	.results-body {
+		height: 100%;
+		margin-top: - $topbar-height;
+		padding-top: $topbar-height;
+	}
+
 	.klee-output {
+		height: 100%;
+		width: 100%;
+		padding-top: 30px;
+		overflow-y: auto;
+
 		pre {
 			background: none;
 			border: none;
@@ -110,7 +125,8 @@
 			color: $console-output-color;
 
 			&.progress-step {
-				padding: 5px 40px;
+				padding: 0 40px;
+				color: $console-tab-color;
 			}
 		}
 	}

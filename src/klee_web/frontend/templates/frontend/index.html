@@ -71,77 +71,70 @@
 
       <div class="content-inner">
 
-          <form ng-submit="processForm(submission)"
-            enctype="multipart/form-data"
-            class="{% if messages %} has-error {% endif %}"
-            ng-cloak>
-            {% csrf_token %}
-            
-            <div class="editor">
-              <header>
-                <button ng-click="processForm(submission)" class="btn k-btn run-klee-btn">
-                  <i class="arrow_triangle-right"></i> <span>Run Klee</span>
-                </button>
-              </header>
-                
-              <ui-codemirror id="codemirror"
-                ng-model="submission.code"
-                ui-codemirror-opts="editorOptions"></ui-codemirror>
+        <form ng-submit="processForm(submission)"
+          enctype="multipart/form-data"
+          class="editor {% if messages %} has-error {% endif %}"
+          ng-cloak>
+          {% csrf_token %}
           
-              {{ form.code.errors }}
+          <header>
+            <button type="submit" class="btn k-btn run-klee-btn">
+              <i class="arrow_triangle-right"></i> <span>Run Klee</span>
+            </button>
+          </header>
+            
+          <ui-codemirror id="codemirror"
+            ng-model="submission.code"
+            ui-codemirror-opts="editorOptions"></ui-codemirror>
+      
+          {{ form.code.errors }}
 
+        </form>
+
+        <div class="results" ng-cloak>
+          <header>
+            <h3>KLEE Results</h3>
+
+            <div class="download action-box">
+              <a href="#">
+                <i class="icon_cloud-download_alt"></i>
+              </a>
             </div>
-          </form>
 
-          <div class="results">
+            <div class="email action-box">
+              <a href="#">
+                <i class="icon_mail_alt"></i>
+              </a>
+            </div>
+
+          </header>
+
+          <div class="results-inner">
             <header>
-              <h3>KLEE Results</h3>
-
-              <div class="download action-box">
-                <a href="#">
-                  <i class="icon_cloud-download_alt"></i>
-                </a>
-              </div>
-
-              <div class="email action-box">
-                <a href="#">
-                  <i class="icon_mail_alt"></i>
-                </a>
-              </div>
-
+              <nav class="tabs">
+                <ul>
+                  <li class="active">
+                    <a href="#">Output</a>
+                  </li>
+                  <li>
+                    <a href="#">Coverage</a>
+                  </li>
+                </ul>
+              </nav>
             </header>
 
-            <div class="results-inner">
-              <header>
-                <nav class="tabs">
-                  <ul>
-                    <li class="active">
-                      <a href="#">Output</a>
-                    </li>
-                    <li>
-                      <a href="#">Coverage</a>
-                    </li>
-                  </ul>
-                </nav>
-              </header>
+            <div class="results-body">
 
               <div class="klee-output">
-                <!-- <pre>
-KLEE: output directory is "/code/klee-out-0"
-KLEE: WARNING: undefined reference to function: printf
-KLEE: WARNING ONCE: calling external: printf(29297344)
-Hello world
 
-KLEE: done: total instructions = 8
-KLEE: done: completed paths = 1
-KLEE: done: generated tests = 1
-                </pre> -->
-                <pre class="progress-step" ng-repeat="step in progress" ng-cloak>[[ step ]]</pre>
+                <pre class="progress-step" ng-repeat="step in progress track by $index" ng-cloak>[[ step ]]</pre>
                 <pre>[[ result.output ]]</pre>
+              
               </div>
 
             </div>
           </div>
+        </div>
 
       </div>
     </div>
