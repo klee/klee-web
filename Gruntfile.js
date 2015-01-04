@@ -36,6 +36,13 @@ module.exports = function (grunt) {
                         src: ['*'],
                         dest: '<%= config.frontend_dist %>/fonts'
                     },
+                    // Animate.css
+                    {
+                        expand: true,
+                        cwd: '<%= config.lib %>/animate.css',
+                        src: ['animate.min.css'],
+                        dest: '<%= config.frontend_dist %>/css/vendor'
+                    },
                     {
                         expand: true,
                         cwd: '<%= config.lib %>/elegant-icons/css',

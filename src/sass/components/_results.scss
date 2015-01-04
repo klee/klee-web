@@ -31,11 +31,39 @@
 				display: table-cell;
 				text-align: center;
 				vertical-align: middle;
-				color: $dark-active-color;
 				font-size: 1.5em;
+				color: $dark-disabled-color;
 
+				
 				&:hover {
-					color: #FFF;
+					color: $dark-disabled-color;
+					cursor: default;
+				}
+			}
+
+			&.active {
+				a {
+					color: $dark-active-color;
+
+					&:hover {
+						color: #FFF;
+						-webkit-transition: color 0.2s ease-in-out;
+						transition: color 0.2s ease-in-out;
+						cursor: pointer;
+					}
+				}
+			}
+
+			&.flash-color {
+				a {
+					-webkit-animation-name: flashColor;
+					animation-name: flashColor;
+					-webkit-animation-duration: 1.5s;
+					animation-duration: 1.5s;
+					-webkit-animation-delay: 0s;
+					animation-delay: 0s;
+					-webkit-animation-iteration-count: 1;
+					animation-iteration-count: 1;
 				}
 			}
 
@@ -46,6 +74,27 @@
 			}
 		}
 	}
+}
+
+// Animation sequence for flashing action boxes
+@-webkit-keyframes flashColor {
+  0%, 50%, 100% {
+    color: $dark-active-color;
+  }
+
+  25%, 75% {
+    color: $dark-disabled-color;
+  }
+}
+
+@keyframes flashColor {
+  0%, 50%, 100% {
+    color: $dark-active-color;
+  }
+
+  25%, 75% {
+    color: $dark-disabled-color;
+  }
 }
 
 .results .results-inner {

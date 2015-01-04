@@ -95,8 +95,8 @@
           <header>
             <h3>KLEE Results</h3>
 
-            <div class="download action-box">
-              <a href="#">
+            <div class="download action-box" ng-class="{'active': result.url, 'flash-color': result.url}">
+              <a href="#" ng-href="[[ result.url ]]">
                 <i class="icon_cloud-download_alt"></i>
               </a>
             </div>
