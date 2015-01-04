@@ -78,11 +78,12 @@ app.controller('MainCtrl', [
             viewportMargin: 5,
             lineWrapping: true,
             lineNumbers: true,
-            mode: 'clike',
+            mode: {
+                name: 'text/x-csrc',
+                useCPP: true
+            },
             theme: 'neo'
         };
-
-        console.log($scope.editorOptions);
 
         $scope.resetStdin = function () {
             $scope.stdinArgs = false;
@@ -104,42 +105,42 @@ app.controller('MainCtrl', [
                 .post('/submit/', submission)
                 // We get a task id from submitting!
                 .success(
-                function (data, status, headers) {
-                    channel_id = data.task_id;
-                    var channel = pusher.subscribe(channel_id);
+                    function (data, status, headers) {
+                        channel_id = data.task_id;
+                        var channel = pusher.subscribe(channel_id);
 
-                    channel.bind('notification', function (response) {
-                        data = angular.fromJson(response.data);
+                        channel.bind('notification', function (response) {
+                            data = angular.fromJson(response.data);
 
-                        // No guarantee of order? latency issues?
-                        if (data.result) {
+                            // No guarantee of order? latency issues?
+                            if (data.result) {
+                                $scope.result = data.result;
+                            } else {
+                                $scope.progress.push(data.message);
+                            }
+                        });
+
+                        channel.bind('job_complete', function (response) {
+                            data = angular.fromJson(response.data);
+                            $scope.progress.push('Done!');
                             $scope.result = data.result;
-                        } else {
-                            $scope.progress.push(data.message);
-                        }
-                    });
+                        });
 
-                    channel.bind('job_complete', function (response) {
-                        data = angular.fromJson(response.data);
-                        $scope.progress.push('Done!');
-                        $scope.result = data.result;
-                    });
+                        channel.bind('job_failed', function (response) {
+                            data = angular.fromJson(response.data);
+                            $scope.result = {
+                                'output': data.output
+                            };
+                        });
 
-                    channel.bind('job_failed', function (response) {
-                        data = angular.fromJson(response.data);
-                        $scope.result = {
-                            'output': data.output
-                        };
-                    });
-
-                }
-            )
+                    }
+                )
                 // We didn't even get a task back from submit
                 .error(
-                function (data, status, headers) {
-                    console.debug('Error! ', data);
-                }
-            );
+                    function (data, status, headers) {
+                        console.debug('Error! ', data);
+                    }
+                );
 
         };
     }]

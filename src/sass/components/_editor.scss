@@ -9,18 +9,35 @@
 			float: right;
 			margin-right: 20px;
 			margin-top: ($topbar-height - $k-btn-height) / 2;
-			width: 100px;
+			width: 125px;
 			background-color: $run-klee-btn-bg-color;
+			
+			i {
+				position: relative;
+				top: 1px;
+				left: -2px;
+				font-size: 1.6em;
+				margin-right: 5px;
+			}
+
+			span {
+				position: relative;
+				top: -3px;
+			}
+
+			&:hover {
+				background-color: lighten($run-klee-btn-bg-color, 5%);
+			}
 		}
 	}
 
 	.CodeMirror {
 		margin-top: - $topbar-height;
-		padding-top: $topbar-height;
+		padding-top: $topbar-height + 20px;
 		height: 100%;
 
 		.CodeMirror-gutters {
-			background-color: $line-nums-bg-color;
+			// background-color: $line-nums-bg-color;
 		}
 
 		.CodeMirror-gutter {
@@ -28,12 +45,17 @@
 		}
 
 		.CodeMirror-linenumber {
-			padding-right: 5px;
+			padding-right: 10px;
 			color: $line-nums-color;
 		}
 
 		.CodeMirror-code {
-			padding-left: 15px;
+			.cm-comment, .cm-meta {color:#94b3d7}
+			.cm-keyword, .cm-property {color:#5784cf}
+			.cm-atom, .cm-number {color:#b64a4a}
+			.cm-node, .cm-tag {color:#9c3328}
+			.cm-string {color:#b64a4a}
+			.cm-variable, .cm-qualifier {color:#3f4146}
 		}
 	}
 }

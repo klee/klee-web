@@ -10,99 +10,144 @@
 
 {% block content %}
 
-  <!-- Sidebar -->
-  <section class="sidebar">
-    <header>
-      
-    </header>
-
-    <div class="current-file">
+  <div class="wrapper" ng-controller="MainCtrl">
+    
+    <!-- Sidebar -->
+    <section class="sidebar">
       <header>
-        <h3>Current file</h3>
-      </header>
-      <p><i class="icon_document_alt"></i> main.c</p>
-    </div>
 
-    <div class="available-files">
-      <div class="add-file">
-        <p>
-          <a href="#">
-            <i class="icon_plus"></i> Add file...
-          </a> 
-        </p>  
+      </header>
+
+      <div class="current-file">
+        <header>
+          <h3>Current file</h3>
+        </header>
+        <p><i class="icon_document_alt"></i> main.c</p>
       </div>
-      
-      <ul class="files">
-        <li>
-          <a href="#">
-            <i class="icon_document_alt"></i> badmalloc.c
-          </a>
-        </li>
-        <li>
-          <a href="#">
-            <i class="icon_document_alt"></i> doublefree.c
-          </a>
-        </li>
-      </ul>
-    </div>
 
-    <div class="upload-file">
-      <h3>
-        <a href="#">
-          Upload File 
-          <i class="icon_cloud-upload_alt"></i>
-        </a>
-      </h3>
-    </div>
-  </section>
-
-  <!-- Main container -->
-  <div class="content" ng-controller="MainCtrl">
-    <nav class="topbar">
-      <header>
-        <img src="" />
-      </header>
-    </nav>
-
-    <div class="content-inner">
-
-        <div class="editor">
-          <header>
-            <button class="btn k-btn run-klee-btn"> Run Klee</button>
-          </header>
-
-          <ui-codemirror id="codemirror"
-            ng-model="submission.code"
-            ui-codemirror-opts="editorOptions"></ui-codemirror>
+      <div class="available-files">
+        <div class="add-file">
+          <p>
+            <a href="#">
+              <i class="icon_plus"></i> Add file...
+            </a> 
+          </p>  
         </div>
+        
+        <ul class="files">
+          <li>
+            <a href="#">
+              <i class="icon_document_alt"></i> badmalloc.c
+            </a>
+          </li>
+          <li>
+            <a href="#">
+              <i class="icon_document_alt"></i> doublefree.c
+            </a>
+          </li>
+        </ul>
+      </div>
 
-        <div class="results">
-          <header>
-            <h3>KLEE Results</h3>
+      <div class="upload-file">
+        <h3>
+          <a href="#">
+            Upload File 
+            <i class="icon_cloud-upload_alt"></i>
+          </a>
+        </h3>
+      </div>
+    </section>
 
-            <div class="download action-box">
-              <a href="#">
-                <i class="icon_cloud-download_alt"></i>
-              </a>
+    <!-- Main container -->
+    <div class="content">
+      <nav class="topbar">
+        <header>
+          <div class="login-area">
+            <a href="#">Login</a>
+          </div>
+          <img src="" />
+        </header>
+      </nav>
+
+      <div class="content-inner">
+
+          <form ng-submit="processForm(submission)"
+            enctype="multipart/form-data"
+            class="{% if messages %} has-error {% endif %}"
+            ng-cloak>
+            {% csrf_token %}
+            
+            <div class="editor">
+              <header>
+                <button ng-click="processForm(submission)" class="btn k-btn run-klee-btn">
+                  <i class="arrow_triangle-right"></i> <span>Run Klee</span>
+                </button>
+              </header>
+                
+              <ui-codemirror id="codemirror"
+                ng-model="submission.code"
+                ui-codemirror-opts="editorOptions"></ui-codemirror>
+          
+              {{ form.code.errors }}
+
             </div>
+          </form>
 
-            <div class="email action-box">
-              <a href="#">
-                <i class="icon_mail_alt"></i>
-              </a>
-            </div>
-
-          </header>
-
-          <div class="results-inner">
+          <div class="results">
             <header>
+              <h3>KLEE Results</h3>
+
+              <div class="download action-box">
+                <a href="#">
+                  <i class="icon_cloud-download_alt"></i>
+                </a>
+              </div>
+
+              <div class="email action-box">
+                <a href="#">
+                  <i class="icon_mail_alt"></i>
+                </a>
+              </div>
+
             </header>
 
-          </div>
-        </div>
+            <div class="results-inner">
+              <header>
+                <nav class="tabs">
+                  <ul>
+                    <li class="active">
+                      <a href="#">Output</a>
+                    </li>
+                    <li>
+                      <a href="#">Coverage</a>
+                    </li>
+                  </ul>
+                </nav>
+              </header>
 
+              <div class="klee-output">
+                <!-- <pre>
+KLEE: output directory is "/code/klee-out-0"
+KLEE: WARNING: undefined reference to function: printf
+KLEE: WARNING ONCE: calling external: printf(29297344)
+Hello world
+
+KLEE: done: total instructions = 8
+KLEE: done: completed paths = 1
+KLEE: done: generated tests = 1
+                </pre> -->
+                <pre class="progress-step" ng-repeat="step in progress" ng-cloak>[[ step ]]</pre>
+                <pre>[[ result.output ]]</pre>
+              </div>
+
+            </div>
+          </div>
+
+      </div>
     </div>
+
   </div>
+
 
     <!-- Real content -->
     <!-- <div ng-app="app">

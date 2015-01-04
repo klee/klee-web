@@ -44,4 +44,21 @@ body .k-btn {
 	font-family: $heading-font;
 	font-size: 0.85em;
 	letter-spacing: 0.9px;
+	@include transition(background-color 0.2s ease-out);
+
+	&:hover,
+	&:focus,
+	&:active {
+		color: #FFF;
+		@include transition(background-color 0.2s ease-in-out);
+	}
 }
+
+body {
+	pre, code {
+		font-family: $monospace-font;
+	}
+}
+
+
+
