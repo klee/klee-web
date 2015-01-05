@@ -2,14 +2,133 @@
 	background-color: #FFF;
 
 	&> header {
+		padding-left: 40px;
 		background-color: $editor-header-bg-color;
 		border-bottom: $border-width solid $nav-border-color;
 
+		.options-btn,
+		.run-klee-btn {
+			margin-top: ($topbar-height - $k-btn-height) / 2;
+		}
+
+		.options-btn {
+			margin-right: 20px;
+
+			.k-btn {
+				background-color: $klee-opt-btn-bg-color;
+				padding-left: 15px;
+
+				&.dropdown-toggle {
+					padding-left: 8px;
+					text-align: center;
+				}
+
+			}
+
+			i {
+				position: relative;
+				top: 2px;
+				font-size: 1.6em;
+			}
+			
+			.dropdown-menu {
+				background-color: #FFF;
+				width: $klee-opt-dropdown-width;
+				padding: 10px 20px;
+
+				&> header {
+					padding: 10px 0;
+					margin-bottom: 10px;
+					border-bottom: 1px solid $vertical-sep-border-color;
+
+					h4 {
+						text-transform: uppercase;
+						font-weight: 700;
+						font-size: 1em;
+						color: $dark-blue-header-color;
+						margin-bottom: 10px;
+					}
+
+					p small {
+						color: darken($line-nums-color, 10%);
+					}
+				}
+
+				.form-group {
+					width: 100%;
+					float: left;
+					padding-top: 5px;
+
+					label {
+						font-size: 0.95em;
+						font-weight: 600;
+						letter-spacing: 0.5px;
+						margin-bottom: 10px;
+					}
+				}
+
+				.args-slider {
+					width: 100%;
+					float: left;
+
+					.slider-inner {
+						padding: 5px 5px;
+					}
+
+					.units {
+						float: left;
+						width: 100%;
+
+						.min, .max {
+							font-weight: 600;
+							font-size: 0.9em;
+						}
+
+						.min {
+							float: left;
+						}
+
+						.max {
+							float: right;
+							text-align: right;
+							padding-right: 2px;
+						}
+					}
+
+					.ui-widget-content {
+						border-color: $vertical-sep-border-color;
+					}
+
+					.ui-slider {
+						.ui-slider-handle {
+							border: none;
+							border-radius: 3px;
+							background: $dark-blue-header-color;
+							width: 0.8em;
+							margin-left: -0.4em;
+
+							&:hover {
+								cursor: pointer;
+							}
+
+							&:focus,
+							&:active {
+								outline: 0;
+							}
+						}
+
+						.ui-slider-range {
+							background-color: $console-tab-color;
+						}
+					}
+				}
+			}
+		}
+
 		.run-klee-btn {
 			float: right;
-			margin-right: 20px;
-			margin-top: ($topbar-height - $k-btn-height) / 2;
 			width: 125px;
+			margin-right: 20px;
 			background-color: $run-klee-btn-bg-color;
 			
 			i {

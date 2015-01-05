@@ -72,9 +72,9 @@ class WorkerRunner():
             size_files = klee_args.get('sizeFiles')
             result += ['--sym-files', str(num_files), str(size_files)]
 
-        min_stdin_args = klee_args.get('minStdinArgs')
-        max_stdin_args = klee_args.get('maxStdinArgs')
-        size_stdin_args = klee_args.get('sizeStdinArgs')
+        stdin_args = klee_args.get('stdinArgs')
+        min_stdin_args, max_stdin_args = stdin_args.get('range')
+        size_stdin_args = stdin_args.get('size')
         if min_stdin_args and max_stdin_args and size_stdin_args:
             result += ['--sym-args', str(min_stdin_args),
                        str(max_stdin_args), str(size_stdin_args)]

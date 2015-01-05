@@ -5,6 +5,7 @@
 {% block css %}
     <link href="{{dist}}css/vendor/codemirror/codemirror.css" rel="stylesheet">
     <link href="{{dist}}css/vendor/codemirror/theme/neo.css" rel="stylesheet">
+    <link href="{{dist}}css/vendor/jquery-ui.min.css" rel="stylesheet">
     <link href="{{dist}}css/ide.css" rel="stylesheet">
 {% endblock %}
 
@@ -78,6 +79,53 @@
           {% csrf_token %}
           
           <header>
+            <div class="options-btn btn-group" dropdown>
+              <button type="button" class="btn k-btn">Sym-args</button>
+              <button type="button" class="btn k-btn dropdown-toggle" dropdown-toggle>
+                <i class="arrow_triangle-down"></i>
+                <span class="sr-only">Split button!</span>
+              </button>
+              <div class="dropdown-menu" role="menu" ng-click="$event.stopPropagation()">
+                <header>
+                  <h4>Symbolic arguments</h4>
+                  <p><small>Very brief explanation of how to use symbolic arguments.</small></p>
+                </header>
+
+                <div class="form-group">
+                  <label>No. of symbolic args</label>
+                  <div class="args-slider"> 
+                    <div class="slider-inner">  
+                      <div ui-slider="{range: true}" min="0" max="9" step="1"ng-model="submission.args.stdinArgs.range"></div>
+                    </div>
+                    <div class="units">
+                      <span class="min">0<br/>Min</span>
+                      <span class="max">9<br/>Max</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label>Arg Size</label>
+                  <input type="text" ng-model="submission.args.stdinArgs.size" class="form-control" />
+                </div>
+              </div>
+            </div>
+
+            <div class="options-btn btn-group" dropdown>
+              <button type="button" class="btn k-btn">Sym-args</button>
+              <button type="button" class="btn k-btn dropdown-toggle" dropdown-toggle>
+                <i class="arrow_triangle-down"></i>
+                <span class="sr-only">Split button!</span>
+              </button>
+              <div class="dropdown-menu" role="menu">
+                <li><a href="#">Action</a></li>
+                <li><a href="#">Another action</a></li>
+                <li><a href="#">Something else here</a></li>
+                <li class="divider"></li>
+                <li><a href="#">Separated link</a></li>
+              </div>
+            </div>
+
             <button type="submit" class="btn k-btn run-klee-btn">
               <i class="arrow_triangle-right"></i> <span>Run Klee</span>
             </button>
@@ -375,6 +423,9 @@
     <script src="{{dist}}js/vendor/pusher-with-angular.min.js"></script>
     <script src="{{dist}}js/vendor/codemirror.min.js"></script>
     <script src="{{dist}}js/vendor/ui-codemirror.min.js"></script>
+    <script src="{{dist}}js/vendor/angular-bootstrap.min.js"></script>
+    <script src="{{dist}}js/vendor/jquery-ui.min.js"></script>
+    <script src="{{dist}}js/vendor/angular-ui-slider.min.js"></script>
 
     <script type="text/javascript">
         window.pclient = new Pusher('19744474b2493510f861');

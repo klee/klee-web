@@ -3,6 +3,8 @@ var app = angular.module('app', [
     'ngCookies',
     'ngAnimate',
     'ui.codemirror',
+    'ui.bootstrap.dropdown',
+    'ui.slider',
     'pusher-angular'
 ]);
 
@@ -28,8 +30,19 @@ app.controller('MainCtrl', [
     function ($scope, $http, $pusher) {
         $scope.submission = {
             code: '',
-            args: {}
+            args: {
+                stdinArgs: {
+                    range: [0, 0],
+                    size: 0
+                },
+                stdin_enabled: false
+            }
         };
+        
+        $scope.stdinArgs = false;
+        $scope.progress = [];
+        $scope.result = {};
+        $scope.submitted = false;
 
         // Setup pusher 
         var pusher = $pusher(pclient);
@@ -59,21 +72,15 @@ app.controller('MainCtrl', [
                 $scope.examples = data;
                 $scope.exampleKeys = Object.keys(data);
 
-
                 // Hack, TODO: add boolean for default value.
                 if ($scope.exampleKeys.length > 0) {
-                    $scope.selected = "Hello World";
+                    $scope.selected = "Test";
                     $scope.change();
                 }
             }).error(function (data, status, headers, config) {
                 console.log("Error loading tutorial examples.");
             });
 
-        $scope.submission.args.stdin_enabled = false;
-        $scope.stdinArgs = false;
-        $scope.progress = [];
-        $scope.result = {};
-        $scope.submitted = false;
 
         $scope.editorOptions = {
             viewportMargin: 5,
@@ -88,9 +95,10 @@ app.controller('MainCtrl', [
 
         $scope.resetStdin = function () {
             $scope.stdinArgs = false;
-            $scope.submission.args.minStdinArgs = 0;
-            $scope.submission.args.maxStdinArgs = 0;
-            $scope.submission.args.sizeStdinArgs = 0;
+            $scope.submission.args.stdinArgs = {
+                range: [0, 0],
+                size: 0
+            };
         };
         
         $scope.processForm = function (submission) {
