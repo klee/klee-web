@@ -1,5 +1,12 @@
 ---
 
+- name: Ensure aufs is installed
+  apt:
+    pkg: "linux-image-extra-{{ ansible_kernel }}"
+    state: present
+    update_cache: yes
+  when: not ci
+
 - name: Ensure we can use the https transport for apt-get
   apt: name=apt-transport-https update_cache=yes state=present
 
