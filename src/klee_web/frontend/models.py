@@ -29,9 +29,10 @@ class Example(models.Model):
             'args': {
                 'numFiles': self.num_files,
                 'sizeFiles': self.size_files,
-                'minStdinArgs': self.min_stdin_args,
-                'maxStdinArgs': self.max_stdin_args,
-                'sizeStdinArgs': self.size_files
+                'stdinArgs': {
+                    'range': [self.min_stdin_args, self.max_stdin_args],
+                    'size': self.size_stdin_args
+                }
             }
         }
 

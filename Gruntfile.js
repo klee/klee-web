@@ -68,7 +68,20 @@ module.exports = function (grunt) {
                         cwd: '<%= config.lib %>/angular-ui-codemirror',
                         src: 'ui-codemirror.min.js',
                         dest: '<%= config.frontend_dist %>/js/vendor'
-                    }
+                    },
+                    // JQuery UI slider
+                    {
+                        expand: true,
+                        cwd: '<%= config.lib %>/jquery-ui/themes/base/minified',
+                        src: 'jquery-ui.min.css',
+                        dest: '<%= config.frontend_dist %>/css/vendor'
+                    },
+                    {
+                        expand: true,
+                        cwd: '<%= config.lib %>/jquery-ui/ui/minified',
+                        src: 'jquery-ui.min.js',
+                        dest: '<%= config.frontend_dist %>/js/vendor'
+                    },
         		]
         	}
         },
@@ -76,6 +89,10 @@ module.exports = function (grunt) {
             dist: {
                 files: [
                     {
+                        '<%= config.frontend_dist %>/js/vendor/lib.min.js': [
+                            '<%= bower.directory %>/jquery/dist/jquery.min.js',
+                            '<%= bower.directory %>/underscore/underscore-min.js',
+                        ],
                         '<%= config.frontend_dist %>/js/vendor/angular-custom.min.js': 
                             [
                                 '<%= bower.directory %>/angular/angular.min.js',
@@ -87,7 +104,12 @@ module.exports = function (grunt) {
                             [
                                 '<%= bower.directory %>/pusher/dist/pusher.min.js',
                                 '<%= bower.directory %>/pusher-angular/lib/pusher-angular.min.js',
-                            ]
+                            ],
+                        '<%= config.frontend_dist %>/js/vendor/angular-bootstrap.min.js':
+                            [
+                                '<%= bower.directory %>/angular-bootstrap/ui-bootstrap.min.js',
+                                '<%= bower.directory %>/angular-bootstrap/ui-bootstrap-tpls.min.js',
+                            ],
                     }
                 ]
             }
@@ -95,10 +117,6 @@ module.exports = function (grunt) {
         uglify: {
         	dist: {
         		files: {
-        			'<%= config.frontend_dist %>/js/lib.min.js': [
-        				'<%= bower.directory %>/jquery/jquery.js',
-        				'<%= bower.directory %>/underscore/underscore.js',
-        			],
                     '<%= config.frontend_dist %>/js/vendor/bootstrap.min.js': [
                         '<%= bower.directory %>/bootstrap-sass-official/assets/javascripts/bootstrap.js',
                         '<%= bower.directory %>/bootstrap-sass-official/assets/javascripts/bootstrap/*.js',
@@ -107,6 +125,9 @@ module.exports = function (grunt) {
                         '<%= bower.directory %>/codemirror/lib/codemirror.js',
                         // C syntax
                         '<%= bower.directory %>/codemirror/mode/clike/clike.js',
+                    ],
+                    '<%= config.frontend_dist %>/js/vendor/angular-ui-slider.min.js': [
+                        '<%= bower.directory %>/angular-ui-slider/src/slider.js',
                     ],
 
                     // Application JS
@@ -162,8 +183,8 @@ module.exports = function (grunt) {
 	grunt.loadNpmTasks('grunt-contrib-uglify');
 
 	grunt.registerTask('default', [
-		'copy',
         'concat',
+        'copy',
 		'uglify',
 		'sass',
 	]);
