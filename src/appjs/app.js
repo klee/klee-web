@@ -28,6 +28,10 @@ app.run([
 app.controller('MainCtrl', [
     '$scope', '$http', '$pusher',
     function ($scope, $http, $pusher) {
+        // Setup pusher 
+        var pusher = $pusher(pclient);
+        var channel_id = null;
+
         $scope.submission = {
             code: '',
             args: {
@@ -43,30 +47,15 @@ app.controller('MainCtrl', [
         $scope.progress = [];
         $scope.result = {};
         $scope.submitted = false;
-
-        // Setup pusher 
-        var pusher = $pusher(pclient);
-        var channel_id = null;
-
-        $scope.views = {
-            main: true,
-            results: false
-        };
-
-        $scope.switchTab = function (tab) {
-            for (var view in $scope.views) {
-                $scope.views[view] = false;
-            }
-            $scope.views[tab] = true;
-        };
-
         $scope.examples = null;
 
-        $scope.change = function () {
-            $scope.submission = angular.copy($scope.examples[$scope.selected]);
+        $scope.changeExample = function () {
+            $scope.submission = angular.copy($scope.examples[$scope.selectedExample]);
+            $scope.stdinArgs = $scope.submission.args.range != [0, 0];
             $scope.submission.args.stdin_enabled = !($scope.submission.args.numFiles == 0 && $scope.submission.args.sizeFiles == 0);
         };
 
+        // Load example projects
         $http.get('/examples').
             success(function (data, status, headers, config) {
                 $scope.examples = data;
@@ -74,8 +63,8 @@ app.controller('MainCtrl', [
 
                 // Hack, TODO: add boolean for default value.
                 if ($scope.exampleKeys.length > 0) {
-                    $scope.selected = "Test";
-                    $scope.change();
+                    $scope.selectedExample = "Files";
+                    $scope.changeExample();
                 }
             }).error(function (data, status, headers, config) {
                 console.log("Error loading tutorial examples.");
@@ -93,7 +82,7 @@ app.controller('MainCtrl', [
             theme: 'neo'
         };
 
-        $scope.resetStdin = function () {
+        $scope.resetSymArgs = function () {
             $scope.stdinArgs = false;
             $scope.submission.args.stdinArgs = {
                 range: [0, 0],

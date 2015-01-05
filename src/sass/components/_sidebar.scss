@@ -18,6 +18,30 @@
 		height: $topbar-height;
 		background-color: $head-bg-color;
 		border-bottom: $border-width solid $head-border-color;
+		display: table;
+		text-align: center;
+
+		.project-selector {
+			display: table-cell;
+			vertical-align: middle;
+			
+			select {
+				background: none;
+				border: none;
+				color: #FFF;
+				font-family: $heading-font;
+				font-size: 1em;
+				font-weight: 400;
+				letter-spacing: 0.8px;
+				padding-left: 20px;
+
+
+				&:hover,
+				&:focus {
+					outline: 0;
+				}
+			}
+		} 
 	}
 
 	.current-file {

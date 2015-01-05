@@ -16,7 +16,13 @@
     <!-- Sidebar -->
     <section class="sidebar">
       <header>
-
+        <div class="project-selector">
+          <select ng-model="selectedExample"
+            ng-hide="!examples"
+            ng-options="key for key in exampleKeys"
+            ng-change="changeExample()">
+          </select>
+        </div>
       </header>
 
       <div class="current-file">
@@ -80,7 +86,7 @@
           
           <header>
             <div class="options-btn btn-group" dropdown>
-              <button type="button" class="btn k-btn">Sym-args</button>
+              <button type="button" class="btn k-btn">Sym-Args</button>
               <button type="button" class="btn k-btn dropdown-toggle" dropdown-toggle>
                 <i class="arrow_triangle-down"></i>
                 <span class="sr-only">Split button!</span>
@@ -91,7 +97,13 @@
                   <p><small>Very brief explanation of how to use symbolic arguments.</small></p>
                 </header>
 
-                <div class="form-group">
+                <div class="form-group" ng-show="!stdinArgs">
+                  <button ng-click="stdinArgs = true" type="button" class="btn k-btn enable">
+                    Enable Sym-Args <i class="icon_check"></i>
+                  </button>
+                </div>
+
+                <div class="form-group" ng-show="stdinArgs">
                   <label>No. of symbolic args</label>
                   <div class="args-slider"> 
                     <div class="slider-inner">  
@@ -104,25 +116,60 @@
                   </div>
                 </div>
 
-                <div class="form-group">
+                <div class="form-group" ng-show="stdinArgs">
                   <label>Arg Size</label>
                   <input type="text" ng-model="submission.args.stdinArgs.size" class="form-control" />
+                </div>
+
+                <div class="form-group" ng-show="stdinArgs">
+                  <button ng-click="resetSymArgs()" type="button" class="btn k-btn disable">
+                    Disable Sym-Args <i class="icon_close"></i>
+                  </button>
                 </div>
               </div>
             </div>
 
             <div class="options-btn btn-group" dropdown>
-              <button type="button" class="btn k-btn">Sym-args</button>
+              <button type="button" class="btn k-btn">Sym-Files</button>
               <button type="button" class="btn k-btn dropdown-toggle" dropdown-toggle>
                 <i class="arrow_triangle-down"></i>
                 <span class="sr-only">Split button!</span>
               </button>
-              <div class="dropdown-menu" role="menu">
-                <li><a href="#">Action</a></li>
-                <li><a href="#">Another action</a></li>
-                <li><a href="#">Something else here</a></li>
-                <li class="divider"></li>
-                <li><a href="#">Separated link</a></li>
+              <div class="dropdown-menu" role="menu" ng-click="$event.stopPropagation()">
+                <header>
+                  <h4>Symbolic Files</h4>
+                  <p><small>Very brief explanation of how to use symbolic files.</small></p>
+                </header>
+
+                <div class="form-group" ng-show="!submission.args.stdin_enabled">
+                  <button ng-click="submission.args.stdin_enabled = true" type="button" class="btn k-btn enable">
+                    Enable Sym-Files <i class="icon_check"></i>
+                  </button>
+                </div>
+
+                <div class="form-group" ng-show="submission.args.stdin_enabled">
+                  <label>No. of symbolic files</label>
+                  <div class="args-slider"> 
+                    <div class="slider-inner">  
+                      <div ui-slider="{range: false}" min="0" max="9" step="1"ng-model="submission.args.numFiles"></div>
+                    </div>
+                    <div class="units">
+                      <span class="min">0<br/>Min</span>
+                      <span class="max">9<br/>Max</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="form-group" ng-show="submission.args.stdin_enabled">
+                  <label>File Size</label>
+                  <input type="text" ng-model="submission.args.sizeFiles" class="form-control" />
+                </div>
+
+                <div class="form-group" ng-show="submission.args.stdin_enabled">
+                  <button ng-click="submission.args.stdin_enabled = false" type="button" class="btn k-btn disable">
+                    Disable Sym-Files <i class="icon_close"></i>
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -192,229 +239,6 @@
     </div>
 
   </div>
-
-
-    <!-- Real content -->
-    <!-- <div ng-app="app">
-
-        <div ng-controller="MainCtrl">
-
-            <div class="col-md-4">
-                <div class="panel panel-default" id="main-panel">
-                    <div class="panel-heading">Progress</div>
-                    <div class="panel-body">
-                        <p class="label label-success"
-                           ng-repeat="step in progress"
-                           style="display: block; padding-top: 8px; padding-bottom: 8px;"
-                           ng-cloak>[[ step ]]</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-md-8">
-                <div class="row">
-                    <div class="col-md-8">
-                        <ul class="nav nav-tabs col-md-8">
-                            <li role="presentation" ng-class="{'active': views.main}">
-                                <a ng-click="switchTab('main')">Submit a KLEE Job</a>
-                            </li>
-                            <li role="presentation" ng-if="result | isNotEmpty "
-                                ng-class="{'active': views.results}" id="result-tab" ng-cloak>
-                                <a ng-click="switchTab('results')">View run results</a>
-                            </li>
-                        </ul>
-                    </div>
-
-                    <div class="col-md-4">
-                        <select name="" id="" class="form-control" ng-model="selected"
-                                ng-hide="!examples"
-                                ng-options="key for key in exampleKeys"
-                                ng-change="change()">
-                        </select>
-                    </div>
-                </div>
-
-                <div class="panel-body" ng-show="views.main">
-                    {% for error in form.non_field_errors %}
-                        <div class="alert alert-danger" role="alert">
-                            {{ error }}
-                        </div>
-                    {% endfor %}
-                    <form ng-submit="processForm(submission)"
-                          enctype="multipart/form-data"
-                          class="{% if messages %} has-error {% endif %}"
-                          ng-cloak>
-                        {% csrf_token %}
-
-                        <div class="form-group">
-                            <label for="{{ form.code.id_for_label }}">Code:</label>
-
-                            <ui-codemirror id="codemirror"
-                                           ng-model="submission.code"
-                                           ui-codemirror-opts="editorOptions"></ui-codemirror>
-
-                            {{ form.code.errors }}
-                        </div>
-
-                        <div class="row">
-                          <div class="form-group col-sm-6">
-                              <label for="{{ form.file.id_for_label }}">File upload
-                                  (optional):</label>
-                              <input name="{{ form.file.name }}"
-                                    ng-model="submission.file"
-                                    id="{{ form.file.id_for_label }}"
-                                    class="form-control" type="file">
-                              {{ form.file.errors }}
-
-                          </div>
-                            <div class="form-group col-sm-6">
-                              <label for="{{ form.min_stdin_args.id_for_label }}">
-                                Additional arguments (Optional):
-                              </label>
-                              <!--<ul style="list-style: none;">-->
-                              <!-- <ul>
-                                <span ng-hide="!stdinArgs" class="ng-hide">
-                                  <li>
-                                    <label for="{{ form.min_stdin_args.id_for_label }}">
-                                      Minimum number of standard arguments
-                                    </label>
-                                    <select class="form-control"
-                                            id="{{ form.min_stdin_args.id_for_label }}"
-                                            name="{{ form.min_stdin_args.name }}"
-                                            ng-model="submission.args.minStdinArgs"
-                                            placeholder=0>
-                                      {% for id, name in form.min_stdin_args.field.choices %}
-                                        <option value="{{ id }}"> {{ name }} </option>
-                                      {% endfor %}
-                                    </select>
-                                    {{ form.min_stdin_args.errors }}
-                                  </li>
-                                  <li>
-                                    <label for="{{ form.max_stdin_args.id_for_label }}">
-                                      Maximum number of standard arguments
-                                    </label>
-                                    <select class="form-control"
-                                            id="{{ form.max_stdin_args.id_for_label }}"
-                                            name="{{ form.max_stdin_args.name }}"
-                                            ng-model="submission.args.maxStdinArgs"
-                                            placeholder=0>
-                                      {% for id, name in form.max_stdin_args.field.choices %}
-                                        <option value="{{ id }}"> {{ name }} </option>
-                                      {% endfor %}
-                                    </select>
-                                    {{ form.max_stdin_args.errors }}
-                                  </li>
-                                  <li>
-                                    <label for="{{ form.size_stdin_args.id_for_label }}">
-                                      Size of standard arguments
-                                    </label>
-                                    <input type="number"
-                                           class="form-control"
-                                           id="{{ form.size_stdin_args.id_for_label }}"
-                                           name="{{ form.size_stdin_args.name }}"
-                                           ng-model="submission.args.sizeStdinArgs"
-                                           min="{{ form.size_stdin_args.field.min_value }}"
-                                           placeholder=0>
-                                    <a href ng-click="resetStdin()">Delete</a>
-                                  </li>
-                                </span>
-                                <li ng-hide="stdinArgs"
-                                    class="ng-hide">
-                                  <a href ng-click="stdinArgs = true">
-                                    Add symbolic arguments
-                                  </a>
-                                  {{ form.size_stdin_args.errors }}
-                                </li>
-                                <li>
-                                <input type="checkbox"
-                                       ng-model="submission.args.stdin_enabled">
-                                Enable symbolic stdin
-                                </li>
-                                <span ng-show="submission.args.stdin_enabled" class="ng-show">
-                                  <li>
-                                    <label for="{{ form.num_files.id_for_label }}">
-                                      Number of symbolic files
-                                    </label>
-                                    <select class="form-control"
-                                          id="{{ form.num_files.id_for_label }}"
-                                          name="{{ form.num_files.name }}"
-                                          ng-model="submission.args.numFiles"
-                                          ng-init="submission.args.numFiles = 0"
-                                          placeholder=0>
-                                      {% for id, name in form.max_stdin_args.field.choices %}
-                                        <option value="{{ id }}"> {{ name }} </option>
-                                      {% endfor %}
-                                    </select>
-                                    {{ form.num_files.errors }}
-                                  </li>
-                                  <li>
-                                    <label for="{{ form.size_files.id_for_label }}">
-                                      Size of symbolic files
-                                    </label>
-                                    <input type="number"
-                                           class="form-control"
-                                           id="{{ form.size_files.id_for_label }}"
-                                           name="{{ form.size_files.name }}"
-                                           ng-model="submission.args.sizeFiles"
-                                           ng-init="submission.args.sizeFiles = 0"
-                                           min="{{ form.size_files.field.min_value }}">
-                                    {{ form.size_files.errors }}
-                                  </li>
-                                </span>
-                                </li>
-                              </ul>
-                            </div>
-                          </div>
-                        <div class="form-group">
-                            <label for="{{ form.email.id_for_label }}">Email
-                                (Optional)
-                                address</label>
-                            <input type="email" class="form-control"
-                                   id="{{ form.email.id_for_label }}"
-                                   name="{{ form.email.name }}"
-                                   ng-model="submission.email"
-                                   placeholder="Enter email">
-                            {{ form.email.errors }}
-                        </div>
-
-                        <input type="submit" value="Submit Job"
-                               class="btn btn-primary" id="submit-job"/>
-                    </form>
-                </div>
-
-                <div class="panel-body" ng-show="views.results" ng-cloak>
-                    <h3>Run Results</h3>
-
-                    <div ng-if="result.url | isNotEmpty">
-                        <p>You can pick up your analysed output here:</p>
-
-                        <p><a ng-href="[[ result.url ]]">[[ result.url ]]</a>
-                        </p>
-                    </div>
-
-                    <pre id="result-output">[[ result.output ]]</pre>
-
-
-                    <div ng-if="result.failing | isNotEmpty">
-                        <h3>Failing tests</h3>
-
-                        <div class="panel panel-danger" ng-repeat="fail in result.failing">
-                            <div class="panel-heading">
-                                <h3 class="panel-title">[[ fail.reason ]]</h3>
-                            </div>
-                            <div class="panel-body">
-                                <strong>Line [[ fail.line_no ]]:</strong>
-                                <pre>[[  fail.line ]]</pre>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-        </div>
-
-    </div> -->
-    <!-- end of content -->
 
 {% endblock %}
 
