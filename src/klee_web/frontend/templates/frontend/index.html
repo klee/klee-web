@@ -173,7 +173,9 @@
               </div>
             </div>
 
-            <button type="submit" class="btn k-btn run-klee-btn">
+            <button ng-click="submission.args.coverage_enabled = true" type="button" class="btn k-btn">Coverage</button>
+
+              <button type="submit" class="btn k-btn run-klee-btn">
               <i class="arrow_triangle-right"></i> <span>Run Klee</span>
             </button>
           </header>
@@ -227,7 +229,8 @@
                 </div>
 
                 <div class="tab-content-inner klee-coverage" ng-show="tabs.coverage.active">
-                  <p>Todo</p>
+                  <pre> [[ linePercentage ]]% of lines covered. </pre>
+                  <div ui-codemirror="{ onLoad : codemirrorLoaded }" ></div>
                 </div>
 
               </div>

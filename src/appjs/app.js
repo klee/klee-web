@@ -28,7 +28,7 @@ app.run([
 app.controller('MainCtrl', [
     '$scope', '$http', '$pusher',
     function ($scope, $http, $pusher) {
-        // Setup pusher 
+        // Setup pusher
         var pusher = $pusher(pclient);
         var channel_id = null;
 
@@ -42,7 +42,7 @@ app.controller('MainCtrl', [
                 stdin_enabled: false
             }
         };
-        
+
         $scope.stdinArgs = false;
         $scope.progress = [];
         $scope.result = {};
@@ -70,6 +70,15 @@ app.controller('MainCtrl', [
                 console.log("Error loading tutorial examples.");
             });
 
+        $scope.codemirrorLoaded = function(_editor) {
+            $scope.editor = _editor;
+
+            _editor.setOption('viewportMargin', 5);
+            _editor.setOption('lineWrapping', true);
+            _editor.setOption('lineNumbers', true);
+            _editor.setOption('readOnly', 'nocursor');
+            _editor.setOption('theme', 'neo');
+        };
 
         $scope.editorOptions = {
             viewportMargin: 5,
@@ -89,9 +98,37 @@ app.controller('MainCtrl', [
                 size: 0
             };
         };
-        
+
+        $scope.drawCoverage = function (coverage) {
+            $scope.editor.setValue($scope.submission.code);
+
+            var linesHit = 0;
+            var linesTotal = 0;
+            var lines = coverage.lines;
+            for (var i = 0; i < lines.length; i++) {
+                var hit = lines[i].hit;
+                if (hit == null) {
+                    $scope.editor.addLineClass(i, 'wrap', 'Line-null');
+                } else {
+                    if (hit > 0) {
+                        linesHit += 1;
+                        $scope.editor.addLineClass(i, 'wrap', 'Line-hit');
+                    } else {
+                        $scope.editor.addLineClass(i, 'wrap', 'Line-miss');
+                    }
+                    linesTotal += 1;
+                }
+            }
+            $scope.editor.addLineClass(lines.length, 'wrap', 'Line-null');
+
+            $scope.linePercentage = (linesHit / linesTotal).toFixed(2) * 100;
+
+            $scope.editor.focus();
+            $scope.editor.refresh();
+        };
+
         $scope.processForm = function (submission) {
-            $scope.submitted = true;            
+            $scope.submitted = true;
             if (channel_id) {
                 pusher.unsubscribe(channel_id);
             }
@@ -118,6 +155,10 @@ app.controller('MainCtrl', [
                             $scope.progress.push('Done!');
                             $scope.result = data.result;
                             $scope.submitted = false;
+
+                            if (data.result.coverage != null) {
+                                $scope.drawCoverage(data.result.coverage[0]);
+                            }
                         });
 
                         channel.bind('job_failed', function (response) {
@@ -146,7 +187,7 @@ app.controller('ResultTabsCtrl', [
     function ($scope) {
         $scope.tabs = {
             output: {
-                active: true 
+                active: true
             },
             coverage: {
                 active: false
@@ -169,10 +210,9 @@ app.controller('ResultTabsCtrl', [
         // Switch tab back to output if we hit submit
         $scope.$watch('submitted', function (submitted) {
             if (submitted) {
-                $scope.setTab('output');     
+                $scope.setTab('output');
             }
         });
-
     }]
 );
 
