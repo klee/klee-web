@@ -1,0 +1,54 @@
+// Import variables
+@import "variables";
+
+.wrapper {
+	margin-right: - $sidebar-width;
+	float: left;
+}
+
+@import "components/sidebar";
+
+.content {
+	height: 100%;
+	margin-left: $sidebar-width;
+	min-width: 600px;
+}
+
+@import "components/navbar";
+
+.content-inner {
+	margin-top: - $topbar-height;
+	padding-top: $topbar-height;
+	height: 100%;
+	width: 100%;
+
+	.editor,
+	.results {
+		float: left;
+		width: 50%;
+		height: 100%;
+
+		&> header {
+			position: relative;
+			height: $topbar-height;
+			width: 100%;
+			z-index: 3;
+		}
+	}
+
+	.CodeMirror {
+
+		.CodeMirror-code {
+			.cm-comment, .cm-meta {color:#94b3d7}
+			.cm-keyword, .cm-property {color:#5784cf}
+			.cm-atom, .cm-number {color:#b64a4a}
+			.cm-node, .cm-tag {color:#9c3328}
+			.cm-string {color:#b64a4a}
+			.cm-variable, .cm-qualifier {color:#3f4146}
+		}
+	}
+}
+
+@import "components/editor";
+@import "components/results";
+

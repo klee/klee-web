@@ -10,8 +10,7 @@
         <thead>
         <tr>
             <td>#</td>
-            <td>Example Name</td>
-            <td>Last Modified</td>
+            <td>Example Project Name</td>
             <td>Delete</td>
         </tr>
         </thead>
@@ -22,13 +21,12 @@
                     {{ forloop.counter }}
                 </td>
                 <td>
-                    <a href="{% url 'control_panel:example_update' example.pk %}">
+                    <a href="{% url 'control_panel:example_project_update' example.pk %}">
                         {{ example.name }}
                     </a>
                 </td>
-                <td>{{ example.last_modified }}</td>
                 <td>
-                    <a href="{% url 'control_panel:example_delete' example.pk %}">
+                    <a href="{% url 'control_panel:example_project_delete' example.pk %}">
                         <i class="glyphicon glyphicon-trash "></i>
                     </a>
                 </td>
@@ -37,8 +35,8 @@
         </tbody>
     </table>
 
-    <a href="{% url 'control_panel:example_create' %}">
-        <button class="btn btn-primary">Add new Example</button>
+    <a href="{% url 'control_panel:example_project_create' %}">
+        <button class="btn btn-primary">Add new Example Project</button>
     </a>
 
 {% endblock %}

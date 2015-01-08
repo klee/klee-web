@@ -1,0 +1,46 @@
+{% extends "frontend/base.html" %}
+
+{% block title %}KLIDE - Login{% endblock %}
+
+{% block css %}
+    <link rel="stylesheet" type="text/css" href="{{dist}}/css/auth.css" />
+{% endblock %}
+
+{% block content %}
+
+<div class="container">
+    <div class="login-form col-sm-4 col-sm-offset-4">
+        
+        <form role="form" method="post" action="">
+            {% csrf_token %}
+
+            <div class="intro">
+                <img src="{{dist}}img/klee-logo.svg" class="logo" />
+                <p>Welcome to KLEE. If you have an account, please log in below. If not, you can <a href="{% url 'register' %}">sign up here</a>.</p>
+            </div>
+
+            <div class="form-group">
+                <label>Username</label>
+                <input type="text" name="{{ form.username.name }}" class="username form-control" placeholder="Username" />
+            </div>
+            
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" name="{{ form.password.name }}" class="password form-control" placeholder="Password" />
+            </div>
+            
+            <button type="submit" class="btn k-btn submit">Login</button>
+
+            <input type="hidden" name="next" value="{% url 'index' %}"/>
+
+            <div class="form-errors">
+                {% if form.errors %}
+                    <small class="login-error">Your username and password didn't match. Please try again.</small>
+                {% endif %}
+            </div>
+        </form>
+        
+    </div>
+</div>
+
+{% endblock %}

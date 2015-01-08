@@ -41,3 +41,33 @@ Running tests!
 Before submitting a pull request it's a good idea to run our test suite locally with the following command
 
     vagrant ssh -c "/titb/run_tests.sh"
+
+
+Building Frontend
+===========================
+
+Make sure you have Node and npm installed.
+
+At the root-level directory:
+	
+	$ npm install -g bower
+	$ npm install -g grunt-cli
+
+Then:
+	
+	$ npm install
+
+Now that Grunt and Bower are installed, install the front-end packages with
+
+	$ bower install
+
+Finally, let Grunt do the rest of the work (compiling/minifying SASS/JS etc), with
+
+	$ grunt
+
+------
+
+To watch for changes when modifying SASS, use
+
+	$ grunt watch
+

@@ -1,0 +1,49 @@
+/* -----------------------------
+ *  Main navbar styles --------
+ * ----------------------------- */
+
+.topbar {
+	background-color: #FFF;
+	border-bottom: $border-width solid $nav-border-color;
+	height: $topbar-height;
+	z-index: 1;
+
+	&> header {
+		height: 100%;
+		width: 100%;
+		float: left;
+
+		.logo {
+			width: 180px;
+			height: 100%;
+			margin-top: 3px;
+			padding: 18px;
+			padding-left: 0;
+		}
+	}
+
+	.login-area,
+	.register-area {
+		float: right;
+		width: 2 * $topbar-height;
+		height: 100%;
+		border-left: $border-width solid $nav-border-color;
+		display: table;
+
+		a {
+			display: table-cell;
+			vertical-align: middle;
+			text-align: center;
+
+			text-transform: uppercase;
+			font-weight: 700;
+			font-size: 0.9em;
+			letter-spacing: 0.8px;
+			color: $dark-blue-header-color;
+
+			&:hover {
+				color: lighten($dark-blue-header-color, 15%);
+			}
+		}
+	}
+}

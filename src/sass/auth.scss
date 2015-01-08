@@ -1,0 +1,85 @@
+// Import variables
+@import "variables";
+
+.k-btn.submit {
+	width: 200px;
+	background: $run-klee-btn-bg-color;
+	margin: 15px 0;
+}
+
+.login-form {
+	padding: 40px 20px;
+	text-align: center;
+
+	.logo {
+		width: 180px;
+		padding: 20px 0;
+		margin-bottom: 0;
+	}
+
+	.form-errors {
+		margin: 25px 0;
+		color: $console-error-color;
+	}
+
+	.login-error {
+		margin: 10px 0;
+		margin-bottom: 35px;
+
+		.errorlist {
+			list-style-type: none;
+			padding-left: 0;
+			text-align: center;
+			
+			li {
+				color: $console-error-color;
+			}
+		}
+	}
+
+	form {
+		max-width: 300px;
+		padding: 0 20px;
+
+		.intro {
+			margin-top: 15px;
+			margin-bottom: 45px;
+
+			p {
+				color: lighten($dark-disabled-color, 20%);
+			}
+		}
+
+		.form-group {
+			margin: 25px 0;
+		}
+
+		label {
+			font-weight: 700;
+			text-transform: uppercase;
+			color: $dark-blue-header-color;
+			text-align: left;
+			width: 100%;
+			margin-bottom: 10px;
+		}
+
+		input {
+			background: none;
+			border-radius: 0;
+			border-left: none;
+			border-right: none;
+			border-top: none;
+			outline: 0;
+			-webkit-box-shadow: none;
+			box-shadow: none;
+
+			&:hover,
+			&:focus {
+				outline: 0;
+				border-color: #CCC;
+				-webkit-box-shadow: none;
+				box-shadow: none;
+			}
+		}
+	}
+}

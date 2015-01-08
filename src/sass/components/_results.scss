@@ -1,0 +1,274 @@
+.results {
+	background-color: $results-body-bg-color;
+	border-left: $border-width solid $vertical-sep-border-color;
+
+	&> header {
+		background-color: $results-header-bg-color;
+		border-bottom: $border-width solid $results-header-border-color;
+		
+		h3 {
+			padding-top: 28px;
+			padding-left: 30px;
+			float: left;
+			font-size: 1.1em;
+			font-weight: 700;
+			text-transform: uppercase;
+			letter-spacing: 0.8px;
+			color: $dark-blue-header-color;
+		}
+
+		.action-box {
+			float: right;
+			height: $topbar-height;
+			width: $topbar-height;
+			border-left: $border-width solid $results-header-border-color;
+			display: table;
+
+			a {
+				width: 100%;
+				display: table-cell;
+				text-align: center;
+				vertical-align: middle;
+				font-size: 1.5em;
+				color: $dark-disabled-color;
+
+				
+				&:hover {
+					color: $dark-disabled-color;
+					cursor: default;
+				}
+			}
+
+			&.active {
+				a {
+					color: $dark-active-color;
+
+					&:hover {
+						color: #FFF;
+						-webkit-transition: color 0.2s ease-in-out;
+						transition: color 0.2s ease-in-out;
+						cursor: pointer;
+					}
+				}
+			}
+
+			&.flash-color {
+				a {
+					-webkit-animation-name: flashColor;
+					animation-name: flashColor;
+					-webkit-animation-duration: 1.5s;
+					animation-duration: 1.5s;
+					-webkit-animation-delay: 0s;
+					animation-delay: 0s;
+					-webkit-animation-iteration-count: 1;
+					animation-iteration-count: 1;
+				}
+			}
+
+			&.download {
+				a { 
+					padding-top: 5px;
+				}
+			}
+		}
+	}
+}
+
+// Animation sequence for flashing action boxes
+@-webkit-keyframes flashColor {
+  0%, 50%, 100% {
+    color: $dark-active-color;
+  }
+
+  25%, 75% {
+    color: $dark-disabled-color;
+  }
+}
+
+@keyframes flashColor {
+  0%, 50%, 100% {
+    color: $dark-active-color;
+  }
+
+  25%, 75% {
+    color: $dark-disabled-color;
+  }
+}
+
+.results .results-inner {
+	height: 100%;
+	margin-top: - $topbar-height;
+	padding-top: $topbar-height;
+
+	&> header {
+		width: 100%;
+		height: $topbar-height;
+		background-color: $results-body-bg-color;
+		border-bottom: $border-width solid $results-header-border-color;
+	
+		.tabs {
+			float: left;
+			width: 100%;
+			height: 100%;
+
+			ul {
+				float: left;
+				width: 100%;
+				padding-left: 20px;
+				margin-top: ($topbar-height - 30px) / 2;
+
+				li {
+					float: left;
+					margin: 0 10px;
+					height: 30px;
+					padding: 0 15px;
+					border-radius: 3px;
+					border: $border-width solid transparent;
+					text-align: center;
+					font-size: 0.82em;
+					font-weight: 700;
+					text-transform: uppercase;
+					display: table;
+
+					a {
+						display: table-cell;
+						vertical-align: middle;
+						color: $console-tab-color;
+					}
+
+					&.active {
+						border-color: $console-tab-border-color;
+						
+						&:hover {
+							a { color: $console-tab-color; }
+						}
+					}
+
+					&:hover {
+						a { color: #FFF; }
+					}
+				}
+			}
+		}
+	}
+
+	.results-body {
+		height: 100%;
+		margin-top: - $topbar-height;
+		padding-top: $topbar-height;
+	}
+
+	.tab-body {
+		position: relative;
+		height: 100%;
+		width: 100%;
+		overflow-y: auto;
+
+		.tab-content-inner {
+			height: 100%;
+			position: absolute;
+			width: 100%;
+			top: 0;
+			padding: 30px 40px;
+		}
+	}
+
+	.tab-content-inner {
+		.code {
+			background: none;
+			border: none;
+			border-radius: 0;
+			padding: 35px 0;
+			color: $console-output-color;
+
+			&.progress-step {
+				padding: 0;
+				color: $console-tab-color;
+			}
+		}
+	}
+
+	.klee-output {
+		.failed-header {
+			padding: 0;
+			margin-bottom: 15px;
+			color: $console-error-color;
+			font-weight: 700;
+		}
+
+		.failed-tests {
+			padding-left: 20px;
+
+			.failed-test {
+				margin-bottom: 15px;
+
+				.error-description,
+				.error-line {
+					padding: 0;
+					margin-bottom: 0;
+				}
+
+				.error-description {
+					color: $console-error-color;
+				}
+
+				.error-line {
+					padding-left: 10px;
+				}
+			}
+		}
+	}
+
+	.klee-coverage {
+		p { color: #FFF; }
+
+		.coverage-stats {
+			padding: 10px 0;
+		}
+
+		.CodeMirror {
+			background: transparent;
+			color: $off-white-body-color;
+
+			.CodeMirror-code {
+				.cm-variable, .cm-qualifier {color:$off-white-body-color;}
+				.cm-keyword, .cm-property {color:$console-output-color;}
+			}
+
+			.line-hit {
+				color: #458345;
+
+				.CodeMirror-linenumber, .cm-comment, .cm-meta, 
+				.cm-keyword, .cm-property, .cm-atom, .cm-number,
+				.cm-node, .cm-tag, .cm-string, .cm-variable, 
+				.cm-qualifier {
+					color: #458345;
+				}
+			}
+
+			.line-miss {
+				color: $console-error-color;
+
+				.CodeMirror-linenumber, .cm-comment, .cm-meta, 
+				.cm-keyword, .cm-property, .cm-atom, .cm-number,
+				.cm-node, .cm-tag, .cm-string, .cm-variable, 
+				.cm-qualifier {
+					color: $console-error-color;
+				}
+			}
+
+			.line-null {
+				color: #61646B;
+
+				.CodeMirror-linenumber, .cm-comment, .cm-meta, 
+				.cm-keyword, .cm-property, .cm-atom, .cm-number,
+				.cm-node, .cm-tag, .cm-string, .cm-variable, 
+				.cm-qualifier {
+					color: #61646B;
+				}
+			}
+		}
+
+
+	}
+}

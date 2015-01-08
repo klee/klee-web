@@ -34,6 +34,7 @@ ALLOWED_HOSTS = ['*']
 TEMPLATE_CONTEXT_PROCESSORS = \
     global_settings.TEMPLATE_CONTEXT_PROCESSORS + (
         "django.core.context_processors.request",
+        "frontend.context_processors.global_vars"
     )
 
 
@@ -49,6 +50,8 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'bootstrapform',
+    'rest_framework',
+    'rest_framework_nested'
 )
 
 MIDDLEWARE_CLASSES = (
@@ -95,3 +98,13 @@ USE_L10N = True
 
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+AUTH_USER_MODEL = 'frontend.User'
+
+REST_FRAMEWORK = {
+    'DEFAULT_RENDERER_CLASSES': (
+        'djangorestframework_camel_case.render.CamelCaseJSONRenderer',
+    ),
+    'DEFAULT_PARSER_CLASSES': (
+        'djangorestframework_camel_case.parser.CamelCaseJSONParser',
+    ),
+}

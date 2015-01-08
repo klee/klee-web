@@ -1,0 +1,223 @@
+/* -----------------------------
+ *  Main sidebar styles --------
+ * ----------------------------- */
+
+.sidebar {
+	position: relative;
+	height: 100%;
+	width: $sidebar-width;
+	float: left;
+	background-color: $sidebar-bg-color;
+
+	.file-input {
+		padding-left: 20px;
+		
+		input {
+			background: none;
+			border: none;
+			border-bottom: 1px solid lighten($current-files-border-color, 10%);
+			color: #FFF;
+
+			&:hover,
+			&:focus {
+				outline: 0;
+			}
+		}
+	}
+}
+
+// Current file area
+.sidebar {
+
+	&> header {
+		width: 100%;
+		height: $topbar-height;
+		background-color: $head-bg-color;
+		border-bottom: $border-width solid $head-border-color;
+		display: table;
+		text-align: center;
+
+		.project-selector {
+			display: table-cell;
+			vertical-align: middle;
+			
+			select {
+				background: none;
+				border: none;
+				color: #FFF;
+				font-family: $heading-font;
+				font-size: 1em;
+				font-weight: 400;
+				letter-spacing: 0.8px;
+				padding-left: 20px;
+
+
+				&:hover,
+				&:focus {
+					outline: 0;
+				}
+			}
+
+			.file-input {
+				padding-left: 0;
+			}
+		} 
+	}
+
+	.current-file {
+		padding-top: 30px;
+		padding-bottom: 20px;
+		padding-left: 20px;
+		background-color: $current-files-bg-color;
+		border-bottom: $border-width solid $current-files-border-color;
+
+		&> header {
+			padding-left: 10px;
+
+			h3 {
+				font-size: 0.9em;
+				font-weight: 700;
+				text-transform: uppercase;
+				letter-spacing: 0.4px;
+				color: $dark-blue-header-color;
+			}
+		}
+
+		p {
+			padding-top: 10px;
+			padding-left: 20px;
+			color: #FFF;
+			font-size: 0.95em;
+
+			i {
+				padding-right: 10px;
+				font-size: 1.1em;
+
+			}
+		}
+	}
+}
+
+// Available files area
+.sidebar {
+
+	.available-files {
+		padding-top: 30px;
+		padding-bottom: 20px;
+
+		.add-file {
+			p {
+				padding-bottom: 10px;
+				
+				a {
+					padding-left: 20px;
+					font-size: 0.95em;
+					color: #FFF;
+
+					i {
+						margin-right: 10px;
+						font-size: 1.2em;
+					}
+
+					&:hover,
+					&:focus {
+						outline: 0;
+						cursor: pointer;
+					}
+				}
+			}
+		}
+
+		ul.files {
+			float: left;
+			width: 100%;
+
+			li {
+				float: left;
+				width: 100%;
+				padding: 8px 0;
+
+				a {
+					float: left;
+					padding-top: 10px;
+					padding-left: 20px;
+					color: $off-white-body-color;
+					font-size: 0.95em;
+
+					i {
+						padding-right: 15px;
+						font-size: 1.1em;
+
+					}
+
+				}
+				
+				.delete-file {
+					display: none;
+					float: right;
+					padding-top: 12px;
+					padding-right: 5px;
+					color: $off-white-body-color;
+				}
+
+				&:hover {
+					
+					a {
+						color: #FFF;
+					}
+
+					.delete-file {
+						display: block;
+						color: $off-white-body-color;
+
+						&:hover {
+							color: $console-error-color;
+						}
+					}
+				}
+			}
+		}		
+	}
+}
+
+// Upload files area
+.sidebar {
+	.upload-file {
+		position: absolute;
+		bottom: 0;
+		width: 100%;
+		height: $topbar-height;
+		display: table;
+		border-top: $border-width solid $current-files-border-color;
+		background-color: $current-files-bg-color;
+		
+		h3 {
+			display: table-cell;
+			vertical-align: middle;
+			text-align: center;
+			font-size: 0.9em;
+			font-weight: 700;
+			text-transform: uppercase;
+			letter-spacing: 0.4px;
+			color: $dark-blue-header-color;
+
+			a {
+				color: $dark-blue-header-color;
+
+				i {
+					font-size: 1.3em;
+					margin-left: 15px;
+				}
+
+				&:hover {
+					color: #FFF;
+				}
+			}
+		}
+	}
+}
+
+
+
+
+

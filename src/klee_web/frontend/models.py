@@ -1,4 +1,10 @@
+from django.conf import settings
+from django.contrib.auth.models import AbstractUser
 from django.db import models
+
+
+class User(AbstractUser):
+    pass
 
 
 class Task(models.Model):
@@ -9,31 +15,34 @@ class Task(models.Model):
     completed_at = models.DateTimeField(null=True)
 
 
-class Example(models.Model):
-    name = models.CharField(max_length=128, unique=True)
+class Project(models.Model):
+    owner = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True)
+    name = models.TextField()
+    example = models.BooleanField(default=False)
+    default_file = models.ForeignKey("File", null=True, blank=True,
+                                     related_name="default_project")
+
+    def __unicode__(self):
+        return self.name
+
+
+class File(models.Model):
+    project = models.ForeignKey(Project)
+    created = models.DateTimeField(auto_now_add=True)
+    updated = models.DateTimeField(auto_now=True)
+
+    name = models.TextField()
     code = models.TextField()
 
+    stdin_enabled = models.BooleanField(default=False)
     num_files = models.IntegerField(default=0)
     size_files = models.IntegerField(default=0)
 
-    min_stdin_args = models.IntegerField(default=0)
-    max_stdin_args = models.IntegerField(default=0)
-    size_stdin_args = models.IntegerField(default=0)
+    min_sym_args = models.IntegerField(default=0)
+    max_sym_args = models.IntegerField(default=0)
+    size_sym_args = models.IntegerField(default=0)
 
     last_modified = models.DateTimeField(auto_now=True)
-
-    @property
-    def as_dict(self):
-        return {
-            'code': self.code,
-            'args': {
-                'numFiles': self.num_files,
-                'sizeFiles': self.size_files,
-                'minStdinArgs': self.min_stdin_args,
-                'maxStdinArgs': self.max_stdin_args,
-                'sizeStdinArgs': self.size_files
-            }
-        }
 
     def __unicode__(self):
         return self.name

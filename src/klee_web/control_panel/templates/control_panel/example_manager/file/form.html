@@ -7,10 +7,10 @@
 {% endblock %}
 
 {% block content %}
-    {% if example %}
-        <h2>Updating Example: {{ example.name }}</h2>
+    {% if file %}
+        <h2>Updating file: {{ file.name }}</h2>
     {% else %}
-        <h2>Add a new Example</h2>
+        <h2>Add a new File</h2>
     {% endif %}
     <form role="form" action="" method="post">
         {% csrf_token %}

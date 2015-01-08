@@ -14,27 +14,24 @@
   when: not ci
   tags: nodejs
 
-- name: "NPM Path"
-  command: npm config set prefix ~/npm
-  when: not ci
-  sudo: no
-  tags: nodejs
-
-- name: Source add NPM directory to path
-  sudo: no
-  lineinfile: >
-    dest=~/.profile
-    line="export PATH="$PATH:$HOME/npm/bin""
-  when: not ci
-  tags: nodejs
-
 - name: "Install phantomjs"
-  sudo: no
   npm: name=phantomjs global=yes
+  when: not ci
 
 - name: "Install mocha"
-  sudo: no
   npm: name=mocha global=yes
+  when: not ci
+
+- name: "Install phantomjs"
+  npm: name=phantomjs global=yes
+  sudo: no
+  when: ci | bool
+
+- name: "Install mocha"
+  npm: name=mocha global=yes
+  sudo: no
+  when: ci | bool
+
 
 - name: "Install E2E test dependencies"
   npm: path={{ application_dir }}/tests

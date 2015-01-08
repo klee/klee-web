@@ -1,0 +1,41 @@
+---
+
+# Install frontend dependencies
+
+- name: "Add chris-lea/node.js"
+  apt_repository: repo='ppa:chris-lea/node.js'
+  when: not ci
+  tags: nodejs
+
+- name: "Install node.js"
+  apt: name=nodejs update_cache=yes
+  when: not ci
+  tags: nodejs
+
+- name: "Install grunt-cli"
+  npm: name=grunt-cli global=yes
+  when: not ci
+
+- name: "Install bower"
+  npm: name=bower global=yes
+  when: not ci
+
+- name: "Install grunt-cli"
+  npm: name=grunt-cli global=yes
+  sudo: no
+  when: ci|bool
+
+- name: "Install bower"
+  npm: name=bower global=yes
+  sudo: no
+  when: ci|bool
+
+- name: "Install node dependencies"
+  npm: path={{ src_dir }}
+  sudo: no
+
+- name: Install Ruby
+  apt: name=ruby-full update_cache=yes state=installed
+
+- name: Install SASS
+  command: gem install sass
