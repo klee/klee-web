@@ -6,16 +6,36 @@
   template: src=supervisor_web.conf.j2 dest=/etc/supervisor/conf.d/web.conf
 
 - name: Get bower dependencies
+  shell: bower install --config.interactive=false
+  sudo: yes
+  sudo_user: klide
+  args:
+    chdir: "{{ src_dir }}"
+    executable: /bin/bash
+  when: not ci
+
+- name: Run grunt
+  shell: grunt
+  sudo: yes
+  sudo_user: klide
+  args:
+    chdir: "{{ src_dir }}"
+    executable: /bin/bash
+  when: not ci
+
+- name: Get bower dependencies
   command: bower install --config.interactive=false
   sudo: no
   args:
     chdir: "{{ src_dir }}"
+  when: ci|bool
 
 - name: Run grunt
   command: grunt
   sudo: no
   args:
     chdir: "{{ src_dir }}"
+  when: ci|bool
 
 - name: Run the Django syncdb command
   shell: . {{ web_virtualenv }}/bin/activate
