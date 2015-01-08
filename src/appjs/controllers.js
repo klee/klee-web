@@ -182,9 +182,11 @@ controllers.controller('EditorCtrl', [
 controllers.controller('SidebarCtrl', [
 	'$scope', 'Project', 'File',
 	function ($scope, Project, File) {
-        $scope.fileToAdd = false;
         $scope.projectToAdd = false;
-        $scope.newFile = '';
+        $scope.newFile = {
+            name: '',
+            showForm: false
+        };
         $scope.newProjectOpt = {name: 'Add New Project'};
 
         Project.query().$promise.then(function(projects) {
@@ -233,7 +235,7 @@ controllers.controller('SidebarCtrl', [
             $scope.$parent.submission = file;
             selectedProject.defaultFile = file.id;
             if (!selectedProject.example) {
-                $selectedProject.$update();
+                selectedProject.$update();
             }
         };
 
@@ -252,10 +254,11 @@ controllers.controller('SidebarCtrl', [
         };
 
         $scope.showAddFile = function () {
-            $scope.fileToAdd = true;
+            $scope.newFile.showForm = true;
         };
 
-        $scope.addFile = function (filename) {
+        $scope.addFile = function () {
+            var filename = $scope.newFile.name;
             // Hacky force append '.c'
             var re = /\.c$/;
             if (!re.test(filename)) {
@@ -278,8 +281,8 @@ controllers.controller('SidebarCtrl', [
 
             blankFile.$save(function(newFile) {
                 $scope.files.unshift(newFile);
-                $scope.newFile = '';
-                $scope.fileToAdd = false;
+                $scope.newFile.name = '';
+                $scope.newFile.showForm = false;
 
                 $scope.selectFile(blankFile);
             });

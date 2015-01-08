@@ -24,7 +24,7 @@
       <header>
         <div class="project-selector">
           <select
-            ng-model="selectedProject"
+            ng-model="$parent.selectedProject"
             ng-options="project.name for project in projects"
             ng-hide="projectToAdd"
             ng-cloak>
@@ -47,10 +47,10 @@
         <div class="add-file" ng-if="selectedProject && !selectedProject.example">
           <p>
             <a href="#" ng-click="showAddFile()" ng-cloak>
-              <i ng-hide="fileToAdd" class="icon_plus"></i>
-              <span ng-hide="fileToAdd">Add file...</span>
-              <span ng-show="fileToAdd" class="file-input">
-                  <input type="text" ng-model="newFile" ng-enter="addFile(newFile)" focus="[[ fileToAdd ]]" ng-blur="fileToAdd = false" />
+              <i ng-hide="newFile.showForm" class="icon_plus"></i>
+              <span ng-hide="newFile.showForm">Add file...</span>
+              <span ng-show="newFile.showForm" class="file-input">
+                  <input type="text" ng-model="newFile.name" ng-enter="addFile()" focus="[[ fileToAdd ]]" ng-blur="newFile.showForm = false" />
               </span>
             </a>
           </p>
