@@ -2,7 +2,7 @@ var controllers = angular.module('controllers', []);
 
 controllers.controller('MainCtrl', [
     '$scope', '$http', '$pusher', 'Project', 'File',
-    function ($scope, $http, $pusher, Project, File) {
+    function($scope, $http, $pusher, Project, File) {
         // Setup pusher 
         var pusher = $pusher(pclient);
         var channel_id = null;
@@ -20,7 +20,7 @@ controllers.controller('MainCtrl', [
             }
         };
         $scope.defaultSubmission = angular.copy($scope.submission);
-        
+
         $scope.symArgs = false;
         $scope.progress = [];
         $scope.result = {};
@@ -32,7 +32,7 @@ controllers.controller('MainCtrl', [
         $scope.projects = [];
         $scope.files = [];
 
-        $scope.resetSymArgs = function () {
+        $scope.resetSymArgs = function() {
             $scope.symArgs = false;
             $scope.submission.args.symArgs = {
                 range: [0, 0],
@@ -40,7 +40,7 @@ controllers.controller('MainCtrl', [
             };
         };
 
-        $scope.selectFile = function (file) {
+        $scope.selectFile = function(file) {
             $scope.submission = file;
         };
 
@@ -54,8 +54,7 @@ controllers.controller('MainCtrl', [
 
         var saveSubmission = function() {
             var submission = $scope.submission;
-            if (!angular.isUndefined($scope.submission.$update)
-                 && !$scope.selectedProject.example) {
+            if (!angular.isUndefined($scope.submission.$update) && !$scope.selectedProject.example) {
                 File.update({}, submission);
             }
 
@@ -70,9 +69,9 @@ controllers.controller('MainCtrl', [
                 saveTimeout = setTimeout(saveSubmission, timeToSave);
             }
         }, true);
-        
-        $scope.processForm = function (submission) {
-            $scope.submitted = true;            
+
+        $scope.processForm = function(submission) {
+            $scope.submitted = true;
             $scope.result = {};
             $scope.progress = [];
             $scope.progress.push('Job queued!');
@@ -85,39 +84,41 @@ controllers.controller('MainCtrl', [
             $http
                 .post('/submit/', submission)
 
-                // We get a task id from submitting!
-                .success(
-                    function (data, status, headers) {
-                        channel_id = data.task_id;
-                        var channel = pusher.subscribe(channel_id);
+            // We get a task id from submitting!
+            .success(
+                function(data, status, headers) {
+                    channel_id = data.task_id;
+                    var channel = pusher.subscribe(channel_id);
 
-                        channel.bind('notification', function (response) {
-                            data = angular.fromJson(response.data);
-                            $scope.progress.push(data.message);
-                        });
+                    channel.bind('notification', function(response) {
+                        data = angular.fromJson(response.data);
+                        $scope.progress.push(data.message);
+                    });
 
-                        channel.bind('job_complete', function (response) {
-                            $scope.submitted = false;
-                            data = angular.fromJson(response.data);
-                            $scope.progress.push('Done!');
-                            $scope.result = data.result;
-                        });
+                    channel.bind('job_complete', function(response) {
+                        $scope.submitted = false;
+                        data = angular.fromJson(response.data);
+                        $scope.progress.push('Done!');
+                        $scope.result = data.result;
+                    });
 
-                        channel.bind('job_failed', function (response) {
-                            $scope.submitted = false;
-                            data = angular.fromJson(response.data);
-                            $scope.result = { 'output': data.output };
-                        });
+                    channel.bind('job_failed', function(response) {
+                        $scope.submitted = false;
+                        data = angular.fromJson(response.data);
+                        $scope.result = {
+                            'output': data.output
+                        };
+                    });
 
-                    }
-                )
+                }
+            )
 
-                // We didn't even get a task back from submit
-                .error(
-                    function (data, status, headers) {
-                        console.debug('Error! ', data);
-                    }
-                );
+            // We didn't even get a task back from submit
+            .error(
+                function(data, status, headers) {
+                    console.debug('Error! ', data);
+                }
+            );
         };
 
         $scope.codemirrorLoaded = function(_editor) {
@@ -134,7 +135,7 @@ controllers.controller('MainCtrl', [
             _editor.setOption('theme', 'neo');
         };
 
-        $scope.drawCoverage = function (coverage) {
+        $scope.drawCoverage = function(coverage) {
             $scope.editor.setValue($scope.submission.code);
 
             var linesHit = 0;
@@ -162,18 +163,18 @@ controllers.controller('MainCtrl', [
         };
 
         $scope.$watch('result', function(result) {
-            if (!(angular.isUndefined(result.coverage) 
-                   || result.coverage === null)) {
-                $scope.drawCoverage(result.coverage[0]);                
+            if (!(angular.isUndefined(result.coverage) || result.coverage === null)) {
+                $scope.drawCoverage(result.coverage[0]);
             }
         });
-    }]);
+    }
+]);
 
 
 controllers.controller('EditorCtrl', [
-	'$scope',
-	function ($scope) {
-		$scope.editorOptions = {
+    '$scope',
+    function($scope) {
+        $scope.editorOptions = {
             viewportMargin: 5,
             lineWrapping: true,
             lineNumbers: true,
@@ -183,24 +184,27 @@ controllers.controller('EditorCtrl', [
             },
             theme: 'neo'
         };
-	}]);
+    }
+]);
 
 
 controllers.controller('SidebarCtrl', [
-	'$scope', 'Project', 'File',
-	function ($scope, Project, File) {
+    '$scope', 'Project', 'File',
+    function($scope, Project, File) {
         $scope.projectToAdd = false;
         $scope.newFile = {
             name: '',
             showForm: false
         };
-        $scope.newProjectOpt = {name: 'Add New Project'};
+        $scope.newProjectOpt = {
+            name: 'Add New Project'
+        };
 
         Project.query().$promise.then(function(projects) {
             $scope.projects = projects;
 
             if (projects.length > 0) {
-                $scope.$parent.selectedProject = projects[0];      
+                $scope.$parent.selectedProject = projects[0];
             }
 
             // Only show new project option if project list is empty
@@ -209,21 +213,24 @@ controllers.controller('SidebarCtrl', [
                 $scope.projects.push($scope.newProjectOpt);
             }
         });
-        
+
         $scope.$watch('selectedProject', function(project) {
             if (!(_.isNull(project) || _.isUndefined(project))) {
                 if (project.name == 'Add New Project') {
                     $scope.projectToAdd = true;
                 } else {
                     // Update file list when project changes
-                    File.query({projectId:project.id})
+                    File.query({
+                            projectId: project.id
+                        })
                         .$promise.then(function(files) {
                             $scope.files = files;
 
                             // Set project default file if it exists
                             // Otherwise load default project
-                            var defaultFile = _.findWhere($scope.files, 
-                                {id: project.defaultFile});
+                            var defaultFile = _.findWhere($scope.files, {
+                                id: project.defaultFile
+                            });
                             if (!angular.isUndefined(defaultFile)) {
                                 $scope.$parent.submission = defaultFile;
                             } else {
@@ -237,7 +244,7 @@ controllers.controller('SidebarCtrl', [
             }
         });
 
-        $scope.selectFile = function (file) {
+        $scope.selectFile = function(file) {
             var selectedProject = $scope.$parent.selectedProject;
             $scope.$parent.submission = file;
             selectedProject.defaultFile = file.id;
@@ -246,13 +253,15 @@ controllers.controller('SidebarCtrl', [
             }
         };
 
-        $scope.resetProjectSelector = function () {
+        $scope.resetProjectSelector = function() {
             $scope.projectToAdd = false;
             $scope.$parent.selectedProject = null;
         };
 
-        $scope.addProject = function (projectName) {
-            var newProject = new Project({name: projectName});
+        $scope.addProject = function(projectName) {
+            var newProject = new Project({
+                name: projectName
+            });
             newProject.$save(function(project) {
                 $scope.projects.push(project);
                 $scope.$parent.selectedProject = project;
@@ -260,11 +269,11 @@ controllers.controller('SidebarCtrl', [
             });
         };
 
-        $scope.showAddFile = function () {
+        $scope.showAddFile = function() {
             $scope.newFile.showForm = true;
         };
 
-        $scope.addFile = function () {
+        $scope.addFile = function() {
             var filename = $scope.newFile.name;
             // Hacky force append '.c'
             var re = /\.c$/;
@@ -295,7 +304,7 @@ controllers.controller('SidebarCtrl', [
             });
         };
 
-        $scope.deleteFile = function (file) {
+        $scope.deleteFile = function(file) {
             file.$delete(function() {
                 // If we're deleting the current file, reset the editor
                 if (file == $scope.submission) {
@@ -307,28 +316,29 @@ controllers.controller('SidebarCtrl', [
             });
         };
 
-	}]);
+    }
+]);
 
 
 controllers.controller('ResultTabsCtrl', [
     '$scope',
-    function ($scope) {
+    function($scope) {
         $scope.tabs = {
             output: {
-                active: true 
+                active: true
             },
             coverage: {
                 active: false
             }
         };
 
-        $scope.hideAllTabs = function () {
-            angular.forEach($scope.tabs, function (tab, name) {
+        $scope.hideAllTabs = function() {
+            angular.forEach($scope.tabs, function(tab, name) {
                 $scope.tabs[name].active = false;
             });
         };
 
-        $scope.setTab = function (tab) {
+        $scope.setTab = function(tab) {
             if (tab in $scope.tabs) {
                 $scope.hideAllTabs();
                 $scope.tabs[tab].active = true;
@@ -336,10 +346,11 @@ controllers.controller('ResultTabsCtrl', [
         };
 
         // Switch tab back to output if we hit submit
-        $scope.$watch('submitted', function (submitted) {
+        $scope.$watch('submitted', function(submitted) {
             if (submitted) {
-                $scope.setTab('output');     
+                $scope.setTab('output');
             }
         });
 
-    }]);
+    }
+]);
