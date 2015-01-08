@@ -17,7 +17,7 @@ from models import Task
 
 def index(request):
     form = SubmitJobForm()
-    return render(request, "frontend/index.html", {"form": form})
+    return render(request, 'frontend/index.html', {'form': form})
 
 
 @csrf_exempt
@@ -38,7 +38,7 @@ def jobs_notify(request):
 
 
 def register(request):
-    if request.method == "POST":
+    if request.method == 'POST':
         user_form = UserCreationForm(request.POST)
         if user_form.is_valid():
             user_form.save()
@@ -46,30 +46,30 @@ def register(request):
             user = auth.authenticate(username=user_data['username'],
                                      password=user_data['password2'])
             auth.login(request, user)
-            return redirect(reverse("index"))
+            return redirect(reverse('index'))
     else:
         user_form = UserCreationForm()
 
-    return render(request, "registration/register.html", {
+    return render(request, 'registration/register.html', {
         'form': user_form,
     })
 
 
 def login(request, **kwargs):
     if request.user.is_authenticated():
-        return redirect(reverse("index"))
+        return redirect(reverse('index'))
     else:
         return django_login(request, **kwargs)
 
 
 @login_required
 def settings(request):
-    if request.method == "POST":
+    if request.method == 'POST':
         user_form = UserChangePasswordForm(request.POST)
         if user_form.is_valid():
             if request.user.check_password(
-                    user_form.cleaned_data["old_password"]):
-                new_password = user_form.cleaned_data["password1"]
+                    user_form.cleaned_data['old_password']):
+                new_password = user_form.cleaned_data['password1']
                 request.user.set_password(new_password)
                 request.user.save()
 
@@ -87,6 +87,6 @@ def settings(request):
     else:
         user_form = UserChangePasswordForm()
 
-    return render(request, "frontend/settings.html", {
+    return render(request, 'frontend/settings.html', {
         'form': user_form,
     })

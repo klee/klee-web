@@ -10,7 +10,7 @@ from runner import WorkerRunner
 from worker_config import WorkerConfig
 
 
-celery = Celery(broker=os.environ["CELERY_BROKER_URL"], backend="rpc")
+celery = Celery(broker=os.environ['CELERY_BROKER_URL'], backend='rpc')
 
 worker_config = WorkerConfig()
 
@@ -18,12 +18,12 @@ worker_config = WorkerConfig()
 @Panel.register
 def get_uptime_stats(state):
     uptime_pattern = re.compile(
-        r"up\s+(.*?),\s+([0-9]+) "
-        r"users?,\s+load averages?: "
-        r"([0-9]+\.[0-9][0-9]),?\s+([0-9]+\.[0-9][0-9])"
-        r",?\s+([0-9]+\.[0-9][0-9])")
+        r'up\s+(.*?),\s+([0-9]+) '
+        r'users?,\s+load averages?: '
+        r'([0-9]+\.[0-9][0-9]),?\s+([0-9]+\.[0-9][0-9])'
+        r',?\s+([0-9]+\.[0-9][0-9])')
 
-    uptime_output = subprocess.check_output("uptime")
+    uptime_output = subprocess.check_output('uptime')
     uptime_matches = uptime_pattern.search(uptime_output)
 
     return {
@@ -44,7 +44,7 @@ def submit_code(self, code, email, klee_args, endpoint):
             runner.send_notification(
                 'job_failed',
                 {
-                    'output': "Job exceeded time limit of "
-                              "{} seconds".format(worker_config.timeout)
+                    'output': 'Job exceeded time limit of '
+                              '{} seconds'.format(worker_config.timeout)
                 }
             )
