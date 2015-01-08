@@ -1,5 +1,4 @@
 import datetime
-import json
 from django.contrib.auth.views import login as django_login
 from django.contrib.auth.decorators import login_required
 from django.forms.util import ErrorList
@@ -13,42 +12,12 @@ from django.contrib import messages, auth
 
 from forms import SubmitJobForm, UserCreationForm, UserChangePasswordForm
 from realtime import send_notification
-from helpers import get_client_ip
 from models import Task
-from worker.worker_config import WorkerConfig
-from worker.worker import submit_code
-
-
-worker_config = WorkerConfig()
 
 
 def index(request):
     form = SubmitJobForm()
     return render(request, "frontend/index.html", {"form": form})
-
-
-@require_POST
-def submit_job(request):
-    data = json.loads(request.body)
-
-    code = data.get("code")
-    email = data.get("email")
-    args = data.get("runConfiguration", {})
-
-    task = submit_code.apply_async(
-        [code,
-         email,
-         args,
-         request.build_absolute_uri(reverse('jobs_notify'))],
-        soft_time_limit=worker_config.timeout
-    )
-
-    Task.objects.create(task_id=task.task_id,
-                        email_address=email,
-                        ip_address=get_client_ip(request),
-                        created_at=datetime.datetime.now())
-
-    return HttpResponse(json.dumps({'task_id': task.task_id}))
 
 
 @csrf_exempt

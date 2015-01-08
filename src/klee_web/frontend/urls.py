@@ -3,7 +3,6 @@ from django.conf.urls import url, patterns
 urlpatterns = patterns(
     'frontend.views',
     url(r'^$', 'index', name='index'),
-    url(r'^submit/$', 'submit_job', name="submit_job"),
 
     # Web hooks
     url(r'^jobs/notify/$', 'jobs_notify', name="jobs_notify"),
