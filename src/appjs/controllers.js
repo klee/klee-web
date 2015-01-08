@@ -160,6 +160,13 @@ controllers.controller('MainCtrl', [
 
             $scope.editor.focus();
         };
+
+        $scope.$watch('result', function(result) {
+            if (!(angular.isUndefined(result.coverage) 
+                   || result.coverage === null)) {
+                $scope.drawCoverage(result.coverage[0]);                
+            }
+        });
     }]);
 
 
