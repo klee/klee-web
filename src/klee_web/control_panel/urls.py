@@ -1,19 +1,16 @@
-from django.conf.urls import url
+from django.conf.urls import url, patterns
 from control_panel import example_manager
 
-urlpatterns = [
-    url(r'^$', 'control_panel.views.index', name='index'),
-    url(r'^worker/list$', 'control_panel.views.worker_list',
-        name='worker_list'),
-    url(r'^worker/config$', 'control_panel.views.worker_config',
-        name='worker_config'),
+urlpatterns = patterns(
+    'control_panel.views',
+    url(r'^$', 'index', name='index'),
+    url(r'^worker/list$', 'worker_list', name='worker_list'),
+    url(r'^worker/config$', 'worker_config', name='worker_config'),
 
-    url(r'^task/list/(?P<type>\w+)?',
-        'control_panel.views.task_list', name='task_list'),
-    url(r'^task/kill$', 'control_panel.views.kill_task', name='kill_task'),
+    url(r'^task/list/(?P<type>\w+)?', 'task_list', name='task_list'),
+    url(r'^task/kill$', 'kill_task', name='kill_task'),
 
-    url(r'^job/history$',
-        'control_panel.views.get_job_history', name='get_job_history'),
+    url(r'^job/history$', 'get_job_history', name='get_job_history'),
 
     url(r'^project/$',
         example_manager.ProjectListView.as_view(),
@@ -38,4 +35,4 @@ urlpatterns = [
     url(r'^project/(?P<project_pk>[0-9]+)/file/(?P<pk>[0-9]+)/delete/$',
         example_manager.FileDeleteView.as_view(),
         name='example_file_delete'),
-]
+)
