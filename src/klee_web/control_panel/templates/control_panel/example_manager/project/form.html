@@ -1,0 +1,67 @@
+{% extends "control_panel/base.html" %}
+{% load bootstrap %}
+
+{% block title %}KLEE Web Admin{% endblock %}
+
+{% block css %}
+{% endblock %}
+
+{% block content %}
+    {% if project %}
+        <h2>Updating Example Project: {{ project.name }}</h2>
+    {% else %}
+        <h2>Add a new Example Project</h2>
+    {% endif %}
+    <form role="form" action="" method="post">
+        {% csrf_token %}
+        {{ form|bootstrap }}
+        <button type="submit" class="btn btn-primary">Save</button>
+    </form>
+
+
+    {% if project %}
+        <h2>Manage project files</h2>
+        <table class="table table-striped">
+            <thead>
+            <tr>
+                <td>#</td>
+                <td>File Name</td>
+                <td>Last modified</td>
+                <td>Set Default</td>
+                <td>Delete</td>
+            </tr>
+            </thead>
+            <tbody>
+            {% for file in project.file_set.all %}
+                <tr>
+                    <td>
+                        {{ forloop.counter }}
+                    </td>
+                    <td>
+                        <a href="{% url 'control_panel:example_file_update' project.pk file.pk %}">
+                            {{ file.name }}
+                        </a>
+                    </td>
+                    <td>{{ file.last_modified }}</td>
+                    <td>
+                        {% if file != project.default_file %}
+                            <a href="{% url 'control_panel:example_file_default' project.pk file.pk %}">Make
+                                Default File</a>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{% url 'control_panel:example_file_delete' project.pk file.pk %}">
+                            <i class="glyphicon glyphicon-trash "></i>
+                        </a>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+
+        <a href="{% url 'control_panel:example_file_create' project.pk %}">
+            <button class="btn btn-primary">Add new File</button>
+        </a>
+
+    {% endif %}
+{% endblock %}

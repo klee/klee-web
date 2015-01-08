@@ -9,7 +9,7 @@
 {% block content %}
     <form action="" method="post">{% csrf_token %}
         <p>Are you sure you want to delete the example "{{ object }}"?</p>
-        <a href="{% url 'control_panel:example_list' %}"
+        <a href="{% url 'control_panel:example_project_list' %}"
            role="button"
            class="btn btn-primary">
             Cancel

@@ -41,7 +41,7 @@ def notify_on_entry(msg):
 
 
 class WorkerRunner():
-    DOCKER_MOUNT_DIR = '/code'
+    DOCKER_MOUNT_DIR = '/tmp/code'
     DOCKER_CODE_FILE = os.path.join(DOCKER_MOUNT_DIR, 'code.c')
     DOCKER_OBJECT_FILE = os.path.join(DOCKER_MOUNT_DIR, 'code.o')
     PROCESSOR_PIPELINE = [UploadProcessor, FailedTestProcessor,
@@ -66,18 +66,18 @@ class WorkerRunner():
     def generate_arguments(klee_args):
         result = []
 
-        stdin_enabled = klee_args.get('stdin_enabled')
+        stdin_enabled = klee_args.get('stdinEnabled')
         if stdin_enabled:
             num_files = klee_args.get('numFiles')
             size_files = klee_args.get('sizeFiles')
             result += ['--sym-files', str(num_files), str(size_files)]
 
-        min_stdin_args = klee_args.get('minStdinArgs')
-        max_stdin_args = klee_args.get('maxStdinArgs')
-        size_stdin_args = klee_args.get('sizeStdinArgs')
-        if min_stdin_args and max_stdin_args and size_stdin_args:
-            result += ['--sym-args', str(min_stdin_args),
-                       str(max_stdin_args), str(size_stdin_args)]
+        sym_args = klee_args.get('symArgs')
+        min_sym_args, max_sym_args = sym_args.get('range')
+        size_sym_args = sym_args.get('size')
+        if min_sym_args and max_sym_args and size_sym_args:
+            result += ['--sym-args', str(min_sym_args),
+                       str(max_sym_args), str(size_sym_args)]
 
         return result
 

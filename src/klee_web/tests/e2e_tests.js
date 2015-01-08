@@ -25,12 +25,8 @@ it('test all', function(done1) {
           n.goto("http://localhost")
             // Type in the code we want to pass to KLEE
             .evaluate(updateCode, function(res){}, input)
-            .click("input[type=submit]")
-            // Wait till result-panel comes up
-            .wait("#result-tab")
-            .click("#result-tab")
+            .click("#run-klee-btn")
             .wait("#result-output")
-            .screenshot("test.png")
             // Retrieve the result and check if the expected result matches
             .evaluate(getResult, function(actual) {
                 actual.replace(/(?:\r\n|\r|\n)/g, "\n").should.match(expected)

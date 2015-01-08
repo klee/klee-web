@@ -17,6 +17,13 @@
 
     <!-- Custom styles for this template -->
     <link href="/static/frontend/css/style.css" rel="stylesheet">
+    <style type="text/css">
+        body {
+            min-height: 2000px;
+            padding-top: 70px;
+        }
+    </style>
+
     {% block css %}
     {% endblock %}
 
@@ -67,9 +74,10 @@
                     <a href="{% url 'control_panel:task_list' 'active' %}">Task
                         List</a>
                 </li>
-                <li role="presentation" class="{% current 'example_list' %}">
-                    <a href="{% url 'control_panel:example_list' %}">Manage
-                        Examples</a>
+                <li role="presentation"
+                    class="{% current 'example_project_list' %}">
+                    <a href="{% url 'control_panel:example_project_list' %}">Manage
+                        Example Projects</a>
                 </li>
             </ul>
         </div>

@@ -1,4 +1,4 @@
-KLEE: output directory is "/code/klee-out-0"
+KLEE: output directory is "/tmp/code/klee-out-0"
 KLEE: WARNING: undefined reference to function: printf
 KLEE: WARNING ONCE: calling external: printf\([0-9]+\)
 Hello world
