@@ -16,7 +16,8 @@ controllers.controller('MainCtrl', [
                     size: 0
                 },
                 stdinEnabled: false,
-                numFiles: 0
+                numFiles: 0,
+                sizeFiles: 0
             }
         };
         $scope.defaultSubmission = angular.copy($scope.submission);
@@ -291,7 +292,8 @@ controllers.controller('SidebarCtrl', [
                         size: 0
                     },
                     stdinEnabled: false,
-                    numFiles: 0
+                    numFiles: 0,
+                    sizeFiles: 0
                 }
             });
 
