@@ -1,10 +1,19 @@
+import datetime
+from django.core.urlresolvers import reverse
+
 from rest_framework import viewsets, status
 from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
+from rest_framework.decorators import list_route
+
+from api.helpers import get_client_ip
 from api.permissions import IsOwnerOrReadOnly
 from api.serializers import ProjectSerializer, FileSerializer
-from frontend.models import Project, File
+from frontend.models import Project, File, Task
+
+from worker.worker import submit_code
+from worker.worker_config import WorkerConfig
 
 
 class ProjectViewSet(viewsets.ModelViewSet):
@@ -55,3 +64,28 @@ class FileViewSet(viewsets.ViewSet):
         instance = File.objects.get(pk=pk, project=project)
         instance.delete()
         return Response("")
+
+
+class JobViewSet(viewsets.ViewSet):
+    @list_route(methods=['POST'])
+    def submit(self, request):
+        worker_config = WorkerConfig()
+
+        code = request.data.get("code")
+        email = request.data.get("email")
+        args = request.data.get("run_configuration", {})
+
+        task = submit_code.apply_async(
+            [code,
+             email,
+             args,
+             request.build_absolute_uri(reverse('jobs_notify'))],
+            soft_time_limit=worker_config.timeout
+        )
+
+        Task.objects.create(task_id=task.task_id,
+                            email_address=email,
+                            ip_address=get_client_ip(request),
+                            created_at=datetime.datetime.now())
+
+        return Response({'task_id': task.task_id})

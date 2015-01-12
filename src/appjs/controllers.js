@@ -5,7 +5,7 @@ controllers.controller('MainCtrl', [
     function($scope, $http, $pusher, Project, File) {
         // Setup pusher 
         var pusher = $pusher(pclient);
-        var channel_id = null;
+        var channelId = null;
 
         $scope.submission = {
             name: null,
@@ -16,7 +16,8 @@ controllers.controller('MainCtrl', [
                     size: 0
                 },
                 stdinEnabled: false,
-                numFiles: 0
+                numFiles: 0,
+                sizeFiles: 0
             }
         };
         $scope.defaultSubmission = angular.copy($scope.submission);
@@ -76,19 +77,19 @@ controllers.controller('MainCtrl', [
             $scope.progress = [];
             $scope.progress.push('Job queued!');
 
-            if (channel_id) {
-                pusher.unsubscribe(channel_id);
+            if (channelId) {
+                pusher.unsubscribe(channelId);
             }
 
             // Send data to submit endpoint
             $http
-                .post('/submit/', submission)
+                .post('/api/jobs/submit/', submission)
 
             // We get a task id from submitting!
             .success(
                 function(data, status, headers) {
-                    channel_id = data.task_id;
-                    var channel = pusher.subscribe(channel_id);
+                    channelId = data.taskId;
+                    var channel = pusher.subscribe(channelId);
 
                     channel.bind('notification', function(response) {
                         data = angular.fromJson(response.data);
@@ -291,7 +292,8 @@ controllers.controller('SidebarCtrl', [
                         size: 0
                     },
                     stdinEnabled: false,
-                    numFiles: 0
+                    numFiles: 0,
+                    sizeFiles: 0
                 }
             });
 

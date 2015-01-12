@@ -54,25 +54,25 @@ class WorkerRunner():
 
     def __enter__(self):
         self.tempdir = tempfile.mkdtemp(prefix=self.task_id)
-        self.temp_code_file = os.path.join(self.tempdir, "code.c")
-        subprocess.check_call(["sudo", "chmod", "777", self.tempdir])
+        self.temp_code_file = os.path.join(self.tempdir, 'code.c')
+        subprocess.check_call(['sudo', 'chmod', '777', self.tempdir])
 
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        subprocess.check_call(["sudo", "rm", "-rf", self.tempdir])
+        subprocess.check_call(['sudo', 'rm', '-rf', self.tempdir])
 
     @staticmethod
     def generate_arguments(klee_args):
         result = []
 
-        stdin_enabled = klee_args.get('stdinEnabled')
+        stdin_enabled = klee_args.get('stdin_enabled')
         if stdin_enabled:
-            num_files = klee_args.get('numFiles')
-            size_files = klee_args.get('sizeFiles')
+            num_files = klee_args.get('num_files')
+            size_files = klee_args.get('size_files')
             result += ['--sym-files', str(num_files), str(size_files)]
 
-        sym_args = klee_args.get('symArgs')
+        sym_args = klee_args.get('sym_args')
         min_sym_args, max_sym_args = sym_args.get('range')
         size_sym_args = sym_args.get('size')
         if min_sym_args and max_sym_args and size_sym_args:
@@ -83,7 +83,7 @@ class WorkerRunner():
 
     @staticmethod
     def create_klee_command(arg_list):
-        klee_command = ["klee"]
+        klee_command = ['klee']
         if arg_list:
             klee_command += ['--posix-runtime', '-libc=uclibc']
 
@@ -93,7 +93,7 @@ class WorkerRunner():
         env_vars = []
         if env:
             for key, value in env.items():
-                env_vars.extend(['-e', "{}={}".format(key, value)])
+                env_vars.extend(['-e', '{}={}'.format(key, value)])
 
         flags = self.docker_flags + env_vars
         return ['sudo', 'docker', 'run'] + flags + ['kleeweb/klee']
@@ -107,7 +107,7 @@ class WorkerRunner():
                  '--net="none"']
 
         # We have to disable cleanup on CircleCI (permissions issues)
-        if not os.environ.get("CI"):
+        if not os.environ.get('CI'):
             flags += ['--rm=true']
 
         return flags
@@ -119,8 +119,8 @@ class WorkerRunner():
                               universal_newlines=True) \
                 .decode('utf-8')
         except subprocess.CalledProcessError as ex:
-            message = "Error running {}:\n{}".format(
-                " ".join(command), clean_stdout(ex.output))
+            message = 'Error running {}:\n{}'.format(
+                ' '.join(command), clean_stdout(ex.output))
             raise KleeRunFailure(message)
 
     def run_llvm(self):
@@ -129,7 +129,7 @@ class WorkerRunner():
                         self.DOCKER_CODE_FILE, '-o', self.DOCKER_OBJECT_FILE]
         self.run_with_docker(llvm_command)
 
-    @notify_on_entry("Analysing with KLEE")
+    @notify_on_entry('Analysing with KLEE')
     def run_klee(self, code, klee_args):
         # Write code out to temporary directory
         with codecs.open(self.temp_code_file, 'w', encoding='utf-8') as f:
@@ -153,7 +153,7 @@ class WorkerRunner():
             }
             requests.post(self.callback_endpoint, payload)
 
-    @notify_on_entry("Starting Job")
+    @notify_on_entry('Starting Job')
     def run(self, code, email, klee_args):
         try:
             args = WorkerRunner.generate_arguments(klee_args)
@@ -173,7 +173,7 @@ class WorkerRunner():
             })
 
         except KleeRunFailure as ex:
-            print "KLEE Run Failed"
+            print 'KLEE Run Failed'
             print ex.message
 
             self.send_notification('job_failed', {'output': ex.message})

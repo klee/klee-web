@@ -11,20 +11,48 @@ class ProjectSerializer(serializers.HyperlinkedModelSerializer):
         fields = ('id', 'name', 'default_file', 'example')
 
 
-class FileSerializer(serializers.HyperlinkedModelSerializer):
-    run_configuration = serializers.SerializerMethodField()
-    project_id = serializers.PrimaryKeyRelatedField(read_only=True)
+class RunConfigurationField(serializers.Field):
+    def get_attribute(self, obj):
+        return obj
 
-    def get_run_configuration(self, obj):
+    def to_representation(self, obj):
         return {
-            'symArgs': {
+            'sym_args': {
                 'range': [obj.min_sym_args, obj.max_sym_args],
                 'size': obj.size_sym_args
             },
-            'stdinEnabled': obj.stdin_enabled,
-            'sizeFiles': obj.size_files,
-            'numFiles': obj.num_files
+            'stdin_enabled': obj.stdin_enabled,
+            'size_files': obj.size_files,
+            'num_files': obj.num_files
         }
+
+    def to_internal_value(self, data):
+        return {
+            'stdin_enabled': data['stdin_enabled'],
+            'size_files': data['size_files'],
+            'num_files': data['num_files'],
+            'min_sym_args': data['sym_args']['range'][0],
+            'max_sym_args': data['sym_args']['range'][1],
+            'size_sym_args': data['sym_args']['size']
+        }
+
+
+class FileSerializer(serializers.HyperlinkedModelSerializer):
+    run_configuration = RunConfigurationField()
+    project_id = serializers.PrimaryKeyRelatedField(read_only=True)
+
+    def create(self, validated_data):
+        # Hack to unpack run configuration to fields in the model
+        validated_data.update(validated_data['run_configuration'])
+        del validated_data['run_configuration']
+
+        return super(FileSerializer, self).create(validated_data)
+
+    def update(self, instance, validated_data):
+        validated_data.update(validated_data['run_configuration'])
+        del validated_data['run_configuration']
+
+        return super(FileSerializer, self).update(instance, validated_data)
 
     class Meta:
         model = File

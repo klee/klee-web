@@ -3,7 +3,7 @@ import redis
 
 
 class WorkerConfig():
-    NAMESPACE = "klee_worker"
+    NAMESPACE = 'klee_worker'
     MEMORY_UNIT = 'm'
 
     def __init__(self):
@@ -12,22 +12,22 @@ class WorkerConfig():
 
     @property
     def cpu_share(self):
-        return self.get_config("cpu_share", default=100)
+        return self.get_config('cpu_share', default=100)
 
     @property
     def memory_limit(self):
-        return self.get_config("memory_limit", default=1024)
+        return self.get_config('memory_limit', default=1024)
 
     @property
     def timeout(self):
-        return self.get_config("timeout", default=30)
+        return self.get_config('timeout', default=30)
 
     def get_config(self, key, default=None):
-        value = self.r.get("{}:{}".format(WorkerConfig.NAMESPACE, key))
+        value = self.r.get('{}:{}'.format(WorkerConfig.NAMESPACE, key))
         if value is not None and value.isdigit():
             return int(value)
         else:
             return value or default
 
     def set_config(self, key, value):
-        self.r.set("{}:{}".format(WorkerConfig.NAMESPACE, key), value)
+        self.r.set('{}:{}'.format(WorkerConfig.NAMESPACE, key), value)

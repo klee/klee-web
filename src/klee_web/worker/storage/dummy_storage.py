@@ -5,4 +5,4 @@ class DummyStorage():
         pass
 
     def store_file(self, file_path):
-        return "File upload disabled in development"
+        return 'File upload disabled in development'
