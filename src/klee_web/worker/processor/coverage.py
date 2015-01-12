@@ -2,18 +2,21 @@ import os
 import glob
 
 from gcovparse import gcovparse
+from worker.processor.base import BaseProcessor
 
 
-class CoverageProcessor():
+class CoverageProcessor(BaseProcessor):
     name = 'coverage'
+    notify_message = 'Generating coverage reports'
 
-    def __init__(self, runner):
-        self.runner = runner
+    def __init__(self, runner, args):
+        BaseProcessor.__init__(self, runner, args)
 
-    def process(self, args):
-        if not args.get('coverage_enabled'):
-            return
+    @property
+    def enabled(self):
+        return self.args.get('coverage_enabled')
 
+    def process(self):
         runner = self.runner
         mount_dir = runner.DOCKER_MOUNT_DIR
         coverage_obj_file = os.path.join(mount_dir, 'code_cov.o')

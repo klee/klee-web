@@ -1,12 +1,15 @@
 import linecache
 import os
 import re
+from worker.processor.base import BaseProcessor
 
 
-class FailedTestProcessor():
+class FailedTestProcessor(BaseProcessor):
     name = 'failed_tests'
+    notify_message = 'Processing failed tests'
 
-    def __init__(self, runner):
+    def __init__(self, runner, args):
+        BaseProcessor.__init__(self, runner, args)
         self.source_file = runner.temp_code_file
         self.klee_result_dir = os.path.join(runner.tempdir, 'klee-out-0')
 
@@ -38,7 +41,7 @@ class FailedTestProcessor():
         m = re.match(pattern, line)
         return m.group(1) if m else 0
 
-    def process(self, args):
+    def process(self):
         error_files = filter(lambda f: f.endswith('.err'),
                              os.listdir(self.klee_result_dir))
         return map(self.process_error_file, error_files)

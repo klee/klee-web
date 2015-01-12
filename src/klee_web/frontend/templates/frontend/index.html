@@ -322,11 +322,15 @@
                             <pre class="progress-step code"
                                  ng-repeat="step in progress track by $index"
                                  ng-cloak>[[ step ]]</pre>
+
+                        <pre class="code klee-command" id="klee-command"
+                             ng-if="result.klee_run.command | isNotEmpty">Ran command "[[ result.klee_run.command ]]".</pre>
+
                             <pre class="code" id="result-output"
-                                 ng-if="result.output | isNotEmpty">[[ result.output ]]</pre>
+                                 ng-if="result.klee_run.output | isNotEmpty">[[ result.klee_run.output ]]</pre>
 
                             <pre class="failed-header code"
-                                 ng-show="(result.output | isNotEmpty) && (result.failed_tests | isNotEmpty)">Failed tests:</pre>
+                                 ng-show="result.failed_tests | isNotEmpty">Failed tests:</pre>
 
                         <div class="failed-tests"
                              ng-if="result.failed_tests | isNotEmpty">

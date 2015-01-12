@@ -2,10 +2,10 @@ import re
 import os
 import unittest
 import codecs
-import shlex
 
 from worker.runner import WorkerRunner
-from worker.exception import KleeRunFailure
+from worker.processor.klee_run import KleeRunProcessor
+from worker.exceptions import KleeRunFailure
 
 
 BASE_DIR = os.path.dirname(os.path.realpath(__file__))
@@ -14,13 +14,17 @@ FIXTURE_DIR = os.path.join(BASE_DIR, 'fixtures')
 
 class TestWorkerRunner(unittest.TestCase):
     def setUp(self):
-        self.runner = WorkerRunner('test')
+        self.runner = WorkerRunner('test', pipeline=[KleeRunProcessor])
         self.runner.__enter__()
 
     def tearDown(self):
         self.runner.__exit__(None, None, None)
 
-    def run_klee_test(self, fixture_name, args='', expect_failure=False):
+    def run_klee_test(self, fixture_name, run_configuration=None,
+                      expect_failure=False):
+        if not run_configuration:
+            run_configuration = {}
+
         test_fixtures = os.path.join(FIXTURE_DIR, fixture_name)
 
         with codecs.open(os.path.join(test_fixtures, 'input.c'),
@@ -33,12 +37,13 @@ class TestWorkerRunner(unittest.TestCase):
 
         flags = re.M | re.DOTALL | re.UNICODE
         expected_regex = re.compile(u"{}$".format(expected_out), flags)
-        arg_list = shlex.split(args)
         if expect_failure:
             self.assertRaisesRegexp(KleeRunFailure, expected_regex,
-                                    self.runner.run_klee, code, arg_list)
+                                    self.runner.execute_pipeline, code,
+                                    run_configuration)
         else:
-            stdout = self.runner.run_klee(code, arg_list)
+            result = self.runner.execute_pipeline(code, run_configuration)
+            stdout = result['klee_run']['output']
             self.assertRegexpMatches(stdout, expected_regex)
 
     def test_simple_run(self):
@@ -48,13 +53,23 @@ class TestWorkerRunner(unittest.TestCase):
         self.run_klee_test('simple_unicode')
 
     def test_symargs(self):
-        self.run_klee_test('symargs', '--sym-args 1 1 1')
+        self.run_klee_test('symargs', {
+            'sym_args': {
+                'range': [1, 1],
+                'size': 1
+            }
+        })
 
     def test_symfiles(self):
-        self.run_klee_test('symfiles', '--sym-files 0 1')
+        self.run_klee_test('symfiles', {
+            'stdin_enabled': True,
+            'num_files': 0,
+            'size_files': 1
+        })
 
     def test_fail_on_invalid_syntax(self):
         self.run_klee_test('invalid_syntax', expect_failure=True)
+
 
 if __name__ == '__main__':
     unittest.main()
