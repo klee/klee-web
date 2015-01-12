@@ -71,8 +71,12 @@ controllers.controller('MainCtrl', [
             $scope.submission.runConfiguration.stdinEnabled = false; 
         };
 
-        $scope.selectFile = function(file) {
-            $scope.submission = file;
+        $scope.selectFile = function (file) {
+            if (!angular.isUndefined(file)) {
+                $scope.submission = angular.copy(file);
+            } else {
+                $scope.resetLoadedFile();
+            }
         };
 
         $scope.resetLoadedFile = function() {
@@ -220,8 +224,23 @@ controllers.controller('EditorCtrl', [
 
 
 controllers.controller('SidebarCtrl', [
-    '$scope', 'Project', 'File',
-    function($scope, Project, File) {
+    '$scope', 'Project', 'File', 'FileUploader', '$cookies',
+    function($scope, Project, File, FileUploader, $cookies) {
+
+        function refreshFiles (projectId, selectedFileId) {
+            var refreshFiles = File.query({
+                projectId: projectId
+            }).$promise;
+
+            refreshFiles.then(function (files) {
+                $scope.files = files;
+                var selectedFile = _.findWhere($scope.files, {
+                    id: selectedFileId
+                });
+                $scope.selectFile(selectedFile);
+            });
+        };
+
         $scope.projectToAdd = false;
         $scope.newFile = {
             name: '',
@@ -230,6 +249,21 @@ controllers.controller('SidebarCtrl', [
         $scope.newProjectOpt = {
             name: 'Add New Project'
         };
+
+        $scope.uploader = new FileUploader({
+            withCredentials: true,
+            autoUpload: true,
+            removeAfterUpload: true,
+            headers: {
+                'X-CSRFToken': $cookies.csrftoken
+            },
+            onSuccessItem: function (item, response, status, headers) {
+                refreshFiles($scope.selectedProject.id, response.id);
+            },
+            onErrorItem: function (item, response, status, headers) {
+                alert('Upload failed. Please make sure you\'re uploading a valid file and try again.');
+            },
+        });
 
         Project.query().$promise.then(function(projects) {
             $scope.projects = projects;
@@ -250,24 +284,10 @@ controllers.controller('SidebarCtrl', [
                 if (project.name == 'Add New Project') {
                     $scope.projectToAdd = true;
                 } else {
-                    // Update file list when project changes
-                    File.query({
-                            projectId: project.id
-                        })
-                        .$promise.then(function(files) {
-                            $scope.files = files;
+                    // Update file uploader
+                    $scope.uploader.url = 'api/projects/' + project.id + '/files/upload/';
 
-                            // Set project default file if it exists
-                            // Otherwise load default project
-                            var defaultFile = _.findWhere($scope.files, {
-                                id: project.defaultFile
-                            });
-                            if (!angular.isUndefined(defaultFile)) {
-                                $scope.$parent.submission = defaultFile;
-                            } else {
-                                $scope.resetLoadedFile();
-                            }
-                        });
+                    refreshFiles(project.id, project.defaultFile);
                 }
             } else {
                 $scope.files = [];
@@ -337,7 +357,7 @@ controllers.controller('SidebarCtrl', [
         };
 
         $scope.deleteFile = function(file) {
-            file.$delete(function() {
+            file.$delete(function () {
                 // If we're deleting the current file, reset the editor
                 if (file == $scope.submission) {
                     $scope.resetLoadedFile();

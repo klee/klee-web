@@ -4,6 +4,8 @@ from django.core.urlresolvers import reverse
 from rest_framework import viewsets, status
 from rest_framework.generics import get_object_or_404
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from rest_framework.parsers import MultiPartParser, FormParser
+from djangorestframework_camel_case.parser import CamelCaseJSONParser
 from rest_framework.response import Response
 from rest_framework.decorators import list_route
 
@@ -34,6 +36,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
 
 class FileViewSet(viewsets.ViewSet):
     permission_classes = (IsAuthenticatedOrReadOnly,)
+    parser_classes = (MultiPartParser, FormParser, CamelCaseJSONParser)
     queryset = File.objects.all()
     serializer_class = FileSerializer
 
@@ -64,6 +67,18 @@ class FileViewSet(viewsets.ViewSet):
         instance = File.objects.get(pk=pk, project=project)
         instance.delete()
         return Response("")
+
+    @list_route(methods=['POST'])
+    def upload(self, request, project_pk=None):
+        project = get_object_or_404(Project, pk=project_pk, owner=request.user)
+        f = request.FILES['file']
+        uploaded_file = File()
+        uploaded_file.project = project
+        uploaded_file.name = f.name
+        uploaded_file.code = ''.join(f.chunks())
+        uploaded_file.save()
+        serializer = FileSerializer(uploaded_file)
+        return Response(serializer.data)
 
 
 class JobViewSet(viewsets.ViewSet):
