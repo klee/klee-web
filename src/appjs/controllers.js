@@ -22,7 +22,17 @@ controllers.controller('MainCtrl', [
         };
         $scope.defaultSubmission = angular.copy($scope.submission);
 
-        $scope.symArgs = false;
+        $scope.opts = {
+            symArgs: {
+                enabled: false,
+                open: false
+            },
+            symFiles: {
+                enabled: false,
+                open: false
+            }
+        };
+
         $scope.progress = [];
         $scope.result = {};
         $scope.submitted = false;
@@ -33,12 +43,32 @@ controllers.controller('MainCtrl', [
         $scope.projects = [];
         $scope.files = [];
 
+        $scope.toggleSymArgs = function ($event) {
+            $event.preventDefault();
+            $event.stopPropagation();
+            $scope.opts.symArgs.enabled = !$scope.opts.symArgs.enabled;
+            $scope.opts.symArgs.open = !$scope.opts.symArgs.open;
+        };
+
+        $scope.toggleSymFiles = function ($event) {
+            $event.preventDefault();
+            $event.stopPropagation();
+            $scope.opts.symFiles.enabled = !$scope.opts.symFiles.enabled;
+            $scope.submission.runConfiguration.stdinEnabled = !$scope.submission.runConfiguration.stdinEnabled;
+            $scope.opts.symFiles.open = !$scope.opts.symFiles.open;
+        };
+
         $scope.resetSymArgs = function() {
-            $scope.symArgs = false;
-            $scope.submission.args.symArgs = {
+            $scope.opts.symArgs.enabled = false;
+            $scope.submission.runConfiguration.symArgs = {
                 range: [0, 0],
                 size: 0
             };
+        };
+
+        $scope.resetSymFiles = function() {
+            $scope.opts.symFiles.enabled = false;
+            $scope.submission.runConfiguration.stdinEnabled = false; 
         };
 
         $scope.selectFile = function(file) {

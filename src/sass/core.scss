@@ -50,6 +50,7 @@ body .k-btn {
 	&:focus,
 	&:active {
 		color: #FFF;
+		outline: 0;
 		@include transition(background-color 0.2s ease-in-out);
 	}
 }
