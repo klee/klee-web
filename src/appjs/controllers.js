@@ -71,14 +71,6 @@ controllers.controller('MainCtrl', [
             $scope.submission.runConfiguration.stdinEnabled = false; 
         };
 
-        $scope.selectFile = function (file) {
-            if (!angular.isUndefined(file)) {
-                $scope.submission = angular.copy(file);
-            } else {
-                $scope.resetLoadedFile();
-            }
-        };
-
         $scope.resetLoadedFile = function() {
             $scope.submission = angular.copy($scope.defaultSubmission);
         }
@@ -134,15 +126,13 @@ controllers.controller('MainCtrl', [
                         $scope.submitted = false;
                         data = angular.fromJson(response.data);
                         $scope.progress.push('Done!');
-                        $scope.result = data.result;
+                        $scope.result = data;
                     });
 
                     channel.bind('job_failed', function(response) {
                         $scope.submitted = false;
                         data = angular.fromJson(response.data);
-                        $scope.result = {
-                            'output': data.output
-                        };
+                        $scope.result = data;
                     });
 
                 }
@@ -197,7 +187,7 @@ controllers.controller('MainCtrl', [
             $scope.editor.focus();
         };
 
-        $scope.$watch('result', function(result) {
+        $scope.$watch('result', function (result) {
             if (!(angular.isUndefined(result.coverage) || result.coverage === null)) {
                 $scope.drawCoverage(result.coverage[0]);
             }
@@ -295,12 +285,17 @@ controllers.controller('SidebarCtrl', [
             }
         });
 
-        $scope.selectFile = function(file) {
-            var selectedProject = $scope.$parent.selectedProject;
-            $scope.$parent.submission = file;
-            selectedProject.defaultFile = file.id;
-            if (!selectedProject.example) {
-                selectedProject.$update();
+        $scope.selectFile = function (file) {
+            if (!angular.isUndefined(file)) {
+                var selectedProject = $scope.$parent.selectedProject;
+                $scope.$parent.submission = file;
+                selectedProject.defaultFile = file.id;
+                
+                if (!selectedProject.example) {
+                    selectedProject.$update();
+                }
+            } else {
+                $scope.resetLoadedFile();
             }
         };
 
@@ -309,7 +304,7 @@ controllers.controller('SidebarCtrl', [
             $scope.$parent.selectedProject = null;
         };
 
-        $scope.addProject = function(projectName) {
+        $scope.addProject = function (projectName) {
             var newProject = new Project({
                 name: projectName
             });

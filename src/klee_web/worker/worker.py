@@ -41,10 +41,10 @@ def submit_code(self, code, email, klee_args, endpoint):
         try:
             runner.run(code, email, klee_args)
         except SoftTimeLimitExceeded:
-            runner.send_notification(
-                'job_failed',
-                {
+            result = {
+                'klee_run': {
                     'output': 'Job exceeded time limit of '
                               '{} seconds'.format(worker_config.timeout)
                 }
-            )
+            }
+            runner.send_notification('job_failed', result)
