@@ -13,7 +13,8 @@
 
 # Configure and deploy the worker nodes.
 - hosts: workers
-  user: root
+  user: ubuntu
+  sudo: yes
   vars_files:
     - vars/secrets.yml
     - vars/production.yml
