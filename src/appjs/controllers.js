@@ -22,7 +22,17 @@ controllers.controller('MainCtrl', [
         };
         $scope.defaultSubmission = angular.copy($scope.submission);
 
-        $scope.symArgs = false;
+        $scope.opts = {
+            symArgs: {
+                enabled: false,
+                open: false
+            },
+            symFiles: {
+                enabled: false,
+                open: false
+            }
+        };
+
         $scope.progress = [];
         $scope.result = {};
         $scope.submitted = false;
@@ -33,16 +43,32 @@ controllers.controller('MainCtrl', [
         $scope.projects = [];
         $scope.files = [];
 
+        $scope.toggleSymArgs = function ($event) {
+            $event.preventDefault();
+            $event.stopPropagation();
+            $scope.opts.symArgs.enabled = !$scope.opts.symArgs.enabled;
+            $scope.opts.symArgs.open = !$scope.opts.symArgs.open;
+        };
+
+        $scope.toggleSymFiles = function ($event) {
+            $event.preventDefault();
+            $event.stopPropagation();
+            $scope.opts.symFiles.enabled = !$scope.opts.symFiles.enabled;
+            $scope.submission.runConfiguration.stdinEnabled = !$scope.submission.runConfiguration.stdinEnabled;
+            $scope.opts.symFiles.open = !$scope.opts.symFiles.open;
+        };
+
         $scope.resetSymArgs = function() {
-            $scope.symArgs = false;
-            $scope.submission.args.symArgs = {
+            $scope.opts.symArgs.enabled = false;
+            $scope.submission.runConfiguration.symArgs = {
                 range: [0, 0],
                 size: 0
             };
         };
 
-        $scope.selectFile = function(file) {
-            $scope.submission = file;
+        $scope.resetSymFiles = function() {
+            $scope.opts.symFiles.enabled = false;
+            $scope.submission.runConfiguration.stdinEnabled = false; 
         };
 
         $scope.resetLoadedFile = function() {
@@ -100,15 +126,13 @@ controllers.controller('MainCtrl', [
                         $scope.submitted = false;
                         data = angular.fromJson(response.data);
                         $scope.progress.push('Done!');
-                        $scope.result = data.result;
+                        $scope.result = data;
                     });
 
                     channel.bind('job_failed', function(response) {
                         $scope.submitted = false;
                         data = angular.fromJson(response.data);
-                        $scope.result = {
-                            'output': data.output
-                        };
+                        $scope.result = data;
                     });
 
                 }
@@ -163,7 +187,7 @@ controllers.controller('MainCtrl', [
             $scope.editor.focus();
         };
 
-        $scope.$watch('result', function(result) {
+        $scope.$watch('result', function (result) {
             if (!(angular.isUndefined(result.coverage) || result.coverage === null)) {
                 $scope.drawCoverage(result.coverage[0]);
             }
@@ -190,8 +214,23 @@ controllers.controller('EditorCtrl', [
 
 
 controllers.controller('SidebarCtrl', [
-    '$scope', 'Project', 'File',
-    function($scope, Project, File) {
+    '$scope', 'Project', 'File', 'FileUploader', '$cookies',
+    function($scope, Project, File, FileUploader, $cookies) {
+
+        function refreshFiles (projectId, selectedFileId) {
+            var refreshFiles = File.query({
+                projectId: projectId
+            }).$promise;
+
+            refreshFiles.then(function (files) {
+                $scope.files = files;
+                var selectedFile = _.findWhere($scope.files, {
+                    id: selectedFileId
+                });
+                $scope.selectFile(selectedFile);
+            });
+        };
+
         $scope.projectToAdd = false;
         $scope.newFile = {
             name: '',
@@ -200,6 +239,21 @@ controllers.controller('SidebarCtrl', [
         $scope.newProjectOpt = {
             name: 'Add New Project'
         };
+
+        $scope.uploader = new FileUploader({
+            withCredentials: true,
+            autoUpload: true,
+            removeAfterUpload: true,
+            headers: {
+                'X-CSRFToken': $cookies.csrftoken
+            },
+            onSuccessItem: function (item, response, status, headers) {
+                refreshFiles($scope.selectedProject.id, response.id);
+            },
+            onErrorItem: function (item, response, status, headers) {
+                alert('Upload failed. Please make sure you\'re uploading a valid file and try again.');
+            },
+        });
 
         Project.query().$promise.then(function(projects) {
             $scope.projects = projects;
@@ -220,24 +274,10 @@ controllers.controller('SidebarCtrl', [
                 if (project.name == 'Add New Project') {
                     $scope.projectToAdd = true;
                 } else {
-                    // Update file list when project changes
-                    File.query({
-                            projectId: project.id
-                        })
-                        .$promise.then(function(files) {
-                            $scope.files = files;
+                    // Update file uploader
+                    $scope.uploader.url = 'api/projects/' + project.id + '/files/upload/';
 
-                            // Set project default file if it exists
-                            // Otherwise load default project
-                            var defaultFile = _.findWhere($scope.files, {
-                                id: project.defaultFile
-                            });
-                            if (!angular.isUndefined(defaultFile)) {
-                                $scope.$parent.submission = defaultFile;
-                            } else {
-                                $scope.resetLoadedFile();
-                            }
-                        });
+                    refreshFiles(project.id, project.defaultFile);
                 }
             } else {
                 $scope.files = [];
@@ -245,12 +285,17 @@ controllers.controller('SidebarCtrl', [
             }
         });
 
-        $scope.selectFile = function(file) {
-            var selectedProject = $scope.$parent.selectedProject;
-            $scope.$parent.submission = file;
-            selectedProject.defaultFile = file.id;
-            if (!selectedProject.example) {
-                selectedProject.$update();
+        $scope.selectFile = function (file) {
+            if (!angular.isUndefined(file)) {
+                var selectedProject = $scope.$parent.selectedProject;
+                $scope.$parent.submission = file;
+                selectedProject.defaultFile = file.id;
+                
+                if (!selectedProject.example) {
+                    selectedProject.$update();
+                }
+            } else {
+                $scope.resetLoadedFile();
             }
         };
 
@@ -259,7 +304,7 @@ controllers.controller('SidebarCtrl', [
             $scope.$parent.selectedProject = null;
         };
 
-        $scope.addProject = function(projectName) {
+        $scope.addProject = function (projectName) {
             var newProject = new Project({
                 name: projectName
             });
@@ -307,7 +352,7 @@ controllers.controller('SidebarCtrl', [
         };
 
         $scope.deleteFile = function(file) {
-            file.$delete(function() {
+            file.$delete(function () {
                 // If we're deleting the current file, reset the editor
                 if (file == $scope.submission) {
                     $scope.resetLoadedFile();

@@ -57,7 +57,7 @@
                         <span ng-hide="newFile.showForm">Add file...</span>
               <span ng-show="newFile.showForm" class="file-input">
                   <input type="text" ng-model="newFile.name"
-                         ng-enter="addFile()" focus="[[ fileToAdd ]]"
+                         ng-enter="addFile()" focus="[[ newFile.showForm ]]"
                          ng-blur="newFile.showForm = false"/>
               </span>
                     </a>
@@ -75,19 +75,16 @@
                         <i class="icon_close"></i>
                     </a>
                 </li>
-            </ul>
+            </ul> 
         </div>
 
         {% if user.is_authenticated %}
-            <div class="upload-file">
+            <form class="upload-file" enctype="multipart/form-data">
+                {% csrf_token %}
                 <h3>
-                    <a href="#">
-                        Upload File
-                        <i class="icon_cloud-upload_alt"></i>
-                    </a>
-
+                    <neat-file-uploader uploader="uploader"></neat-file-uploader>
                 </h3>
-            </div>
+            </form>
         {% endif %}
     </section>
 
@@ -127,8 +124,12 @@
         {% csrf_token %}
 
         <header>
-            <div class="options-btn btn-group" dropdown>
-                <button type="button" class="btn k-btn">Sym-Args</button>
+            <div class="options-btn btn-group" dropdown is-open="opts.symArgs.open">
+                <button type="button" class="btn k-btn" ng-click="toggleSymArgs($event)">
+                    Sym-Args 
+                    <i class=""
+                       ng-class="{'icon_box-empty': !opts.symArgs.enabled, 'icon_box-checked': opts.symArgs.enabled}"></i>
+                </button>
                 <button type="button" class="btn k-btn dropdown-toggle"
                         dropdown-toggle>
                     <i class="arrow_triangle-down"></i>
@@ -146,14 +147,14 @@
                         </p>
                     </header>
 
-                    <div class="form-group" ng-show="!symArgs">
-                        <button ng-click="symArgs = true" type="button"
+                    <div class="form-group" ng-show="!opts.symArgs.enabled">
+                        <button ng-click="opts.symArgs.enabled = true" type="button"
                                 class="btn k-btn enable">
                             Enable Sym-Args <i class="icon_check"></i>
                         </button>
                     </div>
 
-                    <div class="form-group" ng-show="symArgs">
+                    <div class="form-group" ng-show="opts.symArgs.enabled">
                         <label>No. of symbolic args</label>
 
                         <div class="args-slider">
@@ -169,14 +170,14 @@
                         </div>
                     </div>
 
-                    <div class="form-group" ng-show="symArgs">
+                    <div class="form-group" ng-show="opts.symArgs.enabled">
                         <label>Arg Size</label>
                         <input type="text"
                                ng-model="submission.runConfiguration.symArgs.size"
                                class="form-control"/>
                     </div>
 
-                    <div class="form-group" ng-show="symArgs">
+                    <div class="form-group" ng-show="opts.symArgs.enabled">
                         <button ng-click="resetSymArgs()" type="button"
                                 class="btn k-btn disable">
                             Disable Sym-Args <i class="icon_close"></i>
@@ -185,8 +186,12 @@
                 </div>
             </div>
 
-            <div class="options-btn btn-group" dropdown>
-                <button type="button" class="btn k-btn">Sym-Files</button>
+            <div class="options-btn btn-group" dropdown is-open="opts.symFiles.open">
+                <button type="button" class="btn k-btn" ng-click="toggleSymFiles($event)">
+                    Sym-Files
+                    <i class=""
+                       ng-class="{'icon_box-empty': !opts.symFiles.enabled, 'icon_box-checked': opts.symFiles.enabled}"></i>
+                </button>
                 <button type="button" class="btn k-btn dropdown-toggle"
                         dropdown-toggle>
                     <i class="arrow_triangle-down"></i>
@@ -206,15 +211,15 @@
                     </header>
 
                     <div class="form-group"
-                         ng-show="!submission.runConfiguration.stdinEnabled">
-                        <button ng-click="submission.runConfiguration.stdinEnabled = true"
+                         ng-show="!opts.symFiles.enabled">
+                        <button ng-click="submission.runConfiguration.stdinEnabled = true; opts.symFiles.enabled = true"
                                 type="button" class="btn k-btn enable">
                             Enable Sym-Files <i class="icon_check"></i>
                         </button>
                     </div>
 
                     <div class="form-group"
-                         ng-show="submission.runConfiguration.stdinEnabled">
+                         ng-show="opts.symFiles.enabled">
                         <label>No. of symbolic files</label>
 
                         <div class="args-slider">
@@ -239,8 +244,8 @@
                     </div>
 
                     <div class="form-group"
-                         ng-show="submission.runConfiguration.stdinEnabled">
-                        <button ng-click="submission.runConfiguration.stdinEnabled = false"
+                         ng-show="opts.symFiles.enabled">
+                        <button ng-click="resetSymFiles($event)"
                                 type="button" class="btn k-btn disable">
                             Disable Sym-Files <i class="icon_close"></i>
                         </button>
@@ -371,7 +376,7 @@
     <script src="{{ dist }}js/vendor/angular-bootstrap.min.js"></script>
     <script src="{{ dist }}js/vendor/jquery-ui.min.js"></script>
     <script src="{{ dist }}js/vendor/angular-ui-slider.min.js"></script>
-    <script src="//angular-ui.github.io/bootstrap/ui-bootstrap-tpls-0.12.0.js"></script>
+    <script src="{{ dist }}js/vendor/angular-file-upload.min.js"></script>
 
 
     <script type="text/javascript">

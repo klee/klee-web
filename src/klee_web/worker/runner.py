@@ -125,9 +125,7 @@ class WorkerRunner():
         try:
             result = self.execute_pipeline(code, klee_args)
 
-            self.send_notification('job_complete', {
-                'result': result
-            })
+            self.send_notification('job_complete', result)
 
         except KleeRunFailure as ex:
             print 'KLEE Run Failed'

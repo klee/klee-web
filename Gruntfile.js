@@ -118,6 +118,12 @@ module.exports = function (grunt) {
                                 '<%= bower.directory %>/angular-bootstrap/ui-bootstrap.min.js',
                                 '<%= bower.directory %>/angular-bootstrap/ui-bootstrap-tpls.min.js',
                             ],
+                        '<%= config.frontend_dist %>/js/vendor/angular-file-upload.min.js':
+                            [
+                                '<%= bower.directory %>/angular-file-upload/angular-file-upload.min.js',
+                                '<%= bower.directory %>/es5-shim/es5-shim.min.js',
+                                '<%= bower.directory %>/es5-shim/es5-sham.min.js',
+                            ],
                     }
                 ]
             }
