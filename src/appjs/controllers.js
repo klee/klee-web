@@ -293,6 +293,8 @@ controllers.controller('SidebarCtrl', [
             if (!angular.isUndefined(file)) {
                 var selectedProject = $scope.$parent.selectedProject;
                 $scope.$parent.submission = file;
+                $scope.opts.symArgs.enabled = file.runConfiguration.symArgs.range[0] > 0 || file.runConfiguration.symArgs.range[1] > 0;
+                $scope.opts.symFiles.enabled = file.runConfiguration.stdinEnabled;
                 selectedProject.defaultFile = file.id;
                 
                 if (!selectedProject.example) {
