@@ -6,42 +6,45 @@
 {% endblock %}
 
 {% block content %}
-    <h1>Welcome to the KLEE-Web Admin.</h1>
+    <h1>KLIDE Admin</h1>
+    <br/>
+    <br/>
 
-
+    <h4>Number of jobs ran in the last 7 days</h4>
+    <br />
     <div class="row">
         <div class="col-lg-3">
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    Average jobs per day: {{ jobs_per_day }}
+                    <strong>Average jobs per day: {{ jobs_per_day }}</strong>
                 </div>
             </div>
         </div>
         <div class="col-lg-3">
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    Average time per job: {{ avg_time }}s
+                    <strong>Average time per job: {{ avg_time }}s</strong>
                 </div>
             </div>
         </div>
         <div class="col-lg-3">
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    Total jobs submitted: {{ total_done }}
+                    <strong>Total jobs submitted: {{ total_done }}</strong>
                 </div>
             </div>
         </div>
         <div class="col-lg-3">
             <div class="panel panel-default">
                 <div class="panel-heading">
-                    {{ today }}
+                    <strong>{{ today }}</strong>
                 </div>
             </div>
         </div>
     </div>
+    <br />
+    <br />
 
-
-    <h3>Number of jobs ran in the last 7 days</h3>
     <canvas id="myChart" width="1000" height="400"></canvas>
     <!-- Add a legend to show what it means -->
 {% endblock %}

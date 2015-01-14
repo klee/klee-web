@@ -1,29 +1,53 @@
 {% extends "control_panel/base.html" %}
 
+{% block css %}
+  <link rel="stylesheet" type="text/css" href="{{dist}}/css/auth.css" />
+{% endblock %}
+
 {% block content %}
 
-{% if form.errors %}
-<p>Your username and password didn't match. Please try again.</p>
-{% endif %}
+  <div class="row">
+        <div class="login-form col-sm-4 col-sm-offset-4">
 
-<form role="form" method="post"
-      action="{% url 'django.contrib.auth.views.login' %}">
-    {% csrf_token %}
-    <div class="form-group">
-        {{ form.username.label_tag }}
-        <input type="text" class="form-control"
-               id="{{ form.username.label_id }}"
-               name="{{ form.username.name }}" placeholder="Enter username">
-    </div>
-    <div class="form-group">
-        {{ form.password.label_tag }}
-        <input type="password" class="form-control"
-               id="{{ form.password.label_id }}"
-               name="{{ form.password.name }}" placeholder="Password">
-    </div>
-    <button type="submit" class="btn btn-default">Submit</button>
-    <input type="hidden" name="next" value="{{ next }}"/>
+            <form role="form" method="post" action="{% url 'django.contrib.auth.views.login' %}">
+                {% csrf_token %}
 
-</form>
+                <div class="intro">
+                    <img src="{{ dist }}img/klee-logo.svg" class="logo"/>
+
+                    <p>Welcome to KLEE. If you have an account, please log in
+                        below. If not, you can <a href="{% url 'register' %}">sign
+                            up here</a>.</p>
+                </div>
+
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" name="{{ form.username.name }}"
+                           class="username form-control"
+                           placeholder="Username"/>
+                </div>
+
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" name="{{ form.password.name }}"
+                           class="password form-control"
+                           placeholder="Password"/>
+                </div>
+
+                <button type="submit" class="btn k-btn submit">Login</button>
+
+                <input type="hidden" name="next" value="{{ next }}"/>
+
+                <div class="form-errors">
+                    {% if form.errors %}
+                        <small class="login-error">Your username and password
+                            didn't match. Please try again.
+                        </small>
+                    {% endif %}
+                </div>
+            </form>
+
+        </div>
+    </div>
 
 {% endblock %}
