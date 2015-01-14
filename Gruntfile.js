@@ -90,6 +90,12 @@ module.exports = function (grunt) {
                         src: 'jquery-ui.min.js',
                         dest: '<%= config.frontend_dist %>/js/vendor'
                     },
+                    {
+                        expand: true,
+                        cwd: '<%= config.lib %>/nanobar',
+                        src: 'nanobar.min.js',
+                        dest: '<%= config.frontend_dist %>/js/vendor'
+                    }
         		]
         	}
         },
