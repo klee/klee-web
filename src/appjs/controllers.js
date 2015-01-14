@@ -1,8 +1,8 @@
 var controllers = angular.module('controllers', []);
 
 controllers.controller('MainCtrl', [
-    '$scope', '$http', '$pusher', 'Project', 'File',
-    function($scope, $http, $pusher, Project, File) {
+    '$scope', '$http', '$pusher', '$rootScope', 'Project', 'File',
+    function($scope, $http, $pusher, $rootScope, Project, File) {
         // Setup pusher 
         var pusher = $pusher(pclient);
         var channelId = null;
@@ -98,6 +98,7 @@ controllers.controller('MainCtrl', [
         }, true);
 
         $scope.processForm = function(submission) {
+            $rootScope.startNanobar();
             $scope.submitted = true;
             $scope.result = {};
             $scope.progress = [];
@@ -127,12 +128,14 @@ controllers.controller('MainCtrl', [
                         data = angular.fromJson(response.data);
                         $scope.progress.push('Done!');
                         $scope.result = data;
+                        $rootScope.finishNanobar();
                     });
 
                     channel.bind('job_failed', function(response) {
                         $scope.submitted = false;
                         data = angular.fromJson(response.data);
                         $scope.result = data;
+                        $rootScope.finishNanobar();
                     });
 
                 }
@@ -142,6 +145,7 @@ controllers.controller('MainCtrl', [
             .error(
                 function(data, status, headers) {
                     console.debug('Error! ', data);
+                    $rootScope.finishNanobar();
                 }
             );
         };
