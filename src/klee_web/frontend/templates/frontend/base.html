@@ -1,59 +1,59 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
+    <head>
 
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="">
-    <meta name="author" content="">
-    <!-- <link rel="icon" href="../../favicon.ico"> -->
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="description" content="">
+        <meta name="author" content="">
+        <!-- <link rel="icon" href="../../favicon.ico"> -->
 
-    <title>{% block title %}{% endblock %}</title>
+        <title>{% block title %}{% endblock %}</title>
 
-    <!-- Fonts -->
-    <link href='http://fonts.googleapis.com/css?family=Cousine:400,700|Open+Sans:300,400,700,600|Roboto:400,300,500,700'
-          rel='stylesheet' type='text/css'>
+        <!-- Fonts -->
+        <link href='http://fonts.googleapis.com/css?family=Cousine:400,700|Open+Sans:300,400,700,600|Roboto:400,300,500,700'
+              rel='stylesheet' type='text/css'>
 
-    <!-- Custom styles for this template -->
-    <link href="{{ dist }}css/vendor/eleganticons/style.css" rel="stylesheet">
-    <link href="{{ dist }}css/vendor/animate.min.css" rel="stylesheet">
-    <link href="{{ dist }}css/core.css" rel="stylesheet">
-    {% block css %}
-    {% endblock %}
+        <!-- Custom styles for this template -->
+        <link href="{{ dist }}css/vendor/eleganticons/style.css" rel="stylesheet">
+        <link href="{{ dist }}css/vendor/animate.min.css" rel="stylesheet">
+        <link href="{{ dist }}css/core.css" rel="stylesheet">
+        {% block css %}
+        {% endblock %}
 
-    <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
-    <!--[if lt IE 9]>
-      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
-      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
-    <![endif]-->
+        <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+        <!--[if lt IE 9]>
+          <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+          <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+        <![endif]-->
 
-    <script type="text/javascript">
-        window.heap = window.heap || [], heap.load = function (t, e) {
-            window.heap.appid = t, window.heap.config = e;
-            var a = document.createElement("script");
-            a.type = "text/javascript", a.async = !0, a.src = ("https:" === document.location.protocol ? "https:" : "http:") + "//cdn.heapanalytics.com/js/heap.js";
-            var n = document.getElementsByTagName("script")[0];
-            n.parentNode.insertBefore(a, n);
-            for (var o = function (t) {
-                return function () {
-                    heap.push([t].concat(Array.prototype.slice.call(arguments, 0)))
-                }
-            }, p = ["clearEventProperties", "identify", "setEventProperties", "track", "unsetEventProperty"], c = 0; c < p.length; c++)heap[p[c]] = o(p[c])
-        };
-        heap.load("2228716055");
-    </script>
-</head>
+        <script type="text/javascript">
+            window.heap = window.heap || [], heap.load = function (t, e) {
+                window.heap.appid = t, window.heap.config = e;
+                var a = document.createElement("script");
+                a.type = "text/javascript", a.async = !0, a.src = ("https:" === document.location.protocol ? "https:" : "http:") + "//cdn.heapanalytics.com/js/heap.js";
+                var n = document.getElementsByTagName("script")[0];
+                n.parentNode.insertBefore(a, n);
+                for (var o = function (t) {
+                    return function () {
+                        heap.push([t].concat(Array.prototype.slice.call(arguments, 0)))
+                    }
+                }, p = ["clearEventProperties", "identify", "setEventProperties", "track", "unsetEventProperty"], c = 0; c < p.length; c++)heap[p[c]] = o(p[c])
+            };
+            heap.load("2228716055");
+        </script>
+    </head>
 
-<body ng-app="app">
+    <body ng-app="app">
 
-{% block content %}
-{% endblock %}
+        {% block content %}
+        {% endblock %}
 
-<!-- JavaScript
-================================================== -->
-<script src="{{ dist }}js/vendor/lib.min.js"></script>
-{% block javascript %}
-{% endblock %}
-</body>
+        <!-- JavaScript
+        ================================================== -->
+        <script src="{{ dist }}js/vendor/lib.min.js"></script>
+        {% block javascript %}
+        {% endblock %}
+    </body>
 </html>
