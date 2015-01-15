@@ -5,3 +5,4 @@ client = yes
 [redis]
 accept = 127.0.0.1:{{ redis_port }}
 connect = {{ redis_host_remote }}:{{ redis_port }}
+retry = yes
