@@ -3,22 +3,22 @@
 {% block title %}KLIDE{% endblock %}
 
 {% block css %}
-    <link href="{{ dist }}css/vendor/codemirror/codemirror.css"
-          rel="stylesheet">
-    <link href="{{ dist }}css/vendor/codemirror/theme/neo.css" rel="stylesheet">
-    <link href="{{ dist }}css/vendor/jquery-ui.min.css" rel="stylesheet">
-    <link href="{{ dist }}css/ide.css" rel="stylesheet">
+<link href="{{ dist }}css/vendor/codemirror/codemirror.css"
+      rel="stylesheet">
+<link href="{{ dist }}css/vendor/codemirror/theme/neo.css" rel="stylesheet">
+<link href="{{ dist }}css/vendor/jquery-ui.min.css" rel="stylesheet">
+<link href="{{ dist }}css/ide.css" rel="stylesheet">
 
-    <style type="text/css">
-        .tooltip-inner {
-            max-width: 300px;
-        }
-    </style>
+<style type="text/css">
+    .tooltip-inner {
+    max-width: 300px;
+    }
+</style>
 {% endblock %}
 
 {% block content %}
 
-    <div class="wrapper" ng-controller="MainCtrl">
+<div class="wrapper" ng-controller="MainCtrl">
 
     <!-- Sidebar -->
     <section class="sidebar" ng-controller="SidebarCtrl">
@@ -75,255 +75,259 @@
                         <i class="icon_close"></i>
                     </a>
                 </li>
-            </ul> 
+            </ul>
         </div>
 
         {% if user.is_authenticated %}
-            <form class="upload-file" enctype="multipart/form-data">
-                {% csrf_token %}
-                <h3>
-                    <neat-file-uploader uploader="uploader"></neat-file-uploader>
-                </h3>
-            </form>
+        <form class="upload-file" enctype="multipart/form-data">
+            {% csrf_token %}
+            <h3>
+                <neat-file-uploader uploader="uploader"></neat-file-uploader>
+            </h3>
+        </form>
         {% endif %}
     </section>
 
     <!-- Main container -->
     <div class="content">
-    <nav class="topbar">
-        <header>
-            <img src="{{ dist }}img/klee-logo.svg" class="logo" title="KLEE"/>
-            {% if not user.is_authenticated %}
+        <nav class="topbar">
+            <header>
+                <img src="{{ dist }}img/klee-logo.svg" class="logo" title="KLEE"/>
+                {% if not user.is_authenticated %}
                 <div class="register-area">
                     <a href="user/register">Register</a>
                 </div>
-            {% endif %}
-            <div class="login-area">
-                {% if user.is_authenticated %}
-                    <a href="user/logout">Logout</a>
-                {% else %}
-                    <a href="user/login">Login</a>
                 {% endif %}
-            </div>
-            {% if user.is_authenticated %}
+                <div class="login-area">
+                    {% if user.is_authenticated %}
+                    <a href="user/logout">Logout</a>
+                    {% else %}
+                    <a href="user/login">Login</a>
+                    {% endif %}
+                </div>
+                {% if user.is_authenticated %}
                 <div class="login-area">
                     <a href="user/settings">{{ user.username|truncatechars:8 }}&nbsp;&nbsp;<i
                             class="icon_cogs"></i></a>
                 </div>
-            {% endif %}
-        </header>
-    </nav>
-
-    <div class="content-inner">
-
-    <form ng-submit="processForm(submission)"
-          enctype="multipart/form-data"
-          class="editor {% if messages %} has-error {% endif %}"
-          ng-controller="EditorCtrl"
-          ng-cloak>
-        {% csrf_token %}
-
-        <header>
-            <div class="options-btn btn-group" dropdown is-open="opts.symArgs.open">
-                <button type="button" class="btn k-btn" ng-click="toggleSymArgs($event)">
-                    Sym-Args 
-                    <i class=""
-                       ng-class="{'icon_box-empty': !opts.symArgs.enabled, 'icon_box-checked': opts.symArgs.enabled}"></i>
-                </button>
-                <button type="button" class="btn k-btn dropdown-toggle"
-                        dropdown-toggle>
-                    <i class="arrow_triangle-down"></i>
-                    <span class="sr-only">Split button!</span>
-                </button>
-                <div class="dropdown-menu" role="menu"
-                     ng-click="$event.stopPropagation()">
-                    <header>
-                        <h4>Symbolic arguments</h4>
-
-                        <p>
-                            <small>Vary the values of the program arguments
-                                according to the selected restrictions
-                                (number, size)<span class=""></span></small>
-                        </p>
-                    </header>
-
-                    <div class="form-group" ng-show="!opts.symArgs.enabled">
-                        <button ng-click="opts.symArgs.enabled = true" type="button"
-                                class="btn k-btn enable">
-                            Enable Sym-Args <i class="icon_check"></i>
-                        </button>
-                    </div>
-
-                    <div class="form-group" ng-show="opts.symArgs.enabled">
-                        <label>No. of symbolic args</label>
-
-                        <div class="args-slider">
-                            <div class="slider-inner">
-                                <div ui-slider="{range: true}" min="0"
-                                     max="9" step="1"
-                                     ng-model="submission.runConfiguration.symArgs.range"></div>
-                            </div>
-                            <div class="units">
-                                <span class="min">0<br/>Min</span>
-                                <span class="max">9<br/>Max</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="form-group" ng-show="opts.symArgs.enabled">
-                        <label>Arg Size</label>
-                        <input type="text"
-                               ng-model="submission.runConfiguration.symArgs.size"
-                               class="form-control"/>
-                    </div>
-
-                    <div class="form-group" ng-show="opts.symArgs.enabled">
-                        <button ng-click="resetSymArgs()" type="button"
-                                class="btn k-btn disable">
-                            Disable Sym-Args <i class="icon_close"></i>
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <div class="options-btn btn-group" dropdown is-open="opts.symFiles.open">
-                <button type="button" class="btn k-btn" ng-click="toggleSymFiles($event)">
-                    Sym-Files
-                    <i class=""
-                       ng-class="{'icon_box-empty': !opts.symFiles.enabled, 'icon_box-checked': opts.symFiles.enabled}"></i>
-                </button>
-                <button type="button" class="btn k-btn dropdown-toggle"
-                        dropdown-toggle>
-                    <i class="arrow_triangle-down"></i>
-                    <span class="sr-only">Split button!</span>
-                </button>
-                <div class="dropdown-menu" role="menu"
-                     ng-click="$event.stopPropagation()">
-                    <header>
-                        <h4>Symbolic Files</h4>
-
-                        <p>
-                            <small>File reads are taken from any of N files,
-                                the contents of which will varied between
-                                separate executions.
-                            </small>
-                        </p>
-                    </header>
-
-                    <div class="form-group"
-                         ng-show="!opts.symFiles.enabled">
-                        <button ng-click="submission.runConfiguration.stdinEnabled = true; opts.symFiles.enabled = true"
-                                type="button" class="btn k-btn enable">
-                            Enable Sym-Files <i class="icon_check"></i>
-                        </button>
-                    </div>
-
-                    <div class="form-group"
-                         ng-show="opts.symFiles.enabled">
-                        <label>No. of symbolic files</label>
-
-                        <div class="args-slider">
-                            <div class="slider-inner">
-                                <div ui-slider="{range: false}" min="0"
-                                     max="9" step="1"
-                                     ng-model="submission.runConfiguration.numFiles"></div>
-                            </div>
-                            <div class="units">
-                                <span class="min">0<br/>Min</span>
-                                <span class="max">9<br/>Max</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="form-group"
-                         ng-show="submission.runConfiguration.stdinEnabled">
-                        <label>File Size</label>
-                        <input type="text"
-                               ng-model="submission.runConfiguration.sizeFiles"
-                               class="form-control"/>
-                    </div>
-
-                    <div class="form-group"
-                         ng-show="opts.symFiles.enabled">
-                        <button ng-click="resetSymFiles($event)"
-                                type="button" class="btn k-btn disable">
-                            Disable Sym-Files <i class="icon_close"></i>
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <div class="options-btn btn-group">
-                <button ng-click="submission.runConfiguration.coverage_enabled = !submission.runConfiguration.coverage_enabled"
-                        type="button" class="btn k-btn coverage-btn"
-                        tooltip-placement="bottom"
-                        tooltip="Generate a coverage report for this run."
-                        tooltip-popup-delay="200"
-                        tooltip-append-to-body="true">
-                    Coverage
-                    <i class=""
-                       ng-class="{'icon_box-empty': !submission.runConfiguration.coverage_enabled, 'icon_box-checked': submission.runConfiguration.coverage_enabled}"></i>
-                </button>
-            </div>
-
-            <button type="submit" id="run-klee-btn"
-                    class="btn k-btn run-klee-btn">
-                <i class="arrow_triangle-right"></i> <span>Run Klee</span>
-            </button>
-        </header>
-
-        <ui-codemirror id="codemirror"
-                       ng-model="submission.code"
-                       ui-codemirror-opts="editorOptions"></ui-codemirror>
-
-        {{ form.code.errors }}
-
-    </form>
-
-    <div class="results" ng-cloak nanobar>
-        <header>
-            <h3>KLEE Results</h3>
-
-            <div class="download action-box"
-                 ng-class="{'active': result.url, 'flash-color': result.url}">
-                <a href="#" ng-href="[[ result.url ]]"
-                   tooltip-placement="bottom"
-                   tooltip="Download raw KLEE results."
-                   tooltip-popup-delay="200">
-                    <i class="icon_cloud-download_alt"></i>
-                </a>
-            </div>
-
-            <div class="email action-box">
-                <a href="#">
-                    <i class="icon_mail_alt"></i>
-                </a>
-            </div>
-
-        </header>
-
-        <div class="results-inner" ng-controller="ResultTabsCtrl">
-            <header>
-                <nav class="tabs">
-                    <ul>
-                        <li ng-class="{active: tabs.output.active}">
-                            <a href="#"
-                               ng-click="setTab('output')">Output</a>
-                        </li>
-                        <li ng-class="{active: tabs.coverage.active}"
-                            ng-if="result.coverage">
-                            <a href="#"
-                               ng-click="setTab('coverage')">Coverage</a>
-                        </li>
-                    </ul>
-                </nav>
+                {% endif %}
             </header>
+        </nav>
 
-            <div class="results-body">
-                <div class="tab-body">
+        <div class="content-inner">
 
-                    <div class="tab-content-inner klee-output"
-                         ng-show="tabs.output.active">
+            <form ng-submit="processForm(submission)"
+                  enctype="multipart/form-data"
+                  class="editor {% if messages %} has-error {% endif %}"
+                  ng-controller="EditorCtrl"
+                  ng-cloak>
+                {% csrf_token %}
+
+                <header>
+                    <div class="options-btn btn-group" dropdown is-open="opts.symArgs.open">
+                        <button type="button" class="btn k-btn" ng-click="toggleSymArgs($event)">
+                            Sym-Args
+                            <i class=""
+                               ng-class="{'icon_box-empty': !opts.symArgs.enabled, 'icon_box-checked': opts.symArgs.enabled}"></i>
+                        </button>
+                        <button type="button" class="btn k-btn dropdown-toggle"
+                                dropdown-toggle>
+                            <i class="arrow_triangle-down"></i>
+                            <span class="sr-only">Split button!</span>
+                        </button>
+                        <div class="dropdown-menu" role="menu"
+                             ng-click="$event.stopPropagation()">
+                            <header>
+                                <h4>Symbolic arguments</h4>
+
+                                <p>
+                                    <small>Vary the values of the program arguments
+                                        according to the selected restrictions
+                                        (number, size)<span class=""></span></small>
+                                </p>
+                            </header>
+
+                            <div class="form-group" ng-show="!opts.symArgs.enabled">
+                                <button ng-click="opts.symArgs.enabled = true" type="button"
+                                        class="btn k-btn enable">
+                                    Enable Sym-Args <i class="icon_check"></i>
+                                </button>
+                            </div>
+
+                            <div class="form-group" ng-show="opts.symArgs.enabled">
+                                <label>No. of symbolic args</label>
+
+                                <div class="args-slider">
+                                    <div class="slider-inner">
+                                        <div ui-slider="{range: true}" min="0"
+                                             max="9" step="1"
+                                             ng-model="submission.runConfiguration.symArgs.range"></div>
+                                    </div>
+                                    <div class="units">
+                                        <span class="min">0<br/>Min</span>
+                                        <span class="max">9<br/>Max</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-group" ng-show="opts.symArgs.enabled">
+                                <label>Arg Size</label>
+                                <input type="text"
+                                       ng-model="submission.runConfiguration.symArgs.size"
+                                       class="form-control"/>
+                            </div>
+
+                            <div class="form-group" ng-show="opts.symArgs.enabled">
+                                <button ng-click="resetSymArgs()" type="button"
+                                        class="btn k-btn disable">
+                                    Disable Sym-Args <i class="icon_close"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="options-btn btn-group" dropdown is-open="opts.symFiles.open">
+                        <button type="button" class="btn k-btn" ng-click="toggleSymFiles($event)">
+                            Sym-Files
+                            <i class=""
+                               ng-class="{'icon_box-empty': !opts.symFiles.enabled, 'icon_box-checked': opts.symFiles.enabled}"></i>
+                        </button>
+                        <button type="button" class="btn k-btn dropdown-toggle"
+                                dropdown-toggle>
+                            <i class="arrow_triangle-down"></i>
+                            <span class="sr-only">Split button!</span>
+                        </button>
+                        <div class="dropdown-menu" role="menu"
+                             ng-click="$event.stopPropagation()">
+                            <header>
+                                <h4>Symbolic Files</h4>
+
+                                <p>
+                                    <small>File reads are taken from any of N files,
+                                        the contents of which will varied between
+                                        separate executions.
+                                    </small>
+                                </p>
+                            </header>
+
+                            <div class="form-group"
+                                 ng-show="!opts.symFiles.enabled">
+                                <button ng-click="submission.runConfiguration.stdinEnabled = true; opts.symFiles.enabled = true"
+                                        type="button" class="btn k-btn enable">
+                                    Enable Sym-Files <i class="icon_check"></i>
+                                </button>
+                            </div>
+
+                            <div class="form-group"
+                                 ng-show="opts.symFiles.enabled">
+                                <label>No. of symbolic files</label>
+
+                                <div class="args-slider">
+                                    <div class="slider-inner">
+                                        <div ui-slider="{range: false}" min="0"
+                                             max="9" step="1"
+                                             ng-model="submission.runConfiguration.numFiles"></div>
+                                    </div>
+                                    <div class="units">
+                                        <span class="min">0<br/>Min</span>
+                                        <span class="max">9<br/>Max</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-group"
+                                 ng-show="submission.runConfiguration.stdinEnabled">
+                                <label>File Size</label>
+                                <input type="text"
+                                       ng-model="submission.runConfiguration.sizeFiles"
+                                       class="form-control"/>
+                            </div>
+
+                            <div class="form-group"
+                                 ng-show="opts.symFiles.enabled">
+                                <button ng-click="resetSymFiles($event)"
+                                        type="button" class="btn k-btn disable">
+                                    Disable Sym-Files <i class="icon_close"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="options-btn btn-group">
+                        <button ng-click="submission.runConfiguration.coverage_enabled = !submission.runConfiguration.coverage_enabled"
+                                type="button" class="btn k-btn coverage-btn"
+                                tooltip-placement="bottom"
+                                tooltip="Generate a coverage report for this run."
+                                tooltip-popup-delay="200"
+                                tooltip-append-to-body="true">
+                            Coverage
+                            <i class=""
+                               ng-class="{'icon_box-empty': !submission.runConfiguration.coverage_enabled, 'icon_box-checked': submission.runConfiguration.coverage_enabled}"></i>
+                        </button>
+                    </div>
+
+                    <button type="submit" id="run-klee-btn"
+                            class="btn k-btn run-klee-btn">
+                        <i class="arrow_triangle-right"></i> <span>Run Klee</span>
+                    </button>
+                </header>
+
+                <ui-codemirror id="codemirror"
+                               ng-model="submission.code"
+                               ui-codemirror-opts="editorOptions"></ui-codemirror>
+
+                {{ form.code.errors }}
+
+            </form>
+
+            <div class="results" ng-cloak nanobar>
+                <header>
+                    <h3>KLEE Results</h3>
+
+                    <div class="download action-box"
+                         ng-class="{'active': result.url, 'flash-color': result.url}">
+                        <a href="#" ng-href="[[ result.url ]]"
+                           tooltip-placement="bottom"
+                           tooltip="Download raw KLEE results."
+                           tooltip-popup-delay="200">
+                            <i class="icon_cloud-download_alt"></i>
+                        </a>
+                    </div>
+
+                    <div class="email action-box">
+                        <a href="#">
+                            <i class="icon_mail_alt"></i>
+                        </a>
+                    </div>
+
+                </header>
+
+                <div class="results-inner" ng-controller="ResultTabsCtrl">
+                    <header>
+                        <nav class="tabs">
+                            <ul>
+                                <li ng-class="{active: tabs.output.active}">
+                                    <a href="#"
+                                       ng-click="setTab('output')">Output</a>
+                                </li>
+                                <li ng-class="{active: tabs.stats.active}">
+                                    <a href="#"
+                                       ng-click="setTab('stats')">Stats</a>
+                                </li>
+                                <li ng-class="{active: tabs.coverage.active}"
+                                    ng-if="result.coverage">
+                                    <a href="#"
+                                       ng-click="setTab('coverage')">Coverage</a>
+                                </li>
+                            </ul>
+                        </nav>
+                    </header>
+
+                    <div class="results-body">
+                        <div class="tab-body">
+
+                            <div class="tab-content-inner klee-output"
+                                 ng-show="tabs.output.active">
                             <pre class="progress-step code"
                                  ng-repeat="step in progress track by $index"
                                  ng-cloak>[[ step ]]</pre>
@@ -337,52 +341,72 @@
                             <pre class="failed-header code"
                                  ng-show="result.failed_tests | isNotEmpty">Failed tests:</pre>
 
-                        <div class="failed-tests"
-                             ng-if="result.failed_tests | isNotEmpty">
-                            <div class="failed-test"
-                                 ng-repeat="fail in result.failed_tests">
-                                <pre class="error-description code">[[ fail.reason ]] on line [[ fail.line_no ]].</pre>
-                                <pre class="error-line code">[[ fail.line ]]</pre>
+                                <div class="failed-tests"
+                                     ng-if="result.failed_tests | isNotEmpty">
+                                    <div class="failed-test"
+                                         ng-repeat="fail in result.failed_tests">
+                                        <pre class="error-description code">[[ fail.reason ]] on line [[ fail.line_no ]].</pre>
+                                        <pre class="error-line code">[[ fail.line ]]</pre>
+                                    </div>
+                                </div>
+
                             </div>
+
+                            <div class="tab-content-inner klee-output"
+                                 ng-show="tabs.stats.active">
+                                <table class="table code">
+                                    <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Value</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    <tr ng-repeat="row in result.stats">
+                                        <td>[[ row[0] ]]</td>
+                                        <td>[[ row[1] ]]</td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+
+                            <div class="tab-content-inner klee-coverage"
+                                 ng-show="tabs.coverage.active">
+                                <pre class="coverage-stats code"> [[ linePercentage ]]% of lines covered.</pre>
+                                <div ui-codemirror="{ onLoad : codemirrorLoaded }"
+                                     ui-refresh="tabs.coverage.active"
+                                     class="cml-codemirror-refresh"></div>
+                            </div>
+
                         </div>
-
                     </div>
-
-                    <div class="tab-content-inner klee-coverage"
-                         ng-show="tabs.coverage.active">
-                        <pre class="coverage-stats code"> [[ linePercentage ]]% of lines covered.</pre>
-                        <div ui-codemirror="{ onLoad : codemirrorLoaded }"
-                             ui-refresh="tabs.coverage.active"
-                             class="cml-codemirror-refresh"></div>
-                    </div>
-
                 </div>
             </div>
+
         </div>
     </div>
 
-    </div>
-    </div>
-
-    </div>
+</div>
 
 {% endblock %}
 
 {% block javascript %}
-    <script src="{{ dist }}js/vendor/angular-custom.min.js"></script>
-    <script src="{{ dist }}js/vendor/pusher-with-angular.min.js"></script>
-    <script src="{{ dist }}js/vendor/codemirror.min.js"></script>
-    <script src="{{ dist }}js/vendor/ui-codemirror.min.js"></script>
-    <script src="{{ dist }}js/vendor/angular-bootstrap.min.js"></script>
-    <script src="{{ dist }}js/vendor/jquery-ui.min.js"></script>
-    <script src="{{ dist }}js/vendor/angular-ui-slider.min.js"></script>
-    <script src="{{ dist }}js/vendor/angular-file-upload.min.js"></script>
-    <script src="{{ dist }}js/vendor/nanobar.min.js"></script>
-    <script src="//angular-ui.github.io/bootstrap/ui-bootstrap-tpls-0.12.0.js"></script>
+<script src="{{ dist }}js/vendor/angular-custom.min.js"></script>
+<script src="{{ dist }}js/vendor/pusher-with-angular.min.js"></script>
+<script src="{{ dist }}js/vendor/codemirror.min.js"></script>
+<script src="{{ dist }}js/vendor/ui-codemirror.min.js"></script>
+<script src="{{ dist }}js/vendor/angular-bootstrap.min.js"></script>
+<script src="{{ dist }}js/vendor/jquery-ui.min.js"></script>
+<script src="{{ dist }}js/vendor/angular-ui-slider.min.js"></script>
+<script src="{{ dist }}js/vendor/angular-file-upload.min.js"></script>
+<script src="{{ dist }}js/vendor/nanobar.min.js"></script>
+<script src="//angular-ui.github.io/bootstrap/ui-bootstrap-tpls-0.12.0.js"></script>
 
 
-    <script type="text/javascript">
+<script type="text/javascript">
         window.pclient = new Pusher('19744474b2493510f861');
-    </script>
-    <script src="{{ dist }}js/app.min.js"></script>
+
+</script>
+<script src="{{ dist }}js/app.min.js"></script>
 {% endblock %}

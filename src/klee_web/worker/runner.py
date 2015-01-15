@@ -17,6 +17,7 @@ from processor.failed_test import FailedTestProcessor
 from processor.coverage import CoverageProcessor
 from processor.upload import UploadProcessor
 from processor.klee_run import KleeRunProcessor
+from processor.stats import StatsProcessor
 
 ANSI_ESCAPE_PATTERN = re.compile(r'\x1b[^m]*m')
 LXC_MESSAGE_PATTERN = re.compile(r'lxc-start: .*')
@@ -31,7 +32,8 @@ class WorkerRunner():
     DOCKER_CODE_FILE = os.path.join(DOCKER_MOUNT_DIR, CODE_FILE_NAME)
     DOCKER_OBJECT_FILE = os.path.join(DOCKER_MOUNT_DIR, OBJECT_FILE_NAME)
     DEFAULT_PROCESSOR_PIPELINE = [KleeRunProcessor, UploadProcessor,
-                                  FailedTestProcessor, CoverageProcessor]
+                                  FailedTestProcessor, StatsProcessor,
+                                  CoverageProcessor]
 
     def __init__(self, task_id, callback_endpoint=None, pipeline=None):
         self.task_id = task_id
@@ -114,8 +116,9 @@ class WorkerRunner():
 
             if processor.enabled:
                 notify_message = processor.notify_message
-                self.send_notification('notification',
-                                       {'message': notify_message})
+                if notify_message:
+                    self.send_notification('notification',
+                                           {'message': notify_message})
                 result[processor.name] = processor.process()
 
         return result
