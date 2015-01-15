@@ -28,7 +28,6 @@ controllers.controller('MainCtrl', [
                 open: false
             },
             symFiles: {
-                enabled: false,
                 open: false
             }
         };
