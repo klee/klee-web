@@ -293,6 +293,7 @@ controllers.controller('SidebarCtrl', [
                 var selectedProject = $scope.$parent.selectedProject;
                 $scope.$parent.submission = file;
                 selectedProject.defaultFile = file.id;
+                $scope.opts.symArgs.enabled = file.runConfiguration.symArgs.range[0] > 0 || file.runConfiguration.symArgs.range[1] > 0;
                 
                 if (!selectedProject.example) {
                     selectedProject.$update();
