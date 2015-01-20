@@ -1,6 +1,6 @@
 Klee Web
 =======================
-[Try it out on staging here!](http://178.62.50.142/)
+[Try it out here!](http://146.169.47.51:55080/#)
 
 [![Circle CI](https://circleci.com/gh/klee-web/klee-web.png?style=badge)](https://circleci.com/gh/klee-web/klee-web)
 Getting started on development
@@ -27,11 +27,11 @@ then run the following.
     
 In order to invoke KLEE (from within the virtual machine):
 
-    sudo docker run -t -v PATH_TO_SOURCE_DIR:/code kleeweb/klee llvm-gcc -I /src/klee/include --emit-llvm -c -g /code/FILE.c -o /code/FILE.o
+    sudo docker run -t -v PATH_TO_SOURCE_DIR:/code kleeweb/klee clang-3.4 -I /src/klee/include -emit-llvm -c -g /code/FILE.c -o /code/FILE.o
     sudo docker run -t -v PATH_TO_SOURCE_DIR:/code kleeweb/klee klee FILE.o
 
 
-In order to see any server side changes (from within the virtual machine):
+In order to see any server side changes run (from within the virtual machine):
 
     sudo supervisorctl reload
     

@@ -32,7 +32,14 @@
 
 - name: "Install node dependencies"
   npm: path={{ src_dir }}
+  sudo: yes
+  sudo_user: klide
+  when: not ci
+
+- name: "Install node dependencies"
+  npm: path={{ src_dir }}
   sudo: no
+  when: ci|bool
 
 - name: Install Ruby
   apt: name=ruby-full update_cache=yes state=installed

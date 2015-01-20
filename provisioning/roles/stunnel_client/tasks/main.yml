@@ -1,4 +1,0 @@
----
-
-- include: stunnel.yml
-  when: "not development"
