@@ -2,7 +2,8 @@
 
 # Configure and deploy the web servers.
 - hosts: webservers
-  user: root
+  user: ubuntu
+  sudo: yes
   vars_files:
     - vars/secrets.yml
     - vars/production.yml

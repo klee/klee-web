@@ -1,5 +1,9 @@
 server {
+    {% if development %}
     listen       80;
+    {% else %}
+    listen 55080;
+    {% endif %}
     server_name  _;
     location / { try_files $uri @titb; }
     location @titb {
