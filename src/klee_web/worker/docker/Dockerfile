@@ -30,6 +30,7 @@ RUN mkdir /src && cd /src  && \
     make -j `nproc` && \
 	    cd /src && git clone https://github.com/klee/klee.git && \
     cd /src/klee && \
+    git checkout 92c21e2d581bd7405032eaf67544611ccd30ab4e && \
     ./configure --enable-posix-runtime --with-stp=/usr/local --with-uclibc=/src/klee-uclibc/ \
     --with-llvmsrc=/usr/lib/llvm-${LLVM_VERSION}/build \
     --with-llvmobj=/usr/lib/llvm-${LLVM_VERSION}/build \
