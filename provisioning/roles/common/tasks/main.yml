@@ -4,6 +4,9 @@
   action: apt update_cache=yes upgrade=yes
   when: not development
 
+- name: Generate all en_US locales
+  apt: name=language-pack-en-base update_cache=yes state=present
+
 - name: Make working directory
   file: path={{ working_dir }} state=directory
 
