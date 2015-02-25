@@ -1,8 +1,8 @@
 import os
 
-BASE_DIR = os.path.dirname(os.path.realpath(__file__))
-
 from worker.runner import WorkerRunner
+
+BASE_DIR = os.path.dirname(os.path.realpath(__file__))
 
 with WorkerRunner('test') as runner:
     test_dir = os.getcwd()
