@@ -6,16 +6,19 @@ Klee Web
 Getting started on development
 ===============================
 
-Make sure you have [VirtualBox](https://www.virtualbox.org/wiki/Downloads), [Vagrant](https://www.vagrantup.com/downloads.html), and [Ansible](http://docs.ansible.com/intro_installation.html) installed.
+Make sure you have [VirtualBox](https://www.virtualbox.org/wiki/Downloads), [Vagrant](https://www.vagrantup.com/downloads.html), and [Ansible](http://docs.ansible.com/intro_installation.html) installed, using the links in this paragraph.
 
 First clone the repo:
 
-    git clone https://github.com/klee-web/klee-web.git
+    git clone https://github.com/klee/klee-web.git
     
 Start the development virtual machine (this may take a while on the first run):
     vagrant up
 
-After provisioning has completed klee-web will be available at [http://192.168.33.10](http://192.168.33.10)
+If the command fails during provisioning, you can retry using:
+    vagrant provision
+
+After provisioning has completed, klee-web will be available at [http://192.168.33.10](http://192.168.33.10)
 
 The [kleeweb/klee](https://registry.hub.docker.com/u/kleeweb/klee/) image is grabbed using docker pull when provisioning occurs.
 If you need to make modifications to the Dockerfile and build it from scratch 
@@ -36,7 +39,7 @@ In order to see any server side changes run (from within the virtual machine):
     sudo supervisorctl reload
     
 
-Running tests!
+Running tests
 ===========================
 Before submitting a pull request it's a good idea to run our test suite locally with the following command
 
