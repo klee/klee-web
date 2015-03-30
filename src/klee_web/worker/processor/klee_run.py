@@ -22,7 +22,7 @@ class KleeRunProcessor(BaseProcessor):
         if sym_args:
             min_sym_args, max_sym_args = sym_args.get('range')
             size_sym_args = sym_args.get('size')
-            if min_sym_args and max_sym_args and size_sym_args:
+            if min_sym_args is not None and max_sym_args and size_sym_args:
                 result += ['--sym-args', str(min_sym_args),
                            str(max_sym_args), str(size_sym_args)]
 
