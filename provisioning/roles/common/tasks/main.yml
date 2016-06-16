@@ -33,4 +33,5 @@
   file: path={{ src_dir }} state=directory owner=klide
   when: not ci
 
-- include: deploy.yml tags=deploy
+- include: deploy.yml
+  tags: deploy
