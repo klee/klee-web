@@ -1,7 +1,7 @@
 ---
 # Apply common configuration to all hosts
 - hosts: all
-  sudo: yes
+  become: yes
   vars_files:
   - vars/secrets.yml
   - vars/production.yml
@@ -10,7 +10,7 @@
 
 # Configure and deploy message queue servers.
 - hosts: redisservers
-  sudo: yes
+  become: yes
   vars_files:
     - vars/secrets.yml
     - vars/production.yml
@@ -19,7 +19,7 @@
 
 # Configure and deploy message database servers.
 - hosts: dbservers
-  sudo: yes
+  become: yes
   vars_files:
     - vars/secrets.yml
     - vars/production.yml
@@ -28,7 +28,7 @@
 
 # Configure and deploy the web servers.
 - hosts: webservers
-  sudo: yes
+  become: yes
   vars_files:
     - vars/secrets.yml
     - vars/production.yml
@@ -37,7 +37,7 @@
 
 # Configure and deploy the worker nodes.
 - hosts: workers
-  sudo: yes
+  become: yes
   vars_files:
   - vars/secrets.yml
   - vars/production.yml

@@ -24,15 +24,15 @@
 
 - name: "Install phantomjs"
   npm: name=phantomjs global=yes
-  sudo: no
+  become: no
   when: ci | bool
 
 - name: "Install mocha"
   npm: name=mocha global=yes
-  sudo: no
+  become: no
   when: ci | bool
 
 
 - name: "Install E2E test dependencies"
   npm: path={{ application_dir }}/tests
-  sudo: no
+  become: no

@@ -1,15 +1,15 @@
 # Install requirements for task runner
 - apt: name=libffi-dev
 - pip: requirements={{ application_dir }}/requirements.txt virtualenv={{ web_virtualenv }}
-  sudo_user: web
+  become_user: web
 
 - name: Copy supervisor config file
   template: src=supervisor_web.conf.j2 dest=/etc/supervisor/conf.d/web.conf
 
 - name: Get bower dependencies
   shell: bower install --config.interactive=false
-  sudo: yes
-  sudo_user: klide
+  become: yes
+  become_user: klide
   args:
     chdir: "{{ src_dir }}"
     executable: /bin/bash
@@ -17,8 +17,8 @@
 
 - name: Run grunt
   shell: grunt
-  sudo: yes
-  sudo_user: klide
+  become: yes
+  become_user: klide
   args:
     chdir: "{{ src_dir }}"
     executable: /bin/bash
@@ -26,14 +26,14 @@
 
 - name: Get bower dependencies
   command: bower install --config.interactive=false
-  sudo: no
+  become: no
   args:
     chdir: "{{ src_dir }}"
   when: ci|bool
 
 - name: Run grunt
   command: grunt
-  sudo: no
+  become: no
   args:
     chdir: "{{ src_dir }}"
   when: ci|bool
