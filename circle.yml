@@ -11,9 +11,7 @@ dependencies:
     - sudo apt-get install -qq python-apt python-pycurl
     - sudo apt-get install aptitude -y
     - sudo ln -s /home/ubuntu/klee-web/ /titb
-    - sudo pip install ansible
-  cache_directories:
-    - "~/docker"
+    - sudo pip install ansible 
   override:
     - docker pull klee/klee
 
