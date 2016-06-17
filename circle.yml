@@ -15,9 +15,7 @@ dependencies:
   cache_directories:
     - "~/docker"
   override:
-    - if [[ -e ~/docker/image.tar ]]; then docker load -i ~/docker/image.tar; fi
-    - docker build -t klee/klee /titb/src/klee_web/worker/docker
-    - mkdir -p ~/docker; docker save klee/klee > ~/docker/image.tar
+    - docker pull klee/klee
 
 test:
   pre:
