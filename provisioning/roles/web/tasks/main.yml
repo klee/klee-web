@@ -1,6 +1,10 @@
 ---
 
-- include: flask.yml tags=flask
-- include: frontend.yml tags=flask
-- include: nginx.yml tags=nginx
-- include: deploy.yml tags=deploy
+- include: flask.yml
+  tags: flask
+- include: frontend.yml
+  tags: flask
+- include: nginx.yml
+  tags: nginx
+- include: deploy.yml
+  tags: deploy

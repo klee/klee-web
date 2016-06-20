@@ -22,23 +22,23 @@
 
 - name: "Install grunt-cli"
   npm: name=grunt-cli global=yes
-  sudo: no
+  become: no
   when: ci|bool
 
 - name: "Install bower"
   npm: name=bower global=yes
-  sudo: no
+  become: no
   when: ci|bool
 
 - name: "Install node dependencies"
   npm: path={{ src_dir }}
-  sudo: yes
-  sudo_user: klide
+  become: yes
+  become_user: klide
   when: not ci
 
 - name: "Install node dependencies"
   npm: path={{ src_dir }}
-  sudo: no
+  become: no
   when: ci|bool
 
 - name: Install Ruby

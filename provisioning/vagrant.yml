@@ -1,7 +1,8 @@
 - hosts: all
   user: vagrant
-  sudo: yes
-  sudo_user: root
+  become: yes
+  become_user: root
+  become_method: sudo
   roles:
     - common
     - redis

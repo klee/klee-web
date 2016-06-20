@@ -11,13 +11,9 @@ dependencies:
     - sudo apt-get install -qq python-apt python-pycurl
     - sudo apt-get install aptitude -y
     - sudo ln -s /home/ubuntu/klee-web/ /titb
-    - sudo pip install ansible
-  cache_directories:
-    - "~/docker"
+    - sudo pip install ansible 
   override:
-    - if [[ -e ~/docker/image.tar ]]; then docker load -i ~/docker/image.tar; fi
-    - docker build -t kleeweb/klee /titb/src/klee_web/worker/docker
-    - mkdir -p ~/docker; docker save kleeweb/klee > ~/docker/image.tar
+    - docker pull klee/klee
 
 test:
   pre:
@@ -32,6 +28,6 @@ deployment:
     branch: master
     commands:
       - sed "s/<EMAIL>/$DOCKER_EMAIL/;s/<AUTH>/$DOCKER_AUTH/" < /titb/.dockercfg.template > ~/.dockercfg
-      - docker push kleeweb/klee
+      - docker push klee/klee
       - ansible-playbook -i provisioning/hosts --vault-password-file=/home/ubuntu/.vault_password provisioning/deploy.yml:
           timeout: 600

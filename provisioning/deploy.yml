@@ -3,7 +3,7 @@
 # Configure and deploy the web servers.
 - hosts: webservers
   user: ubuntu
-  sudo: yes
+  become: yes
   vars_files:
     - vars/secrets.yml
     - vars/production.yml
@@ -15,7 +15,7 @@
 # Configure and deploy the worker nodes.
 - hosts: workers
   user: ubuntu
-  sudo: yes
+  become: yes
   vars_files:
     - vars/secrets.yml
     - vars/production.yml
