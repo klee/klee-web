@@ -12,6 +12,8 @@ https://docs.djangoproject.com/en/1.7/ref/settings/
 import os
 import sys
 import django.conf.global_settings as global_settings
+from time import gmtime, strftime
+
 
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
@@ -87,6 +89,8 @@ DATABASES = {
 # https://docs.djangoproject.com/en/1.7/topics/i18n/
 
 LANGUAGE_CODE = 'en-us'
+
+TIME_ZONE = strftime("%Z", gmtime()) 
 
 USE_I18N = True
 
