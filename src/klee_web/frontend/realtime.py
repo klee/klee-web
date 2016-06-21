@@ -9,4 +9,4 @@ pusher = pusher.Pusher(
 
 
 def send_notification(channel, notification_type, data):
-    pusher[channel].trigger(notification_type, {'data': data})
+    pusher.trigger(channel, notification_type, {'data': data})
