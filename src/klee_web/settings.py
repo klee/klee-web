@@ -14,6 +14,8 @@ import sys
 import django.conf.global_settings as global_settings
 from time import gmtime, strftime
 
+import string
+import random
 
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
@@ -24,12 +26,16 @@ sys.path.insert(0, os.path.join(BASE_DIR, ".."))
 # See https://docs.djangoproject.com/en/1.7/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ["DJANGO_SECRET_KEY"]
+
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get("DEVELOPMENT") is not None
 
-TEMPLATE_DEBUG = os.environ.get("DEVELOPMENT") is not None
+# If we're in debug mode, generate a random key so that we don't need to provide one
+key = ''.join([random.SystemRandom().choice(string.ascii_letters + string.digits) for _ in range(50)]) if DEBUG else ''
+SECRET_KEY = key if DEBUG else os.environ.get("DJANGO_SECRET_KEY")
+
+TEMPLATE_DEBUG = DEBUG
 
 ALLOWED_HOSTS = ['*']
 
