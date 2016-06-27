@@ -13,29 +13,38 @@ from django.contrib import messages, auth
 from forms import SubmitJobForm, UserCreationForm, UserChangePasswordForm
 from realtime import send_notification
 from models import Task
+import json
 
+# Store all the data for the page in a dictionary so that it's easy to retrieve by channel
+data_store = {}
 
 def index(request):
     form = SubmitJobForm()
     return render(request, 'frontend/index.html', {'form': form})
 
+def store_data(channel, type, data):
+    d = {'type': type, 'message': data}
+    data_store[channel] = json.dumps(d)
+    pass
 
 @csrf_exempt
-@require_POST
 def jobs_notify(request):
-    type = request.POST.get('type')
-    channel = request.POST.get('channel')
-    send_notification(
-        channel,
-        type,
-        request.POST.get('data')
-    )
-    if type == 'job_complete' or type == 'job_failed':
-        task = Task.objects.get(task_id=channel)
-        task.completed_at = datetime.datetime.now()
-        task.save()
-    return HttpResponse('Ok!')
-
+    if request.method == 'POST':
+        type = request.POST.get('type')
+        channel = request.POST.get('channel')
+        store_data(
+            channel,
+            type,
+            request.POST.get('data')
+            )
+        if type == 'job_complete' or type == 'job_failed':
+            task = Task.objects.get(task_id=channel)
+            task.completed_at = datetime.datetime.now()
+            task.save()
+            return HttpResponse('Ok!')
+    else:
+        channel = request.GET.get('channel')
+        return HttpResponse(data_store.pop(channel, json.dumps({'type': 'error', 'message': 'NO SUCH JOB'})))
 
 def register(request):
     if request.method == 'POST':
