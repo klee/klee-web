@@ -1,9 +1,9 @@
 var controllers = angular.module('controllers', []);
 
 controllers.controller('MainCtrl', [
-    '$scope', '$http', '$pusher', '$rootScope', 'Project', 'File',
-    function($scope, $http, $pusher, $rootScope, Project, File) {
-        // Setup pusher 
+    '$scope', '$http', '$pusher', '$rootScope', 'Project', 'File', '$interval',
+    function($scope, $http, $pusher, $rootScope, Project, File, $interval) {
+        // Setup pusher
         var pusher = $pusher(pclient);
         var channelId = null;
 
@@ -67,7 +67,7 @@ controllers.controller('MainCtrl', [
 
         $scope.resetSymFiles = function() {
             $scope.opts.symFiles.enabled = false;
-            $scope.submission.runConfiguration.stdinEnabled = false; 
+            $scope.submission.runConfiguration.stdinEnabled = false;
         };
 
         $scope.resetLoadedFile = function() {
@@ -113,29 +113,25 @@ controllers.controller('MainCtrl', [
 
             // We get a task id from submitting!
             .success(
-                function(data, status, headers) {
-                    channelId = data.taskId;
-                    var channel = pusher.subscribe(channelId);
-
-                    channel.bind('notification', function(response) {
-                        data = angular.fromJson(response.data);
-                        $scope.progress.push(data.message);
-                    });
-
-                    channel.bind('job_complete', function(response) {
-                        $scope.submitted = false;
-                        data = angular.fromJson(response.data);
-                        $scope.progress.push('Done!');
-                        $scope.result = data;
-                        $rootScope.finishNanobar();
-                    });
-
-                    channel.bind('job_failed', function(response) {
-                        $scope.submitted = false;
-                        data = angular.fromJson(response.data);
-                        $scope.result = data;
-                        $rootScope.finishNanobar();
-                    });
+              function(data, status, headers) {
+                channelId = data.taskId;
+                var fetch = $interval(function () {
+                  $http.get('/jobs/notify/?channel=' + channelId).success(function(data, status, headers) {
+                    m = angular.fromJson(data);
+                    var type = m['type'];
+                    if(type == 'notification') {
+                      data = angular.fromJson(m.data);
+                      $scope.progress.push(data.message);
+                    } else {
+                      $scope.submitted = false;
+                      data = angular.fromJson(m.data);
+                      if(type == 'job_complete') $scope.progress.push('Done!');
+                      $scope.result = data;
+                      $rootScope.finishNanobar();
+                      $interval.cancel(fetch);
+                    }
+                  });
+                }, 1000);
 
                 }
             )
@@ -294,7 +290,7 @@ controllers.controller('SidebarCtrl', [
                 $scope.$parent.submission = file;
                 selectedProject.defaultFile = file.id;
                 $scope.opts.symArgs.enabled = file.runConfiguration.symArgs.range[0] > 0 || file.runConfiguration.symArgs.range[1] > 0;
-                
+
                 if (!selectedProject.example) {
                     selectedProject.$update();
                 }
