@@ -13,6 +13,7 @@ class Task(models.Model):
     email_address = models.EmailField(null=True)
     created_at = models.DateTimeField(auto_created=True)
     completed_at = models.DateTimeField(null=True)
+    current_output = models.TextField(null=True)
 
 
 class Project(models.Model):

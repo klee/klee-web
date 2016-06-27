@@ -4,7 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.forms.util import ErrorList
 
 from django.shortcuts import render, redirect
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseNotFound
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.core.urlresolvers import reverse
@@ -13,29 +13,41 @@ from django.contrib import messages, auth
 from forms import SubmitJobForm, UserCreationForm, UserChangePasswordForm
 from realtime import send_notification
 from models import Task
+import json
+import os
 
-
+# Store all the data for the page in a dictionary so that it's easy to retrieve by channel
 def index(request):
     form = SubmitJobForm()
     return render(request, 'frontend/index.html', {'form': form})
 
+def store_data(task, type, data):
+    d = {'type': type, 'data': data}
+    task.current_output = json.dumps(d)
+    task.save()
+    pass
 
 @csrf_exempt
-@require_POST
 def jobs_notify(request):
-    type = request.POST.get('type')
-    channel = request.POST.get('channel')
-    send_notification(
-        channel,
-        type,
-        request.POST.get('data')
-    )
-    if type == 'job_complete' or type == 'job_failed':
+    if request.method == 'POST':
+        channel = request.POST.get('channel')
         task = Task.objects.get(task_id=channel)
-        task.completed_at = datetime.datetime.now()
-        task.save()
-    return HttpResponse('Ok!')
-
+        store_data(
+            task,
+            request.POST.get('type'),
+            request.POST.get('data')
+            )
+        os.system("echo I AM HERE {0} >> log.log".format(task))
+        if type == 'job_complete' or type == 'job_failed':
+            task.completed_at = datetime.datetime.now()
+            task.save()
+            return HttpResponse('Ok!')
+    elif request.method == 'GET':
+        channel = request.GET.get('channel')
+        task = Task.objects.get(task_id=channel)
+        return HttpResponse(task.current_output)
+    else:
+        return HttpResponseNotFound("This page only supports GET and POST")
 
 def register(request):
     if request.method == 'POST':
