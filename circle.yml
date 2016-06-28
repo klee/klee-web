@@ -17,7 +17,7 @@ dependencies:
 
 test:
   pre:
-    - export ANSIBLE_HOST_KEY_CHECKING=false
+    - export ANSIBLE_HOST_KEY_CHECKING=false 
     - ansible-playbook -i localhost, --syntax-check provisioning/vagrant.yml
     - ansible-playbook -i localhost, --connection=local -e ci=yes provisioning/vagrant.yml
   override:
