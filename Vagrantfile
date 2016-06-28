@@ -41,7 +41,6 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   config.vm.provision "ansible" do |ansible|
     ansible.playbook = "provisioning/vagrant.yml"
     ansible.verbose = "vvvv"
-    ansible.vault_password_file = "~/.klee_vault_password"
   end
 
   config.vm.provider "virtualbox" do |v|
