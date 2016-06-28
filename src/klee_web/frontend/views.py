@@ -23,8 +23,8 @@ def index(request):
     return render(request, 'frontend/index.html', {'form': form})
 
 def store_data(channel, type, data):
-    d = {'type': type, 'message': data}
-    data_store[channel] = json.dumps(d)
+    d = {'type': type, 'data': data}
+    data_store[channel] = d
     pass
 
 @csrf_exempt
@@ -44,7 +44,8 @@ def jobs_notify(request):
             return HttpResponse('Ok!')
     else:
         channel = request.GET.get('channel')
-        return HttpResponse(data_store.pop(channel, json.dumps({'type': 'error', 'message': 'NO SUCH JOB'})))
+        ds = data_store.pop(channel, {})
+        return HttpResponse(json.dumps(ds))
 
 def register(request):
     if request.method == 'POST':

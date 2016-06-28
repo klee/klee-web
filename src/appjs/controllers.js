@@ -1,11 +1,8 @@
 var controllers = angular.module('controllers', []);
 
 controllers.controller('MainCtrl', [
-    '$scope', '$http', '$pusher', '$rootScope', 'Project', 'File', '$interval',
-    function($scope, $http, $pusher, $rootScope, Project, File, $interval) {
-        // Setup pusher
-        var pusher = $pusher(pclient);
-        var channelId = null;
+    '$scope', '$http', '$rootScope', 'Project', 'File', '$interval',
+    function($scope, $http, $rootScope, Project, File, $interval) {
 
         $scope.submission = {
             name: null,
@@ -103,43 +100,50 @@ controllers.controller('MainCtrl', [
             $scope.progress = [];
             $scope.progress.push('Job queued!');
 
-            if (channelId) {
-                pusher.unsubscribe(channelId);
-            }
-
             // Send data to submit endpoint
             $http
                 .post('/api/jobs/submit/', submission)
 
             // We get a task id from submitting!
             .success(
-                function(data, status, headers) {
-                    channelId = data.taskId;
-                    var fetch = $interval(function () {
-                    $http.get('/jobs/notify/?channel=' + channelId).success(function(data, status, headers) {
-                           var type = data.type;
-                           var d = angular.fromJson(data.message);
-                           console.log(data.type);
-                           if(type.indexOf('notification') > -1) {
-                             $scope.progress.push(d['message']);
-                           } else if(type.indexOf('job_complete') > -1) {
-                             $scope.progress.push(d['message']);
-                             $interval.cancel(fetch);
-                           }
-                         });
-                       }, 1000);
+              function(data, status, headers) {
+                channelId = data.taskId;
+                var fetch = $interval(function () {
+                  $http.get('/jobs/notify/?channel=' + channelId).success(function(data, status, headers) {
+                    m = angular.fromJson(data);
+                    var type = m['type'];
+                    if(type == 'notification') {
+                      data = angular.fromJson(m.data);
+                      $scope.progress.push(data.message);
+                    } else if(type == 'job_complete') {
+                      $scope.submitted = false;
+                      data = angular.fromJson(m.data);
+                      $scope.progress.push('Done!');
+                      $scope.result = data;
+                      $rootScope.finishNanobar();
+                      $interval.cancel(fetch);
+                    } else if(type == 'job_failed') {
+                      $scope.submitted = false;
+                      data = angular.fromJson(m.data);
+                      $scope.result = data;
+                      $rootScope.finishNanobar();
+                      $interval.cancer(fetch);
+                    }
 
-                }
+                  });
+                }, 1000);
+
+              }
             )
 
             // We didn't even get a task back from submit
             .error(
-                function(data, status, headers) {
-                    console.debug('Error! ', data);
-                    $rootScope.finishNanobar();
-                }
+              function(data, status, headers) {
+                console.debug('Error! ', data);
+                $rootScope.finishNanobar();
+              }
             );
-        };
+          };
 
         $scope.codemirrorLoaded = function(_editor) {
             $scope.editor = _editor;
