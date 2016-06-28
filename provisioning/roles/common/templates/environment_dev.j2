@@ -4,12 +4,6 @@ export REDIS_PORT={{ redis_port }}
 
 export CELERY_BROKER_URL={{ celery_broker_url }}
 
-export AWS_ACCESS_KEY={{ aws_access_key }}
-export AWS_SECRET_KEY={{ aws_secret_key }}
-
-export MAILGUN_API_KEY={{ mailgun_api_key }}
-export DJANGO_SECRET_KEY="{{ django_secret_key }}"
-
 export PUSHER_KEY={{ pusher_key }}
 export PUSHER_SECRET={{ pusher_secret }}
 
@@ -18,5 +12,4 @@ export DB_PASSWORD={{ db_password }}
 export DB_HOST={{ db_host }}
 export DB_PORT={{ db_port }}
 export DB_NAME={{ db_name }}
-
-{{ "export DEVELOPMENT=1" if development else "" }}
+export DEVELOPMENT=1
