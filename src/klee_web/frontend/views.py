@@ -11,7 +11,6 @@ from django.views.decorators.http import require_POST
 from django.contrib import messages, auth
 
 from forms import SubmitJobForm, UserCreationForm, UserChangePasswordForm
-from realtime import send_notification
 from models import Task
 import json
 

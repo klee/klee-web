@@ -114,11 +114,6 @@ module.exports = function (grunt) {
                                 '<%= bower.directory %>/angular-cookies/angular-cookies.min.js',
                                 '<%= bower.directory %>/angular-animate/angular-animate.min.js',
                             ],
-                        '<%= config.frontend_dist %>/js/vendor/pusher-with-angular.min.js':
-                            [
-                                '<%= bower.directory %>/pusher/dist/pusher.min.js',
-                                '<%= bower.directory %>/pusher-angular/lib/pusher-angular.min.js',
-                            ],
                         '<%= config.frontend_dist %>/js/vendor/angular-bootstrap.min.js':
                             [
                                 '<%= bower.directory %>/angular-bootstrap/ui-bootstrap.min.js',
