@@ -5,6 +5,9 @@ services:
   - docker
 
 before_install:
+  - sudo /etc/init.d/postgresql stop
+  - sudo apt-get purge -qq postgresql posgresql-contrib
+  - sudo apt-get install -qq postgresql-9.3 posgresql-contrib-9.3
   - sudo apt-add-repository ppa:ansible/ansible -y
   - sudo apt-get update -qq
   - sudo apt-get install software-properties-common ansible -qq
