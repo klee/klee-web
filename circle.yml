@@ -7,29 +7,15 @@ machine:
 
 dependencies:
   pre:
+    - sudo apt-get install software-properties-common
+    - sudo apt-add-repository ppa:ansible/ansible -y
     - sudo apt-get update -qq
-    - sudo apt-get install -qq python-apt python-pycurl
-    - sudo apt-get install aptitude -y
+    - sudo apt-get install ansible -y
     - sudo ln -s /home/ubuntu/klee-web/ /titb
-    - sudo pip install ansible
-  override:
-    - docker pull klee/klee
 
 test:
   pre:
-    - export ANSIBLE_HOST_KEY_CHECKING=false 
     - ansible-playbook -i localhost, --syntax-check provisioning/vagrant.yml
     - ansible-playbook -i localhost, --connection=local -e ci=yes provisioning/vagrant.yml
   override:
     - ./run_tests.sh
-
-deployment:
-  staging:
-    branch: master
-    commands:
-      # Deployment needs the vault password
-      - echo $VAULT_PASSWORD > /home/ubuntu/.vault_password
-      - sed "s/<EMAIL>/$DOCKER_EMAIL/;s/<AUTH>/$DOCKER_AUTH/" < /titb/.dockercfg.template > ~/.dockercfg
-      - docker push klee/klee
-      - ansible-playbook -i provisioning/hosts --vault-password-file=/home/ubuntu/.vault_password provisioning/deploy.yml:
-          timeout: 600
