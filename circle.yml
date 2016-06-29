@@ -3,7 +3,6 @@
 machine:
   services:
     - docker
-    - rabbitmq-server
 
 dependencies:
   pre:
