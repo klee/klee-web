@@ -1,11 +1,8 @@
 var controllers = angular.module('controllers', []);
 
 controllers.controller('MainCtrl', [
-    '$scope', '$http', '$pusher', '$rootScope', 'Project', 'File',
-    function($scope, $http, $pusher, $rootScope, Project, File) {
-        // Setup pusher 
-        var pusher = $pusher(pclient);
-        var channelId = null;
+    '$scope', '$http', '$rootScope', 'Project', 'File', '$interval',
+    function($scope, $http, $rootScope, Project, File, $interval) {
 
         $scope.submission = {
             name: null,
@@ -67,7 +64,7 @@ controllers.controller('MainCtrl', [
 
         $scope.resetSymFiles = function() {
             $scope.opts.symFiles.enabled = false;
-            $scope.submission.runConfiguration.stdinEnabled = false; 
+            $scope.submission.runConfiguration.stdinEnabled = false;
         };
 
         $scope.resetLoadedFile = function() {
@@ -103,51 +100,50 @@ controllers.controller('MainCtrl', [
             $scope.progress = [];
             $scope.progress.push('Job queued!');
 
-            if (channelId) {
-                pusher.unsubscribe(channelId);
-            }
-
             // Send data to submit endpoint
             $http
                 .post('/api/jobs/submit/', submission)
 
             // We get a task id from submitting!
             .success(
-                function(data, status, headers) {
-                    channelId = data.taskId;
-                    var channel = pusher.subscribe(channelId);
+              function(data, status, headers) {
+                channelId = data.taskId;
+                var fetch = $interval(function () {
+                  $http.get('/jobs/notify/?channel=' + channelId).success(function(data, status, headers) {
+                    m = angular.fromJson(data);
+                    var type = m['type'];
+                    if(type == 'notification') {
+                      data = angular.fromJson(m.data);
+                      $scope.progress.push(data.message);
+                    } else if(type == 'job_complete') {
+                      $scope.submitted = false;
+                      data = angular.fromJson(m.data);
+                      $scope.progress.push('Done!');
+                      $scope.result = data;
+                      $rootScope.finishNanobar();
+                      $interval.cancel(fetch);
+                    } else if(type == 'job_failed') {
+                      $scope.submitted = false;
+                      data = angular.fromJson(m.data);
+                      $scope.result = data;
+                      $rootScope.finishNanobar();
+                      $interval.cancer(fetch);
+                    }
 
-                    channel.bind('notification', function(response) {
-                        data = angular.fromJson(response.data);
-                        $scope.progress.push(data.message);
-                    });
+                  });
+                }, 1000);
 
-                    channel.bind('job_complete', function(response) {
-                        $scope.submitted = false;
-                        data = angular.fromJson(response.data);
-                        $scope.progress.push('Done!');
-                        $scope.result = data;
-                        $rootScope.finishNanobar();
-                    });
-
-                    channel.bind('job_failed', function(response) {
-                        $scope.submitted = false;
-                        data = angular.fromJson(response.data);
-                        $scope.result = data;
-                        $rootScope.finishNanobar();
-                    });
-
-                }
+              }
             )
 
             // We didn't even get a task back from submit
             .error(
-                function(data, status, headers) {
-                    console.debug('Error! ', data);
-                    $rootScope.finishNanobar();
-                }
+              function(data, status, headers) {
+                console.debug('Error! ', data);
+                $rootScope.finishNanobar();
+              }
             );
-        };
+          };
 
         $scope.codemirrorLoaded = function(_editor) {
             $scope.editor = _editor;
@@ -294,7 +290,7 @@ controllers.controller('SidebarCtrl', [
                 $scope.$parent.submission = file;
                 selectedProject.defaultFile = file.id;
                 $scope.opts.symArgs.enabled = file.runConfiguration.symArgs.range[0] > 0 || file.runConfiguration.symArgs.range[1] > 0;
-                
+
                 if (!selectedProject.example) {
                     selectedProject.$update();
                 }

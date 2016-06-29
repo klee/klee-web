@@ -393,7 +393,6 @@
 
 {% block javascript %}
 <script src="{{ dist }}js/vendor/angular-custom.min.js"></script>
-<script src="{{ dist }}js/vendor/pusher-with-angular.min.js"></script>
 <script src="{{ dist }}js/vendor/codemirror.min.js"></script>
 <script src="{{ dist }}js/vendor/ui-codemirror.min.js"></script>
 <script src="{{ dist }}js/vendor/angular-bootstrap.min.js"></script>
@@ -403,10 +402,5 @@
 <script src="{{ dist }}js/vendor/nanobar.min.js"></script>
 <script src="//angular-ui.github.io/bootstrap/ui-bootstrap-tpls-0.12.0.js"></script>
 
-
-<script type="text/javascript">
-        window.pclient = new Pusher('19744474b2493510f861');
-
-</script>
 <script src="{{ dist }}js/app.min.js"></script>
 {% endblock %}

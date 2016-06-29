@@ -8,7 +8,6 @@ var app = angular.module('app', [
     'ui.bootstrap',
     'ui.bootstrap.dropdown',
     'ui.slider',
-    'pusher-angular',
     'angularFileUpload',
 
     // App
