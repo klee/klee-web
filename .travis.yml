@@ -1,13 +1,13 @@
 sudo: required
+language: python
 
 services:
   - docker
 
 before_install:
-  - sudo apt-get install software-properties-common
   - sudo apt-add-repository ppa:ansible/ansible -y
   - sudo apt-get update -qq
-  - sudo apt-get install ansible -y
+  - sudo apt-get install software-properties-common ansible -qq
   - sudo ln -s /home/ubuntu/klee-web/ /titb
   - ansible-playbook -i localhost, --syntax-check provisioning/vagrant.yml
   - ansible-playbook -i localhost, --connection=local -e ci=yes provisioning/vagrant.yml
