@@ -13,7 +13,6 @@ from django.contrib import messages, auth
 from forms import SubmitJobForm, UserCreationForm, UserChangePasswordForm
 from models import Task
 import json
-import os
 
 # Store all the data for the page in a dictionary so that it's easy to retrieve by channel
 def index(request):
@@ -36,7 +35,6 @@ def jobs_notify(request):
             request.POST.get('type'),
             request.POST.get('data')
             )
-        os.system("echo I AM HERE {0} >> log.log".format(task))
         if type == 'job_complete' or type == 'job_failed':
             task.completed_at = datetime.datetime.now()
             task.save()
