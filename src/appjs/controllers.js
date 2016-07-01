@@ -1,11 +1,8 @@
 var controllers = angular.module('controllers', []);
 
 controllers.controller('MainCtrl', [
-    '$scope', '$http', '$pusher', '$rootScope', 'Project', 'File', '$interval',
-    function($scope, $http, $pusher, $rootScope, Project, File, $interval) {
-        // Setup pusher
-        var pusher = $pusher(pclient);
-        var channelId = null;
+    '$scope', '$http', '$rootScope', 'Project', 'File', '$interval',
+    function($scope, $http, $rootScope, Project, File, $interval) {
 
         $scope.submission = {
             name: null,
@@ -103,10 +100,6 @@ controllers.controller('MainCtrl', [
             $scope.progress = [];
             $scope.progress.push('Job queued!');
 
-            if (channelId) {
-                pusher.unsubscribe(channelId);
-            }
-
             // Send data to submit endpoint
             $http
                 .post('/api/jobs/submit/', submission)
@@ -133,17 +126,17 @@ controllers.controller('MainCtrl', [
                   });
                 }, 1000);
 
-                }
+              }
             )
 
             // We didn't even get a task back from submit
             .error(
-                function(data, status, headers) {
-                    console.debug('Error! ', data);
-                    $rootScope.finishNanobar();
-                }
+              function(data, status, headers) {
+                console.debug('Error! ', data);
+                $rootScope.finishNanobar();
+              }
             );
-        };
+          };
 
         $scope.codemirrorLoaded = function(_editor) {
             $scope.editor = _editor;

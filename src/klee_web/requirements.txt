@@ -5,7 +5,6 @@ boto==2.33.0
 requests==2.4.3
 psycopg2==2.5.1
 redis==2.10.3
-pusher
 fakeredis==0.5.1
 django-bootstrap-form
 gcovparse
