@@ -38,6 +38,12 @@
     chdir: "{{ src_dir }}"
   when: ci|bool
 
+- name: Create Django South migrations
+  shell: . {{ web_virtualenv }}/bin/activate
+        && . /etc/profile.d/klee-web-environment.sh
+        && cd {{ application_dir }}
+        && python manage.py makemigrations --noinput
+
 - name: Run the Django syncdb command
   shell: . {{ web_virtualenv }}/bin/activate
          && . /etc/profile.d/klee-web-environment.sh
