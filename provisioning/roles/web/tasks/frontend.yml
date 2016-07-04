@@ -41,8 +41,18 @@
   become: no
   when: ci|bool
 
-- name: Install Ruby
-  apt: name=ruby-full update_cache=yes state=installed
+- name: "Add brightbox ruby"
+  apt_repository: repo='ppa:brightbox/ruby-ng'
+  tags: setup
+
+- name: "Install ruby"
+  apt: name={{ item }} update_cache=yes state=latest
+  with_items:
+    - ruby2.3
+    - ruby2.3-dev
+
+- name: "Set ruby2.3 to be the default one"
+  shell: update-alternatives --set ruby /usr/bin/ruby2.3
 
 - name: Install SASS
   command: gem install sass
