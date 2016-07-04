@@ -1,19 +1,29 @@
 ---
 
+- name: "Add postgresql repo"
+  template: src=pgdg.list dest=/etc/apt/sources.list.d/pgdg.list
+  when: not ci
+  tags: packages
+
+- name: "Add postgresql key"
+  shell: wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
+  when: not ci
+  tags: packages
+
 - name: Install PostgreSQL
   apt: name={{ item }} update_cache=yes state=installed
   with_items:
-    - postgresql
-    - postgresql-contrib
+    - postgresql-9.5
+    - postgresql-contrib-9.5
     - libpq-dev
     - python-psycopg2
   tags: packages
 
 - name: Copy valid pg_hba.conf
-  template: src=pg_hba.conf.j2 dest=/etc/postgresql/9.3/main/pg_hba.conf
+  template: src=pg_hba.conf.j2 dest=/etc/postgresql/9.5/main/pg_hba.conf
 
 - name: Copy valid postgresql.conf
-  template: src=postgresql.conf.j2 dest=/etc/postgresql/9.3/main/postgresql.conf
+  template: src=postgresql.conf.j2 dest=/etc/postgresql/9.5/main/postgresql.conf
 
 - name: Ensure the PostgreSQL service is running
   service: name=postgresql state=restarted enabled=yes
