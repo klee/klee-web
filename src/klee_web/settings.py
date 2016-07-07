@@ -31,8 +31,16 @@ sys.path.insert(0, os.path.join(BASE_DIR, ".."))
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get("DEVELOPMENT") is not None
 
-# If we're in debug mode, generate a random key so that we don't need to provide one
-key = ''.join([random.SystemRandom().choice(string.ascii_letters + string.digits) for _ in range(50)]) if DEBUG else ''
+# If we're in debug mode, generate a random key
+# so that we don't need to provide one
+
+key = ''
+if DEBUG:
+    # Long but silences flake8
+    k = [random.SystemRandom().choice(string.letters + string.digits)
+         for _ in range(50)]
+    key = ''.join(k)
+
 SECRET_KEY = key if DEBUG else os.environ.get("DJANGO_SECRET_KEY")
 
 TEMPLATE_DEBUG = DEBUG
@@ -96,7 +104,7 @@ DATABASES = {
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = strftime("%Z", gmtime()) 
+TIME_ZONE = strftime("%Z", gmtime())
 
 USE_I18N = True
 

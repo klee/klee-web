@@ -6,8 +6,8 @@ from django.forms.util import ErrorList
 from django.shortcuts import render, redirect
 from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
-from django.core.urlresolvers import reverse
 from django.views.decorators.http import require_POST
+from django.core.urlresolvers import reverse
 from django.contrib import messages, auth
 
 from forms import SubmitJobForm, UserCreationForm, UserChangePasswordForm
