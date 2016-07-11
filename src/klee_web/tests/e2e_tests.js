@@ -8,7 +8,7 @@ var inputDir = path.join(__dirname, "input");
 var outputDir= path.join(__dirname, "output");
 
 it('test all', function(done1) {
-  this.timeout(30000);
+  this.timeout(20000);
   var testsRun = 0;
 
   var runAllTests = function(tests) {
@@ -16,12 +16,12 @@ it('test all', function(done1) {
       var fileName = tests[i];
       var inputFuture = fs.readFileAsync(path.join(inputDir, fileName), 'UTF8');
 
-      var expectedOutputFile = path.join(outputDir, 
+      var expectedOutputFile = path.join(outputDir,
         path.basename(fileName, ".c") + ".txt");
       var expectedOutputFuture = fs.readFileAsync(expectedOutputFile, 'UTF8');
 
       Promise.join(inputFuture, expectedOutputFuture, function(input, expected) {
-          var n = new nightmare({timeout: 20000});
+          var n = new nightmare({load: 1000, webSecurity: false});
           n.goto("http://localhost")
             // Type in the code we want to pass to KLEE
             .evaluate(updateCode, function(res){}, input)

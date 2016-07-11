@@ -1,12 +1,17 @@
 {
   "name": "E2E-Tests",
   "description": "End-To-End tests for KLEE Web",
-  "version": "0.0.1",
+  "version": "0.0.2",
+  "scripts": {
+    "test": "node_modules/.bin/mocha e2e_tests.js"
+  },
+  "devDependencies": {
+    "mocha": "^2.5.3",
+    "should": "^9.0.2"
+  },
   "dependencies": {
-    "nightmare": "1.6.5",
-    "mocha": "2.0.1",
-    "phantomjs": "1.9.12",
-    "should": "4.3.0",
-    "bluebird": "2.3.11"
+    "bluebird": "^3.4.1",
+    "nightmare": "^1.6.5",
+    "phantomjs-prebuilt": "^2.1.7"
   }
 }

@@ -11,7 +11,7 @@ _Box () {
 
 _Done() {
    echo -e "\n\e[32mDone\n"
-   tput sgr0 
+   tput sgr0
 }
 
 _Run() {
@@ -31,4 +31,4 @@ _Run "Waiting for webserver to come up" "sleep 10"
 
 _Run "Checking that loading the homepage returns 200 OK" "http --check-status http://localhost/ > /dev/null"
 
-_Run "Running E2E webdriver tests" "mocha /titb/src/klee_web/tests/e2e_tests.js"
+_Run "Running E2E webdriver tests" "cd /titb/src/klee_web/tests/ && npm test"

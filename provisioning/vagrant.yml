@@ -11,5 +11,4 @@
     - worker
     - webdriver
   vars_files:
-    - vars/secrets.yml
     - vars/development.yml
