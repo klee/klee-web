@@ -6,7 +6,6 @@ from django.forms.util import ErrorList
 from django.shortcuts import render, redirect
 from django.http import HttpResponse, HttpResponseNotFound
 from django.views.decorators.csrf import csrf_exempt
-from django.views.decorators.http import require_POST
 from django.core.urlresolvers import reverse
 from django.contrib import messages, auth
 
@@ -14,16 +13,17 @@ from forms import SubmitJobForm, UserCreationForm, UserChangePasswordForm
 from models import Task
 import json
 
-# Store all the data for the page in a dictionary so that it's easy to retrieve by channel
+
 def index(request):
     form = SubmitJobForm()
     return render(request, 'frontend/index.html', {'form': form})
+
 
 def store_data(task, type, data):
     d = {'type': type, 'data': data}
     task.current_output = json.dumps(d)
     task.save()
-    pass
+
 
 @csrf_exempt
 def jobs_notify(request):
@@ -45,6 +45,7 @@ def jobs_notify(request):
         return HttpResponse(task.current_output)
     else:
         return HttpResponseNotFound("This page only supports GET and POST")
+
 
 def register(request):
     if request.method == 'POST':
