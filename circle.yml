@@ -1,6 +1,9 @@
 ---
 
 machine:
+  node:
+    version: 0.10.37
+    
   services:
     - docker
     - rabbitmq-server
