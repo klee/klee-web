@@ -1,7 +1,7 @@
 # Install requirements for task runner
 - apt: name=libffi-dev
 - pip: requirements={{ application_dir }}/requirements.txt virtualenv={{ web_virtualenv }}
-  become_user: web
+  become_user: klee_web
 
 - name: Copy supervisor config file
   template: src=supervisor_web.conf.j2 dest=/etc/supervisor/conf.d/web.conf
