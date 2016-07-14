@@ -5,7 +5,8 @@ urlpatterns = patterns(
     url(r'^$', 'index', name='index'),
 
     # Web hooks
-    url(r'^jobs/notify/$', 'jobs_notify', name="jobs_notify"),
+    url(r'^jobs/notify/$', 'jobs_notify', name='jobs_notify'),
+    url(r'^jobs/status/([a-z0-9-]+)/$', 'jobs_status', name='jobs_status'),
 
     # User account
     url(r'^user/login/$', 'login', name='login'),

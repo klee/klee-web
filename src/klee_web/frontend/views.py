@@ -39,12 +39,16 @@ def jobs_notify(request):
             task.completed_at = datetime.datetime.now()
             task.save()
             return HttpResponse('Ok!')
-    elif request.method == 'GET':
-        channel = request.GET.get('channel')
+    else:
+        return HttpResponseNotFound("This page only supports POST")
+
+
+def jobs_status(request, channel):
+    if request.method == 'GET':
         task = Task.objects.get(task_id=channel)
         return HttpResponse(task.current_output)
     else:
-        return HttpResponseNotFound("This page only supports GET and POST")
+        return HttpResponseNotFound("This page only supports GET")
 
 
 def register(request):

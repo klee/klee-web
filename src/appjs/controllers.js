@@ -107,9 +107,9 @@ controllers.controller('MainCtrl', [
             // We get a task id from submitting!
             .success(
               function(data, status, headers) {
-                channelId = data.taskId;
+                taskId = data.taskId;
                 var fetch = $interval(function () {
-                  $http.get('/jobs/notify/?channel=' + channelId).success(function(data, status, headers) {
+                  $http.get('/jobs/status/' + taskId + '/').success(function(data, status, headers) {
                     m = angular.fromJson(data);
                     var type = m['type'];
                     if(type == 'notification') {
