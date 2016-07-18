@@ -60,12 +60,12 @@ class WorkerRunner():
                 env_vars.extend(['-e', '{}={}'.format(key, value)])
 
         flags = self.docker_flags + env_vars
-        return ['sudo', 'docker', 'run'] + flags + ['kleeweb/klee']
+        return ['sudo', 'docker', 'run'] + flags + ['klee/klee']
 
     @property
     def docker_flags(self):
         flags = ['-t',
-                 '-c={}'.format(worker_config.cpu_share),
+                 '--cpu-shares={}'.format(worker_config.cpu_share),
                  '-v', '{}:{}'.format(self.tempdir, self.DOCKER_MOUNT_DIR),
                  '-w', self.DOCKER_MOUNT_DIR,
                  '--net="none"']
