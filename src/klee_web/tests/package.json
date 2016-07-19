@@ -3,7 +3,7 @@
   "description": "End-To-End tests for KLEE Web",
   "version": "0.0.2",
   "scripts": {
-    "test": "node_modules/.bin/mocha e2e_tests.js"
+    "test": "node_modules/mocha/bin/mocha e2e_tests.js"
   },
   "devDependencies": {
     "mocha": "^2.5.3",

@@ -2,8 +2,8 @@
 
 # Install frontend dependencies
 
-- name: "Add chris-lea/node.js"
-  apt_repository: repo='ppa:chris-lea/node.js'
+- name: "Add official NodeJS repo 6.x"
+  shell: curl -sL https://deb.nodesource.com/setup_6.x | sudo -E bash -
   when: not ci
   tags: nodejs
 
