@@ -11,12 +11,12 @@ class KleeRunProcessor(BaseProcessor):
     def generate_arguments(self):
         klee_args = self.args
         result = []
-
-        stdin_enabled = klee_args.get('stdin_enabled')
-        if stdin_enabled:
-            num_files = klee_args.get('num_files')
-            size_files = klee_args.get('size_files')
-            result += ['--sym-files', str(num_files), str(size_files)]
+        sym_files = klee_args.get('sym_files')
+        if sym_files:
+            num_files = sym_files.get('num')
+            size_files = sym_files.get('size')
+            if num_files and size_files:
+                result += ['--sym-files', str(num_files), str(size_files)]
 
         sym_args = klee_args.get('sym_args')
         if sym_args:
@@ -25,7 +25,6 @@ class KleeRunProcessor(BaseProcessor):
             if min_sym_args is not None and max_sym_args and size_sym_args:
                 result += ['--sym-args', str(min_sym_args),
                            str(max_sym_args), str(size_sym_args)]
-
         return result
 
     def create_klee_command(self, arg_list):

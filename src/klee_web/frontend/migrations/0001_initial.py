@@ -46,7 +46,6 @@ class Migration(migrations.Migration):
                 ('updated', models.DateTimeField(auto_now=True)),
                 ('name', models.TextField()),
                 ('code', models.TextField()),
-                ('stdin_enabled', models.BooleanField(default=False)),
                 ('num_files', models.IntegerField(default=0)),
                 ('size_files', models.IntegerField(default=0)),
                 ('min_sym_args', models.IntegerField(default=0)),
@@ -65,6 +64,7 @@ class Migration(migrations.Migration):
                 ('name', models.TextField()),
                 ('example', models.BooleanField(default=False)),
                 ('owner', models.ForeignKey(blank=True, to=settings.AUTH_USER_MODEL, null=True)),
+                ('default_file', models.ForeignKey(related_name='default_project', blank=True, to='frontend.File', null=True)),
             ],
             options={
             },
@@ -79,6 +79,7 @@ class Migration(migrations.Migration):
                 ('ip_address', models.GenericIPAddressField()),
                 ('email_address', models.EmailField(max_length=75, null=True)),
                 ('completed_at', models.DateTimeField(null=True)),
+                ('current_output', models.TextField(null=True)),
             ],
             options={
             },

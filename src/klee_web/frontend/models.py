@@ -35,7 +35,6 @@ class File(models.Model):
     name = models.TextField()
     code = models.TextField()
 
-    stdin_enabled = models.BooleanField(default=False)
     num_files = models.IntegerField(default=0)
     size_files = models.IntegerField(default=0)
 

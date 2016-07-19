@@ -21,7 +21,6 @@
         {
             "name": "sym_files.c",
             "code": "#include <stdio.h>\nint main(int argc, char* argv[])\n{\n\tchar in;\n\tread(0, &in, sizeof(char));\n\tif (in == 'a') {\n\t\tprintf(\"Hello World!\");\n\t} else {\n\t\tprintf(\"Goodbye World!\");\n\t}\n\treturn 0;\n}",
-            "stdin_enabled": true,
             "num_files": 1,
             "size_files": 1,
             "min_sym_args": 0,

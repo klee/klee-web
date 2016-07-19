@@ -51,7 +51,7 @@ class ProjectDeleteView(AdminRequiredMixin, DeleteView):
 class FileCreateView(AdminRequiredMixin, CreateView):
     model = File
     template_name = 'control_panel/example_manager/file/form.html'
-    fields = ['name', 'code', 'stdin_enabled',
+    fields = ['name', 'code',
               'num_files', 'min_sym_args', 'max_sym_args', 'size_sym_args']
 
     def get_success_url(self):
@@ -69,7 +69,7 @@ class FileCreateView(AdminRequiredMixin, CreateView):
 class FileUpdateView(AdminRequiredMixin, UpdateView):
     model = File
     template_name = 'control_panel/example_manager/file/form.html'
-    fields = ['name', 'code', 'stdin_enabled',
+    fields = ['name', 'code',
               'num_files', 'min_sym_args', 'max_sym_args', 'size_sym_args']
 
     def get_success_url(self):

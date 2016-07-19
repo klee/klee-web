@@ -190,7 +190,7 @@
                         <button type="button" class="btn k-btn" ng-click="toggleSymFiles($event)">
                             Sym-Files
                             <i class=""
-                               ng-class="{'icon_box-empty': !submission.runConfiguration.stdinEnabled, 'icon_box-checked': submission.runConfiguration.stdinEnabled}"></i>
+                               ng-class="{'icon_box-empty': !opts.symFiles.enabled, 'icon_box-checked': opts.symFiles.enabled}"></i>
                         </button>
                         <button type="button" class="btn k-btn dropdown-toggle"
                                 dropdown-toggle>
@@ -211,22 +211,22 @@
                             </header>
 
                             <div class="form-group"
-                                 ng-show="!submission.runConfiguration.stdinEnabled">
-                                <button ng-click="submission.runConfiguration.stdinEnabled = true"
+                                 ng-show="!opts.symFiles.enabled">
+                                <button ng-click="opts.symFiles.enabled = true"
                                         type="button" class="btn k-btn enable">
                                     Enable Sym-Files <i class="icon_check"></i>
                                 </button>
                             </div>
 
                             <div class="form-group"
-                                 ng-show="submission.runConfiguration.stdinEnabled">
+                                 ng-show="opts.symFiles.enabled">
                                 <label>No. of symbolic files</label>
 
                                 <div class="args-slider">
                                     <div class="slider-inner">
                                         <div ui-slider="{range: false}" min="0"
                                              max="9" step="1"
-                                             ng-model="submission.runConfiguration.numFiles"></div>
+                                             ng-model="submission.runConfiguration.symFiles.num"></div>
                                     </div>
                                     <div class="units">
                                         <span class="min">0<br/>Min</span>
@@ -236,15 +236,15 @@
                             </div>
 
                             <div class="form-group"
-                                 ng-show="submission.runConfiguration.stdinEnabled">
+                                 ng-show="opts.symFiles.enabled">
                                 <label>File Size</label>
                                 <input type="text"
-                                       ng-model="submission.runConfiguration.sizeFiles"
+                                       ng-model="submission.runConfiguration.symFiles.size"
                                        class="form-control"/>
                             </div>
 
                             <div class="form-group"
-                                 ng-show="submission.runConfiguration.stdinEnabled">
+                                 ng-show="opts.symFiles.enabled">
                                 <button ng-click="resetSymFiles($event)"
                                         type="button" class="btn k-btn disable">
                                     Disable Sym-Files <i class="icon_close"></i>
@@ -258,7 +258,6 @@
                                 type="button" class="btn k-btn coverage-btn"
                                 tooltip-placement="bottom"
                                 tooltip="Generate a coverage report for this run."
-                                tooltip-popup-delay="200"
                                 tooltip-append-to-body="true">
                             Coverage
                             <i class=""
