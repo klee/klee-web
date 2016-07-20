@@ -38,6 +38,8 @@ class File(models.Model):
     num_files = models.IntegerField(default=0)
     size_files = models.IntegerField(default=0)
 
+    size_sym_in = models.IntegerField(default=0)
+
     min_sym_args = models.IntegerField(default=0)
     max_sym_args = models.IntegerField(default=0)
     size_sym_args = models.IntegerField(default=0)

@@ -127,7 +127,7 @@
                     <div class="options-btn btn-group" dropdown is-open="opts.symArgs.open">
                         <button type="button" class="btn k-btn" ng-click="toggleSymArgs($event)">
                             Sym-Args
-                            <i class=""
+                            <i class="" ng-click="resetSymArgs()"
                                ng-class="{'icon_box-empty': !opts.symArgs.enabled, 'icon_box-checked': opts.symArgs.enabled}"></i>
                         </button>
                         <button type="button" class="btn k-btn dropdown-toggle"
@@ -189,7 +189,7 @@
                     <div class="options-btn btn-group" dropdown is-open="opts.symFiles.open">
                         <button type="button" class="btn k-btn" ng-click="toggleSymFiles($event)">
                             Sym-Files
-                            <i class=""
+                            <i class="" ng-click="resetSymFiles()"
                                ng-class="{'icon_box-empty': !opts.symFiles.enabled, 'icon_box-checked': opts.symFiles.enabled}"></i>
                         </button>
                         <button type="button" class="btn k-btn dropdown-toggle"
@@ -256,7 +256,7 @@
                     <div class="options-btn btn-group" dropdown is-open="opts.symIn.open">
                         <button type="button" class="btn k-btn" ng-click="toggleSymIn($event)">
                             Sym-In
-                            <i class=""
+                            <i class="" ng-click="resetSymIn()"
                                ng-class="{'icon_box-empty': !opts.symIn.enabled, 'icon_box-checked': opts.symIn.enabled}"></i>
                         </button>
                         <button type="button" class="btn k-btn dropdown-toggle"

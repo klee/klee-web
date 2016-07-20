@@ -25,12 +25,16 @@ class RunConfigurationField(serializers.Field):
                 'size': obj.size_files,
                 'num': obj.num_files
             },
+            'sym_in': {
+                'size': obj.size_sym_in,
+            },
         }
 
     def to_internal_value(self, data):
         return {
             'size_files': data['sym_files']['size'],
             'num_files': data['sym_files']['num'],
+            'size_sym_in': data['sym_in']['size'],
             'min_sym_args': data['sym_args']['range'][0],
             'max_sym_args': data['sym_args']['range'][1],
             'size_sym_args': data['sym_args']['size']
