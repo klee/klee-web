@@ -253,6 +253,55 @@
                         </div>
                     </div>
 
+                    <div class="options-btn btn-group" dropdown is-open="opts.symIn.open">
+                        <button type="button" class="btn k-btn" ng-click="toggleSymIn($event)">
+                            Sym-In
+                            <i class=""
+                               ng-class="{'icon_box-empty': !opts.symIn.enabled, 'icon_box-checked': opts.symIn.enabled}"></i>
+                        </button>
+                        <button type="button" class="btn k-btn dropdown-toggle"
+                                dropdown-toggle>
+                            <i class="arrow_triangle-down"></i>
+                            <span class="sr-only">Split button!</span>
+                        </button>
+                        <div class="dropdown-menu" role="menu"
+                             ng-click="$event.stopPropagation()">
+                            <header>
+                                <h4>Symbolic Input</h4>
+
+                                <p>
+                                    <small>Make the standard input symbolic and
+                                      specify the size of the input.
+                                    </small>
+                                </p>
+                            </header>
+
+                            <div class="form-group"
+                                 ng-show="!opts.symIn.enabled">
+                                <button ng-click="opts.symIn.enabled = true"
+                                        type="button" class="btn k-btn enable">
+                                    Enable Sym-Input <i class="icon_check"></i>
+                                </button>
+                            </div>
+
+                            <div class="form-group"
+                                 ng-show="opts.symIn.enabled">
+                                <label>Input Size</label>
+                                <input type="text"
+                                       ng-model="submission.runConfiguration.symIn.size"
+                                       class="form-control"/>
+                            </div>
+
+                            <div class="form-group"
+                                 ng-show="opts.symIn.enabled">
+                                <button ng-click="resetSymIn()"
+                                        type="button" class="btn k-btn disable">
+                                    Disable Sym-Input <i class="icon_close"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <div class="options-btn btn-group">
                         <button ng-click="submission.runConfiguration.coverage_enabled = !submission.runConfiguration.coverage_enabled"
                                 type="button" class="btn k-btn coverage-btn"

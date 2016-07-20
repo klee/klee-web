@@ -15,6 +15,9 @@ controllers.controller('MainCtrl', [
                 symFiles: {
                     num: 0,
                     size: 0
+                },
+                symIn: {
+                    size: 0
                 }
             }
         };
@@ -26,6 +29,10 @@ controllers.controller('MainCtrl', [
                 open: false
             },
             symFiles: {
+                enabled: false,
+                open: false
+            },
+            symIn: {
                 enabled: false,
                 open: false
             }
@@ -54,6 +61,13 @@ controllers.controller('MainCtrl', [
             $scope.opts.symFiles.enabled = !$scope.opts.symFiles.enabled;
             $scope.opts.symFiles.open = !$scope.opts.symFiles.open;
         };
+        
+        $scope.toggleSymIn = function ($event) {
+            $event.preventDefault();
+            $event.stopPropagation();
+            $scope.opts.symIn.enabled = !$scope.opts.symIn.enabled;
+            $scope.opts.symIn.open = !$scope.opts.symIn.open;
+        };
 
         $scope.resetSymArgs = function() {
             $scope.opts.symArgs.enabled = false;
@@ -69,6 +83,14 @@ controllers.controller('MainCtrl', [
             $scope.opts.symFiles.open = false;
             $scope.submission.runConfiguration.symFiles = {
                 num: 0,
+                size: 0
+            };
+        };
+        
+        $scope.resetSymIn = function() {
+            $scope.opts.symIn.enabled = false;
+            $scope.opts.symIn.open = false;
+            $scope.submission.runConfiguration.symIn = {
                 size: 0
             };
         };
@@ -337,6 +359,9 @@ controllers.controller('SidebarCtrl', [
                     },
                     symFiles: {
                         num: 0,
+                        size: 0
+                    },
+                    symIn: {
                         size: 0
                     }
                 }
