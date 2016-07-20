@@ -1,5 +1,5 @@
-KLEE: NOTE: Using klee-uclibc : /usr/local/lib/klee-uclibc.bca
-KLEE: NOTE: Using model: /usr/local/lib/libkleeRuntimePOSIX.bca
+KLEE: NOTE: Using klee-uclibc : /home/klee/klee_build/klee/Release\+Asserts/lib/klee-uclibc.bca
+KLEE: NOTE: Using model: /home/klee/klee_build/klee/Release\+Asserts/lib/libkleeRuntimePOSIX.bca
 KLEE: output directory is "/tmp/code/klee-out-0"
 Using STP solver backend
 KLEE: WARNING: undefined reference to function: klee_posix_prefer_cex
