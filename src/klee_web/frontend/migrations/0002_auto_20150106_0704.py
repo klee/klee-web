@@ -10,22 +10,29 @@ BASE_DIR = os.path.dirname(os.path.realpath(__file__))
 FIXTURE_DIR = os.path.join(BASE_DIR, '..', 'fixtures')
 
 
-def load_example_fixtures(apps, schema_editor):
+def load_fixtures(apps, schema_editor):
+    fixtures_file = os.path.join(FIXTURE_DIR, 'fixtures.json')
+    with open(fixtures_file) as fixtures_data:
+        fixtures = json.loads(fixtures_data.read())    
+        # Create example project
+        add_fixtures(apps, fixtures, "Examples")
+        # Create tutorial project
+        add_fixtures(apps, fixtures, "Tutorials")
+
+
+def add_fixtures(apps, fixtures, title):
     Project = apps.get_model("frontend", "Project")
     File = apps.get_model("frontend", "File")
-
-    # Create example project
-    project = Project(name="Examples", example=True)
+            
+    project = Project(name=title, example=True)
     project.save()
-
-    # Load example figures
-    example_file = os.path.join(FIXTURE_DIR, 'examples.json')
-    with open(example_file) as example_data:
-        examples = json.loads(example_data.read())
-        for fixture in examples.get('examples', []):
-            example = File(**fixture)
-            example.project = project
-            example.save()
+    for fixture in fixtures.get(title, []):
+        figure = File(**fixture)
+        code_path = os.path.join(FIXTURE_DIR, title, figure.name)
+        with open(code_path, 'r') as code:
+            figure.code = code.read()
+        figure.project = project
+        figure.save()
 
 
 class Migration(migrations.Migration):
@@ -34,5 +41,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(load_example_fixtures)
+        migrations.RunPython(load_fixtures)
     ]
