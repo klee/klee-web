@@ -1,0 +1,12 @@
+---
+  - name: Ensure that docker is installed
+    apt: name=lxc-docker update_cache=no state=present
+
+  - name: Clone the docker repository
+    git: repo={{ docker_repo }} clone=yes dest={{ build_path }}
+    when: not ci
+
+  - name: Build updated docker container
+    shell: source build.sh >> {{ build_path}}/build.log creates={{ build_path }}/build.log chdir={{ build_path }} executable=/bin/bash
+    become: yes
+    when: not ci

@@ -2,3 +2,5 @@
 web_working_dir: /src/web
 web_log_dir: "{{ web_working_dir }}/logs"
 web_virtualenv: "{{ web_working_dir }}/env"
+docker_repo: https://github.com/helicopter88/docker_django_klee.git
+build_path: /build

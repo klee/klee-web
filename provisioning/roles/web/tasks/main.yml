@@ -4,5 +4,8 @@
   tags: web
 - include: nginx.yml
   tags: nginx
+- include: build.yml
+  tags: docker
 - include: deploy.yml
   tags: deploy
+
