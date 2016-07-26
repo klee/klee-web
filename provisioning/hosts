@@ -1,14 +1,11 @@
 [dbservers]
-146.169.47.51:55022 ansible_ssh_user=ubuntu
+klee.doc.ic.ac.uk:22 ansible_ssh_user=ubuntu
 
 [redisservers]
-146.169.47.51:55022 ansible_ssh_user=ubuntu
+klee.doc.ic.ac.uk:22 ansible_ssh_user=ubuntu
 
 [webservers]
-146.169.47.51:55022 ansible_ssh_user=ubuntu
+klee.doc.ic.ac.uk:22 ansible_ssh_user=ubuntu
 
 [workers]
-146.169.46.144:55022 ansible_ssh_user=ubuntu
-146.169.46.244:55022 ansible_ssh_user=ubuntu
-146.169.46.102:55022 ansible_ssh_user=ubuntu
-146.169.46.212:55022 ansible_ssh_user=ubuntu
+klee.doc.ic.ac.uk:22 ansible_ssh_user=ubuntu
