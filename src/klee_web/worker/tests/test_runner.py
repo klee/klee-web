@@ -60,16 +60,12 @@ class TestWorkerRunner(unittest.TestCase):
             }
         })
 
-    # TODO: Needs to be fixed
-    # This test must be run with the sym-stdin flag.
-    # When support for this flag is added, this test
-    # can be uncommented and updated.
-    # def test_symfiles(self):
-    #     self.run_klee_test('symfiles', {
-    #         'stdin_enabled': True,
-    #         'num_files': 0,
-    #         'size_files': 1
-    #     })
+    def test_symin(self):
+        self.run_klee_test('symin', {
+            'sym_in': {
+                'size': 1
+            }
+        })
 
     def test_fail_on_invalid_syntax(self):
         self.run_klee_test('invalid_syntax', expect_failure=True)

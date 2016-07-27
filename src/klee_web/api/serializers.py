@@ -21,16 +21,20 @@ class RunConfigurationField(serializers.Field):
                 'range': [obj.min_sym_args, obj.max_sym_args],
                 'size': obj.size_sym_args
             },
-            'stdin_enabled': obj.stdin_enabled,
-            'size_files': obj.size_files,
-            'num_files': obj.num_files
+            'sym_files': {
+                'size': obj.size_files,
+                'num': obj.num_files
+            },
+            'sym_in': {
+                'size': obj.size_sym_in,
+            },
         }
 
     def to_internal_value(self, data):
         return {
-            'stdin_enabled': data['stdin_enabled'],
-            'size_files': data['size_files'],
-            'num_files': data['num_files'],
+            'size_files': data['sym_files']['size'],
+            'num_files': data['sym_files']['num'],
+            'size_sym_in': data['sym_in']['size'],
             'min_sym_args': data['sym_args']['range'][0],
             'max_sym_args': data['sym_args']['range'][1],
             'size_sym_args': data['sym_args']['size']

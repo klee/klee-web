@@ -14,6 +14,7 @@ class SubmitJobForm(forms.Form):
     size_stdin_args = forms.IntegerField(required=False, min_value=0)
     num_files = forms.ChoiceField(required=False, choices=num_choices)
     size_files = forms.IntegerField(required=False, min_value=0)
+    size_sym_in = forms.IntegerField(required=False, min_value=0)
 
     def clean(self):
         cleaned_data = super(SubmitJobForm, self).clean()
