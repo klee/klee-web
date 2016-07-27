@@ -1,8 +1,9 @@
 Klee Web
 =======================
-[Try it out here!](http://146.169.47.51:55080/#)
+[Try it out here!](http://klee.doc.ic.ac.uk/#)
 
-[![Circle CI](https://circleci.com/gh/klee-web/klee-web.png?style=badge)](https://circleci.com/gh/klee-web/klee-web)
+[![CircleCI](https://circleci.com/gh/klee/klee-web.svg?style=svg)](https://circleci.com/gh/klee/klee-web)
+
 Getting started on development
 ===============================
 
@@ -11,58 +12,57 @@ Make sure you have [VirtualBox](https://www.virtualbox.org/wiki/Downloads), [Vag
 First clone the repo:
 
     git clone https://github.com/klee/klee-web.git
-    
+
 Start the development virtual machine (this may take a while on the first run):
+
     vagrant up
 
 If the command fails during provisioning, you can retry using:
+
     vagrant provision
 
 After provisioning has completed, klee-web will be available at [http://192.168.33.10](http://192.168.33.10)
 
-The [kleeweb/klee](https://registry.hub.docker.com/u/kleeweb/klee/) image is grabbed using docker pull when provisioning occurs.
-If you need to make modifications to the Dockerfile and build it from scratch 
-then run the following.
+The [klee/klee](https://registry.hub.docker.com/u/klee/klee/) image is grabbed using docker pull when provisioning occurs.
 
-    vagrant ssh
-    sudo docker build /titb/python/worker/klee/
-    
-    
+
 In order to invoke KLEE (from within the virtual machine):
 
-    sudo docker run -t -v PATH_TO_SOURCE_DIR:/code kleeweb/klee clang-3.4 -I /src/klee/include -emit-llvm -c -g /code/FILE.c -o /code/FILE.o
-    sudo docker run -t -v PATH_TO_SOURCE_DIR:/code kleeweb/klee klee FILE.o
+    sudo docker run -t -v PATH_TO_SOURCE_DIR:/code klee/klee clang -I /home/klee/klee_src/include/klee/include -emit-llvm -c -g /code/FILE.c -o /code/FILE.bc
+    sudo docker run -t -v PATH_TO_SOURCE_DIR:/code klee/klee klee FILE.bc
 
 
 In order to see any server side changes run (from within the virtual machine):
 
     sudo supervisorctl reload
-    
+
 
 Running tests
 ===========================
 Before submitting a pull request it's a good idea to run our test suite locally with the following command
 
-    vagrant ssh -c "/titb/run_tests.sh"
+    $ vagrant ssh -c "/titb/run_tests.sh"
 
 
 Building Frontend
 ===========================
 
-Make sure you have Node and npm installed.
+Make sure you have Node and npm installed and that you are inside a machine with a deployed web role (e.g. after vagrant provision).
 
 At the root-level directory:
-	
-	$ npm install -g bower
-	$ npm install -g grunt-cli
+  ```bash
+$ npm install -g bower
+$ npm install -g grunt-cli
+  ```
 
 Then:
-	
+
 	$ npm install
 
 Now that Grunt and Bower are installed, install the front-end packages with
 
-	$ bower install
+
+  $ bower install
 
 Finally, let Grunt do the rest of the work (compiling/minifying SASS/JS etc), with
 
