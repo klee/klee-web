@@ -28,6 +28,8 @@ class RunConfigurationField(serializers.Field):
             'sym_in': {
                 'size': obj.size_sym_in,
             },
+            'options': obj.options,
+            'arguments': obj.arguments
         }
 
     def to_internal_value(self, data):
@@ -37,7 +39,9 @@ class RunConfigurationField(serializers.Field):
             'size_sym_in': data['sym_in']['size'],
             'min_sym_args': data['sym_args']['range'][0],
             'max_sym_args': data['sym_args']['range'][1],
-            'size_sym_args': data['sym_args']['size']
+            'size_sym_args': data['sym_args']['size'],
+            'options': data['options'],
+            'arguments': data['arguments'],
         }
 
 

@@ -52,7 +52,8 @@ class FileCreateView(AdminRequiredMixin, CreateView):
     model = File
     template_name = 'control_panel/example_manager/file/form.html'
     fields = ['name', 'code', 'num_files', 'size_files', 'size_sym_in',
-              'min_sym_args', 'max_sym_args', 'size_sym_args']
+              'min_sym_args', 'max_sym_args', 'size_sym_args', 'options',
+              'arguments']
 
     def get_success_url(self):
         project_pk = self.kwargs['project_pk']
@@ -70,7 +71,8 @@ class FileUpdateView(AdminRequiredMixin, UpdateView):
     model = File
     template_name = 'control_panel/example_manager/file/form.html'
     fields = ['name', 'code', 'num_files', 'size_files', 'size_sym_in',
-              'min_sym_args', 'max_sym_args', 'size_sym_args']
+              'min_sym_args', 'max_sym_args', 'size_sym_args', 'options',
+              'arguments']
 
     def get_success_url(self):
         project_pk = self.kwargs['project_pk']

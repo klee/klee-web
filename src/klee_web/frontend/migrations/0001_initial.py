@@ -52,6 +52,8 @@ class Migration(migrations.Migration):
                 ('min_sym_args', models.IntegerField(default=0)),
                 ('max_sym_args', models.IntegerField(default=0)),
                 ('size_sym_args', models.IntegerField(default=0)),
+                ('options', models.TextField()),
+                ('arguments', models.TextField()),
                 ('last_modified', models.DateTimeField(auto_now=True)),
             ],
             options={

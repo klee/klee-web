@@ -44,6 +44,9 @@ class File(models.Model):
     max_sym_args = models.IntegerField(default=0)
     size_sym_args = models.IntegerField(default=0)
 
+    options = models.TextField()
+    arguments = models.TextField()
+
     last_modified = models.DateTimeField(auto_now=True)
 
     def __unicode__(self):

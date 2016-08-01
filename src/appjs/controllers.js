@@ -18,7 +18,9 @@ controllers.controller('MainCtrl', [
                 },
                 symIn: {
                     size: 0
-                }
+                },
+                options: '',
+                arguments: ''
             }
         };
         $scope.defaultSubmission = angular.copy($scope.submission);
@@ -33,6 +35,10 @@ controllers.controller('MainCtrl', [
                 open: false
             },
             symIn: {
+                enabled: false,
+                open: false
+            },
+            options: {
                 enabled: false,
                 open: false
             }
@@ -69,6 +75,13 @@ controllers.controller('MainCtrl', [
             $scope.opts.symIn.open = !$scope.opts.symIn.open;
         };
 
+        $scope.toggleOptions = function ($event) {
+            $event.preventDefault();
+            $event.stopPropagation();
+            $scope.opts.options.enabled = !$scope.opts.options.enabled;
+            $scope.opts.options.open = !$scope.opts.options.open;
+        };
+        
         $scope.resetSymArgs = function() {
             $scope.opts.symArgs.enabled = false;
             $scope.opts.symArgs.open = false;
@@ -93,6 +106,13 @@ controllers.controller('MainCtrl', [
             $scope.submission.runConfiguration.symIn = {
                 size: 0
             };
+        };
+
+        $scope.resetOptions = function() {
+            $scope.opts.options.enabled = false;
+            $scope.opts.options.open = false;
+            $scope.submission.runConfiguration.options = '';
+            $scope.submission.runConfiguration.arguments = '';
         };
 
         $scope.resetLoadedFile = function() {
@@ -363,7 +383,9 @@ controllers.controller('SidebarCtrl', [
                     },
                     symIn: {
                         size: 0
-                    }
+                    },
+                    options: '',
+                    arguments: ''
                 }
             });
 
