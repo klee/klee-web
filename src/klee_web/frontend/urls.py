@@ -1,4 +1,5 @@
 from django.conf.urls import url
+from django.contrib import auth
 from . import views
 urlpatterns = [
     url(r'^$', views.index, name='index'),
@@ -10,10 +11,7 @@ urlpatterns = [
     # User account
     url(r'^user/login/$', views.login, name='login'),
     url(r'^user/settings/$', views.settings, name='settings'),
-    url(r'^user/register/$', views.register, name="register")
-]
-
-urlpatterns += [
-    url(r'^user/logout/$', 'django.contrib.auth.views.logout',
-        {'next_page': 'index'}, name='logout'),
+    url(r'^user/register/$', views.register, name="register"),
+    url(r'^user/logout/$', auth.views.logout,
+        {'next_page': 'index'}, name='logout')
 ]

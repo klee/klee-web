@@ -11,7 +11,6 @@ https://docs.djangoproject.com/en/1.7/ref/settings/
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os
 import sys
-import django.conf.global_settings as global_settings
 from time import gmtime, strftime
 
 import string
@@ -43,19 +42,30 @@ if DEBUG:
 
 SECRET_KEY = key if DEBUG else os.environ.get("DJANGO_SECRET_KEY")
 
-TEMPLATE_DEBUG = DEBUG
-
 ALLOWED_HOSTS = ['*']
 
-TEMPLATE_CONTEXT_PROCESSORS = \
-    global_settings.TEMPLATE_CONTEXT_PROCESSORS + (
-        "django.core.context_processors.request",
-        "frontend.context_processors.global_vars"
-    )
-
+TEMPLATES = [
+    {
+        'BACKEND': 'django.template.backends.django.DjangoTemplates',
+        # Paths for Django to find templates
+        'DIRS': [
+            os.path.join(BASE_DIR, 'frontend/templates'),
+            os.path.join(BASE_DIR, 'control_panel/templates')
+        ],
+        # Controls whether Django checks for templates inside apps
+        'APP_DIRS': True,
+        'OPTIONS': {
+            'context_processors': [
+                'django.template.context_processors.request',
+                'django.contrib.auth.context_processors.auth',
+                'django.contrib.messages.context_processors.messages',
+                "frontend.context_processors.global_vars"
+            ],
+        }
+    }
+]
 
 # Application definition
-
 INSTALLED_APPS = (
     'frontend',
     'control_panel',
