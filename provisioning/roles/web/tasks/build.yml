@@ -12,6 +12,6 @@
     when: not ci
 
   - name: Build the docker container
-    shell: docker build -t helicopter88/klee_django:{{ docker_var }} chdir={{ build_path }}
+    shell: docker build -t helicopter88/klee_django:{{ docker_var }} chdir={{ build_path }} .
     become: yes
-    when: not ci
+    when: build|bool
