@@ -8,18 +8,11 @@
 <link href="{{ dist }}css/vendor/codemirror/theme/neo.css" rel="stylesheet">
 <link href="{{ dist }}css/vendor/jquery-ui.min.css" rel="stylesheet">
 <link href="{{ dist }}css/ide.css" rel="stylesheet">
-
-<style type="text/css">
-    .tooltip-inner {
-    max-width: 300px;
-    }
-</style>
 {% endblock %}
 
 {% block content %}
 
 <div class="wrapper" ng-controller="MainCtrl">
-
     <!-- Sidebar -->
     <section class="sidebar" ng-controller="SidebarCtrl">
         <header>
@@ -124,78 +117,63 @@
                 {% csrf_token %}
 
                 <header>
-                    <div class="options-btn btn-group" dropdown is-open="opts.symArgs.open">
-                        <button type="button" class="btn k-btn" ng-click="toggleSymArgs($event)">
-                            Sym-Args
-                            <i class="" ng-click="resetSymArgs()"
-                               ng-class="{'icon_box-empty': !opts.symArgs.enabled, 'icon_box-checked': opts.symArgs.enabled}"></i>
+                    <div class="options-btn btn-group" dropdown>
+                        <button type="button" class="btn k-btn" ng-click="toggleSymArgs($event)" dropdown-toggle>
+                            Sym. Args
+                            <i ng-class="{'icon_box-empty': !opts.symArgs, 'icon_box-checked': opts.symArgs}"></i>
                         </button>
                         <button type="button" class="btn k-btn dropdown-toggle"
                                 dropdown-toggle>
                             <i class="arrow_triangle-down"></i>
-                            <span class="sr-only">Split button!</span>
+                            <span class="sr-only"></span>
                         </button>
                         <div class="dropdown-menu" role="menu"
                              ng-click="$event.stopPropagation()">
                             <header>
-                                <h4>Symbolic arguments</h4>
+                                <h4>Symbolic Arguments</h4>
 
                                 <p>
-                                    <small>Vary the values of the program arguments
-                                        according to the selected restrictions
-                                        (number, size)<span class=""></span></small>
+                                    <small>Specify the number and size of the 
+                                      program arguments to be made symbolic.
+                                    </small>
                                 </p>
                             </header>
 
-                            <div class="form-group" ng-show="!opts.symArgs.enabled">
-                                <button ng-click="opts.symArgs.enabled = true" type="button"
-                                        class="btn k-btn enable">
-                                    Enable Sym-Args <i class="icon_check"></i>
-                                </button>
-                            </div>
-
-                            <div class="form-group" ng-show="opts.symArgs.enabled">
-                                <label>No. of symbolic args</label>
-
+                            <div class="form-group">
+                                <label>No. of symbolic arguments</label>
                                 <div class="args-slider">
                                     <div class="slider-inner">
                                         <div ui-slider="{range: true}" min="0"
                                              max="9" step="1"
-                                             ng-model="submission.runConfiguration.symArgs.range"></div>
+                                             ng-model="config.symArgs.range"></div>
                                     </div>
                                     <div class="units">
                                         <span class="min">0<br/>Min</span>
+                                        [[ config.symArgs.range[0] ]] to 
+                                        [[ config.symArgs.range[1] ]]
                                         <span class="max">9<br/>Max</span>
                                     </div>
                                 </div>
                             </div>
 
-                            <div class="form-group" ng-show="opts.symArgs.enabled">
-                                <label>Arg Size</label>
+                            <div class="form-group">
+                                <label>Argument(s) size (bytes)</label>
                                 <input type="text"
-                                       ng-model="submission.runConfiguration.symArgs.size"
+                                       ng-model="config.symArgs.size"
                                        class="form-control"/>
-                            </div>
-
-                            <div class="form-group" ng-show="opts.symArgs.enabled">
-                                <button ng-click="resetSymArgs()" type="button"
-                                        class="btn k-btn disable">
-                                    Disable Sym-Args <i class="icon_close"></i>
-                                </button>
                             </div>
                         </div>
                     </div>
 
-                    <div class="options-btn btn-group" dropdown is-open="opts.symFiles.open">
-                        <button type="button" class="btn k-btn" ng-click="toggleSymFiles($event)">
-                            Sym-Files
-                            <i class="" ng-click="resetSymFiles()"
-                               ng-class="{'icon_box-empty': !opts.symFiles.enabled, 'icon_box-checked': opts.symFiles.enabled}"></i>
+                    <div class="options-btn btn-group" dropdown>
+                        <button type="button" class="btn k-btn" ng-click="toggleSymFiles($event)" dropdown-toggle>
+                            Sym. Files
+                            <i ng-class="{'icon_box-empty': !opts.symFiles, 'icon_box-checked': opts.symFiles}"></i>
                         </button>
                         <button type="button" class="btn k-btn dropdown-toggle"
                                 dropdown-toggle>
                             <i class="arrow_triangle-down"></i>
-                            <span class="sr-only">Split button!</span>
+                            <span class="sr-only"></span>
                         </button>
                         <div class="dropdown-menu" role="menu"
                              ng-click="$event.stopPropagation()">
@@ -203,66 +181,48 @@
                                 <h4>Symbolic Files</h4>
 
                                 <p>
-                                    <small>File reads are taken from any of N files,
-                                        the contents of which will varied between
-                                        separate executions.
+                                    <small>File reads are taken from n files,
+                                        whose contents of which will vary 
+                                        amongst separate executions.
                                     </small>
                                 </p>
                             </header>
 
-                            <div class="form-group"
-                                 ng-show="!opts.symFiles.enabled">
-                                <button ng-click="opts.symFiles.enabled = true"
-                                        type="button" class="btn k-btn enable">
-                                    Enable Sym-Files <i class="icon_check"></i>
-                                </button>
-                            </div>
-
-                            <div class="form-group"
-                                 ng-show="opts.symFiles.enabled">
+                            <div class="form-group">
                                 <label>No. of symbolic files</label>
 
                                 <div class="args-slider">
                                     <div class="slider-inner">
                                         <div ui-slider="{range: false}" min="0"
                                              max="9" step="1"
-                                             ng-model="submission.runConfiguration.symFiles.num"></div>
+                                             ng-model="config.symFiles.num"></div>
                                     </div>
                                     <div class="units">
                                         <span class="min">0<br/>Min</span>
+                                        [[ config.symFiles.num ]]
                                         <span class="max">9<br/>Max</span>
                                     </div>
                                 </div>
                             </div>
 
-                            <div class="form-group"
-                                 ng-show="opts.symFiles.enabled">
-                                <label>File Size</label>
+                            <div class="form-group">
+                                <label>File(s) size (bytes)</label>
                                 <input type="text"
-                                       ng-model="submission.runConfiguration.symFiles.size"
+                                       ng-model="config.symFiles.size"
                                        class="form-control"/>
-                            </div>
-
-                            <div class="form-group"
-                                 ng-show="opts.symFiles.enabled">
-                                <button ng-click="resetSymFiles($event)"
-                                        type="button" class="btn k-btn disable">
-                                    Disable Sym-Files <i class="icon_close"></i>
-                                </button>
                             </div>
                         </div>
                     </div>
 
-                    <div class="options-btn btn-group" dropdown is-open="opts.symIn.open">
-                        <button type="button" class="btn k-btn" ng-click="toggleSymIn($event)">
-                            Sym-In
-                            <i class="" ng-click="resetSymIn()"
-                               ng-class="{'icon_box-empty': !opts.symIn.enabled, 'icon_box-checked': opts.symIn.enabled}"></i>
+                    <div class="options-btn btn-group" dropdown>
+                        <button type="button" class="btn k-btn" ng-click="toggleSymIn($event)" dropdown-toggle>
+                            Sym. Input
+                            <i ng-class="{'icon_box-empty': !opts.symIn, 'icon_box-checked': opts.symIn}"></i>
                         </button>
                         <button type="button" class="btn k-btn dropdown-toggle"
                                 dropdown-toggle>
                             <i class="arrow_triangle-down"></i>
-                            <span class="sr-only">Split button!</span>
+                            <span class="sr-only"></span>
                         </button>
                         <div class="dropdown-menu" role="menu"
                              ng-click="$event.stopPropagation()">
@@ -276,42 +236,24 @@
                                 </p>
                             </header>
 
-                            <div class="form-group"
-                                 ng-show="!opts.symIn.enabled">
-                                <button ng-click="opts.symIn.enabled = true"
-                                        type="button" class="btn k-btn enable">
-                                    Enable Sym-Input <i class="icon_check"></i>
-                                </button>
-                            </div>
-
-                            <div class="form-group"
-                                 ng-show="opts.symIn.enabled">
-                                <label>Input Size</label>
+                            <div class="form-group">
+                                <label>Input size (bytes)</label>
                                 <input type="text"
-                                       ng-model="submission.runConfiguration.symIn.size"
+                                       ng-model="config.symIn.size"
                                        class="form-control"/>
-                            </div>
-
-                            <div class="form-group"
-                                 ng-show="opts.symIn.enabled">
-                                <button ng-click="resetSymIn()"
-                                        type="button" class="btn k-btn disable">
-                                    Disable Sym-Input <i class="icon_close"></i>
-                                </button>
                             </div>
                         </div>
                     </div>
-                    
-                    <div class="options-btn btn-group" dropdown is-open="opts.options.open">
-                        <button type="button" class="btn k-btn" ng-click="toggleOptions($event)">
+
+                    <div class="options-btn btn-group" dropdown>
+                        <button type="button" class="btn k-btn" ng-click="toggleOptions($event)" dropdown-toggle>
                             Options
-                            <i class="" ng-click="resetOptions()"
-                               ng-class="{'icon_box-empty': !opts.options.enabled, 'icon_box-checked': opts.options.enabled}"></i>
+                            <i ng-class="{'icon_box-empty': !opts.options, 'icon_box-checked': opts.options}"></i>
                         </button>
                         <button type="button" class="btn k-btn dropdown-toggle"
                                 dropdown-toggle>
                             <i class="arrow_triangle-down"></i>
-                            <span class="sr-only">Split button!</span>
+                            <span class="sr-only"></span>
                         </button>
                         <div class="dropdown-menu" role="menu"
                              ng-click="$event.stopPropagation()">
@@ -326,36 +268,20 @@
                                 </p>
                             </header>
 
-                            <div class="form-group"
-                                 ng-show="!opts.options.enabled">
-                                <button ng-click="opts.options.enabled = true"
-                                        type="button" class="btn k-btn enable">
-                                    Enable Options & Arguments <i class="icon_check"></i>
-                                </button>
-                            </div>
-
-                            <div class="form-group"
-                                 ng-show="opts.options.enabled">
-                                <label>Option</label>
+                            <div class="form-group">
+                                <label>Option flags</label>
                                 <input type="text"
-                                       ng-model="submission.runConfiguration.options"
+                                       ng-model="config.options"
+                                       placeholder="e.g. --help"
                                        class="form-control"/>
                             </div>
                             
-                            <div class="form-group"
-                                 ng-show="opts.options.enabled">
-                                <label>Program Arguments</label>
+                            <div class="form-group">
+                                <label>Program arguments</label>
                                 <input type="text"
-                                       ng-model="submission.runConfiguration.arguments"
+                                       ng-model="config.arguments"
+                                       placeholder="e.g. --sym-stdout"
                                        class="form-control"/>
-                            </div>
-
-                            <div class="form-group"
-                                 ng-show="opts.options.enabled">
-                                <button ng-click="resetOptions()"
-                                        type="button" class="btn k-btn disable">
-                                    Disable Options & Arguments <i class="icon_close"></i>
-                                </button>
                             </div>
                         </div>
                     </div>

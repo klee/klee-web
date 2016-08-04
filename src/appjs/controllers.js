@@ -6,43 +6,35 @@ controllers.controller('MainCtrl', [
 
         $scope.submission = {
             name: null,
-            code: '',
-            runConfiguration: {
-                symArgs: {
-                    range: [0, 0],
-                    size: 0
-                },
-                symFiles: {
-                    num: 0,
-                    size: 0
-                },
-                symIn: {
-                    size: 0
-                },
-                options: '',
-                arguments: ''
-            }
+            code: ''
         };
-        $scope.defaultSubmission = angular.copy($scope.submission);
-
+        
         $scope.opts = {
-            symArgs: {
-                enabled: false,
-                open: false
-            },
-            symFiles: {
-                enabled: false,
-                open: false
-            },
-            symIn: {
-                enabled: false,
-                open: false
-            },
-            options: {
-                enabled: false,
-                open: false
-            }
+            symArgs: false,
+            symFiles: false,
+            symIn: false,
+            options: false,
+            arguments: false
         };
+        
+        $scope.config = {
+              symArgs: {
+                  range: [0, 0],
+                  size: 0
+              },
+              symFiles: {
+                  num: 0,
+                  size: 0
+              },
+              symIn: {
+                  size: 0
+              },
+              options: '',
+              arguments: ''
+        }
+        
+        $scope.submission.runConfiguration = angular.copy($scope.config);
+        $scope.defaultSubmission = angular.copy($scope.submission);
 
         $scope.progress = [];
         $scope.result = {};
@@ -57,64 +49,28 @@ controllers.controller('MainCtrl', [
         $scope.toggleSymArgs = function ($event) {
             $event.preventDefault();
             $event.stopPropagation();
-            $scope.opts.symArgs.enabled = !$scope.opts.symArgs.enabled;
-            $scope.opts.symArgs.open = !$scope.opts.symArgs.open;
+            $scope.opts.symArgs = !$scope.opts.symArgs;
         };
 
         $scope.toggleSymFiles = function ($event) {
             $event.preventDefault();
             $event.stopPropagation();
-            $scope.opts.symFiles.enabled = !$scope.opts.symFiles.enabled;
-            $scope.opts.symFiles.open = !$scope.opts.symFiles.open;
+            $scope.opts.symFiles = !$scope.opts.symFiles;
         };
         
         $scope.toggleSymIn = function ($event) {
             $event.preventDefault();
             $event.stopPropagation();
-            $scope.opts.symIn.enabled = !$scope.opts.symIn.enabled;
-            $scope.opts.symIn.open = !$scope.opts.symIn.open;
+            $scope.opts.symIn = !$scope.opts.symIn;
         };
 
         $scope.toggleOptions = function ($event) {
             $event.preventDefault();
             $event.stopPropagation();
-            $scope.opts.options.enabled = !$scope.opts.options.enabled;
-            $scope.opts.options.open = !$scope.opts.options.open;
+            $scope.opts.options = !$scope.opts.options;
+            $scope.opts.arguments = !$scope.opts.arguments;
         };
         
-        $scope.resetSymArgs = function() {
-            $scope.opts.symArgs.enabled = false;
-            $scope.opts.symArgs.open = false;
-            $scope.submission.runConfiguration.symArgs = {
-                range: [0, 0],
-                size: 0
-            };
-        };
-
-        $scope.resetSymFiles = function() {
-            $scope.opts.symFiles.enabled = false;
-            $scope.opts.symFiles.open = false;
-            $scope.submission.runConfiguration.symFiles = {
-                num: 0,
-                size: 0
-            };
-        };
-        
-        $scope.resetSymIn = function() {
-            $scope.opts.symIn.enabled = false;
-            $scope.opts.symIn.open = false;
-            $scope.submission.runConfiguration.symIn = {
-                size: 0
-            };
-        };
-
-        $scope.resetOptions = function() {
-            $scope.opts.options.enabled = false;
-            $scope.opts.options.open = false;
-            $scope.submission.runConfiguration.options = '';
-            $scope.submission.runConfiguration.arguments = '';
-        };
-
         $scope.resetLoadedFile = function() {
             $scope.submission = angular.copy($scope.defaultSubmission);
         }
@@ -140,8 +96,17 @@ controllers.controller('MainCtrl', [
                 saveTimeout = setTimeout(saveSubmission, timeToSave);
             }
         }, true);
+        
+        var buildConfiguration = function() {
+            for (opt in $scope.opts) {
+                $scope.submission.runConfiguration[opt] 
+                    = $scope.opts[opt] ? $scope.config[opt] 
+                    : $scope.defaultSubmission.runConfiguration[opt]
+            }
+        };
 
         $scope.processForm = function(submission) {
+            buildConfiguration();
             $rootScope.startNanobar();
             $scope.submitted = true;
             $scope.result = {};
@@ -330,8 +295,12 @@ controllers.controller('SidebarCtrl', [
                 var selectedProject = $scope.$parent.selectedProject;
                 $scope.$parent.submission = file;
                 selectedProject.defaultFile = file.id;
-                $scope.opts.symArgs.enabled = file.runConfiguration.symArgs.range[0] > 0 || file.runConfiguration.symArgs.range[1] > 0;
-
+                for (opt in $scope.opts) {
+                  if (file.runConfiguration[opt].size) {
+                    $scope.opts[opt] = true;
+                  }
+                }
+                $scope.$parent.config = file.runConfiguration;
                 if (!selectedProject.example) {
                     selectedProject.$update();
                 }
