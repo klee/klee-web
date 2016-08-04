@@ -28,11 +28,12 @@ def store_data(task, type, data):
 @csrf_exempt
 def jobs_notify(request):
     if request.method == 'POST':
+        type = request.POST.get('type')
         channel = request.POST.get('channel')
         task = Task.objects.get(task_id=channel)
         store_data(
             task,
-            request.POST.get('type'),
+            type,
             request.POST.get('data')
             )
         if type == 'job_complete' or type == 'job_failed':
