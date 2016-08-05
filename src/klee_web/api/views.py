@@ -25,10 +25,10 @@ class ProjectViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
+        queryset = Project.objects.filter(example=True)
         if user.is_authenticated():
-            return Project.objects.filter(owner=user)
-        else:
-            return Project.objects.filter(example=True)
+            queryset |= Project.objects.filter(owner=user)
+        return queryset
 
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
