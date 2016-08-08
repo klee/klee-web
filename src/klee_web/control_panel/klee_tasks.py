@@ -110,7 +110,8 @@ def populate_completed_task(db_task):
         'mach': db_task['worker_name'],
         'id': db_task['task_id'],
         'ip_address': db_task['ip_address'],
-        'created_at': db_task['created_at']
+        'created_at': db_task['created_at'],
+        'location': db_task['location']
     }
 
     time = db_task['completed_at'] - db_task['created_at']
