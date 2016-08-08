@@ -35,7 +35,20 @@
 			z-index: 5;
 		}
 	}
-
+  
+  .editor {
+    &> header {
+      width: 200%;
+    }
+  }
+  
+  .results {
+    padding-bottom: $topbar-height +3px;
+    &> header {
+      margin-top: $topbar-height;
+    }
+  }
+  
 	.CodeMirror {
 
 		.CodeMirror-code {

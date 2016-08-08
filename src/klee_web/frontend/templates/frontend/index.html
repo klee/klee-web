@@ -1,6 +1,6 @@
 {% extends "frontend/base.html" %}
 
-{% block title %}KLIDE{% endblock %}
+{% block title %}Klee Web{% endblock %}
 
 {% block css %}
 <link href="{{ dist }}css/vendor/codemirror/codemirror.css"
@@ -302,6 +302,64 @@
                         </div>
                     </div>
                     
+                    <div class="options-btn btn-group" dropdown is-open="opts.options.open">
+                        <button type="button" class="btn k-btn" ng-click="toggleOptions($event)">
+                            Options
+                            <i class="" ng-click="resetOptions()"
+                               ng-class="{'icon_box-empty': !opts.options.enabled, 'icon_box-checked': opts.options.enabled}"></i>
+                        </button>
+                        <button type="button" class="btn k-btn dropdown-toggle"
+                                dropdown-toggle>
+                            <i class="arrow_triangle-down"></i>
+                            <span class="sr-only">Split button!</span>
+                        </button>
+                        <div class="dropdown-menu" role="menu"
+                             ng-click="$event.stopPropagation()">
+                            <header>
+                                <h4>Options and Arguments</h4>
+
+                                <p>
+                                    <small>
+                                      Provide Klee with more advanced option flags and program arguments.
+                                      See the <a href="http://klee.github.io/docs/" target="_blank">Documentation</a> to know more.
+                                    </small>
+                                </p>
+                            </header>
+
+                            <div class="form-group"
+                                 ng-show="!opts.options.enabled">
+                                <button ng-click="opts.options.enabled = true"
+                                        type="button" class="btn k-btn enable">
+                                    Enable Options & Arguments <i class="icon_check"></i>
+                                </button>
+                            </div>
+
+                            <div class="form-group"
+                                 ng-show="opts.options.enabled">
+                                <label>Option</label>
+                                <input type="text"
+                                       ng-model="submission.runConfiguration.options"
+                                       class="form-control"/>
+                            </div>
+                            
+                            <div class="form-group"
+                                 ng-show="opts.options.enabled">
+                                <label>Program Arguments</label>
+                                <input type="text"
+                                       ng-model="submission.runConfiguration.arguments"
+                                       class="form-control"/>
+                            </div>
+
+                            <div class="form-group"
+                                 ng-show="opts.options.enabled">
+                                <button ng-click="resetOptions()"
+                                        type="button" class="btn k-btn disable">
+                                    Disable Options & Arguments <i class="icon_close"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
                     <div class="options-btn btn-group">
                         <button ng-click="submission.runConfiguration.coverage_enabled = !submission.runConfiguration.coverage_enabled"
                                 type="button" class="btn k-btn coverage-btn"
@@ -328,7 +386,7 @@
 
             </form>
 
-            <div class="results" ng-cloak nanobar>
+            <div class="results" ng-cloak>
                 <header>
                     <h3>KLEE Results</h3>
 
@@ -336,8 +394,7 @@
                          ng-class="{'active': result.url, 'flash-color': result.url}">
                         <a href="#" ng-href="[[ result.url ]]"
                            tooltip-placement="bottom"
-                           tooltip="Download raw KLEE results."
-                           tooltip-popup-delay="200">
+                           tooltip="Download raw KLEE results.">
                             <i class="icon_cloud-download_alt"></i>
                         </a>
                     </div>
@@ -350,7 +407,7 @@
 
                 </header>
 
-                <div class="results-inner" ng-controller="ResultTabsCtrl">
+                <div class="results-inner" ng-controller="ResultTabsCtrl" nanobar>
                     <header>
                         <nav class="tabs">
                             <ul>

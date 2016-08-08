@@ -32,12 +32,20 @@ class KleeRunProcessor(BaseProcessor):
             if size_sym_in:
                 result += ['--sym-stdin', str(size_sym_in)]
 
+        arguments = klee_args.get('arguments')
+        if arguments:
+            result += [arguments]
+
         return result
 
     def create_klee_command(self, arg_list):
         klee_command = ['klee']
         if arg_list:
             klee_command += ['--posix-runtime', '-libc=uclibc']
+
+        options = self.args.get('options')
+        if options:
+            klee_command += [options]
 
         return klee_command + [self.runner.DOCKER_OBJECT_FILE] + arg_list
 
