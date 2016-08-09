@@ -1,9 +1,9 @@
 ---
 
-- include: flask.yml
-  tags: flask
+- include: web.yml
+  tags: web
 - include: frontend.yml
-  tags: flask
+  tags: web
 - include: nginx.yml
   tags: nginx
 - include: deploy.yml

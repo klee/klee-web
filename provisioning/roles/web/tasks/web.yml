@@ -15,11 +15,11 @@
 - name: Start supervisor service
   service: name=supervisor state=started
 
-# Create worker user
-- user: name=web shell=/bin/bash
+- name: Create web user
+  user: name=klee_web shell=/bin/bash
 
-# Create folder for web files
-- file: path={{ web_working_dir }} owner=web group=web state=directory
+- name: Create folder for web files
+  file: path={{ web_working_dir }} owner=klee_web group=klee_web state=directory
 
-# Create folder for web log files
-- file: path={{ web_log_dir }} owner=web group=web state=directory
+- name: Create folder for web log files
+  file: path={{ web_log_dir }} owner=klee_web group=klee_web state=directory

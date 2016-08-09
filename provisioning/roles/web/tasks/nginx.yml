@@ -2,16 +2,16 @@
   apt: pkg=nginx state=latest
 
 - name: Remove the default site
-  command: rm -rf /etc/nginx/sites-enabled/default
+  file: name=/etc/nginx/sites-enabled/default state=absent
 
 - name: Remove the sites config, if exists
-  command: rm -rf /etc/nginx/sites-enabled/default
+  file: name=/etc/nginx/sites-enabled/default state=absent
 
 - name: Remove the default sites symlink, if exists
-  command: rm -rf /etc/nginx/sites-enabled/titb
+  file: name=/etc/nginx/sites-enabled/titb state=absent
 
 - name: Remove existing nginx conf
-  command: rm -rf /etc/nginx/nginx.conf
+  file: name=/etc/nginx/nginx.conf state=absent
 
 - name: Configure nginx
   template: src=nginx.conf.j2 dest=/etc/nginx/nginx.conf
@@ -20,7 +20,7 @@
   template: src=sites-available_titb.conf.j2 dest=/etc/nginx/sites-available/titb group=www-data owner=www-data force=yes
 
 - name: Enable the app
-  command: ln -s /etc/nginx/sites-available/titb /etc/nginx/sites-enabled/titb
+  file: src=/etc/nginx/sites-available/titb dest=/etc/nginx/sites-enabled/titb state=link
 
 - name: Restart nginx
   action: service name=nginx state=restarted

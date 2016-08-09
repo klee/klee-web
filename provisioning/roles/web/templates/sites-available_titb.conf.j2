@@ -1,16 +1,12 @@
 server {
-    {% if development %}
     listen       80;
-    {% else %}
-    listen 55080;
-    {% endif %}
     server_name  _;
     location / { try_files $uri @titb; }
     location @titb {
       include uwsgi_params;
       uwsgi_pass unix:/tmp/uwsgi.sock;
     }
-    
+
     {% if not development %}
     location /static/ {
       alias {{ src_dir }}/src/static/;
