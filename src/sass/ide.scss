@@ -32,13 +32,13 @@
 			position: relative;
 			height: $topbar-height;
 			width: 100%;
-			z-index: 5;
 		}
 	}
   
   .editor {
     &> header {
       width: 200%;
+      z-index: 5;
     }
   }
   
