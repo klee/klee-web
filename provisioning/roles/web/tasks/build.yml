@@ -1,6 +1,6 @@
 ---
   - name: Ensure that docker is installed
-    apt: name=lxc-docker update_cache=no state=present
+    apt: name=docker-engine update_cache=no state=present
 
   - name: Clone the docker repository
     git: repo={{ docker_repo }} clone=yes dest={{ build_path }}
