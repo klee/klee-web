@@ -1,0 +1,6 @@
+#!/bin/bash
+
+. {{ web_virtualenv }}/bin/activate
+. /etc/profile.d/klee-web-environment.sh
+cd {{ application_dir }}
+python manage.py update_admin_user --username=admin --password={{ admin_password }}

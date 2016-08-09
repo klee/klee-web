@@ -39,6 +39,22 @@ it('test all', function(done1) {
             }).run();
       })
     }
+    var n = new nightmare({ webSecurity: false });
+
+    // Check that admin can login
+    n.goto("http://localhost/admin")
+    .wait('login')
+    .type("#id_username", 'admin')
+    .type("#id_password", 'development')
+
+    .click('[type=submit]')
+    .wait('dashboard')
+
+    .evaluate(getTitle, function(res) {
+      res.should.match("Site administration | Django site admin")
+      done1();
+    })
+    .run();
   }
 
   fs.readdirAsync(inputDir).then(runAllTests);
