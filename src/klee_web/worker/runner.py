@@ -37,10 +37,12 @@ class WorkerRunner():
                                   FailedTestProcessor, StatsProcessor,
                                   CoverageProcessor]
 
-    def __init__(self, task_id, callback_endpoint=None, pipeline=None):
+    def __init__(self, task_id, callback_endpoint=None, pipeline=None,
+                 worker_name=''):
         self.task_id = task_id
         self.callback_endpoint = callback_endpoint
         self.mailer = DummyMailer() if DEVELOPMENT else MailgunMailer()
+        self.worker_name = worker_name
         self.pipeline = pipeline or WorkerRunner.DEFAULT_PROCESSOR_PIPELINE
 
     def __enter__(self):
@@ -99,6 +101,7 @@ class WorkerRunner():
     def send_notification(self, notification_type, data):
         if self.callback_endpoint:
             payload = {
+                'worker_name': self.worker_name,
                 'channel': self.task_id,
                 'type': notification_type,
                 'data': json.dumps(data)

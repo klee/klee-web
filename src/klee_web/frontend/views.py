@@ -31,6 +31,7 @@ def jobs_notify(request):
         type = request.POST.get('type')
         channel = request.POST.get('channel')
         task = Task.objects.get(task_id=channel)
+        task.worker_name = request.POST.get('worker_name')
         store_data(
             task,
             type,
