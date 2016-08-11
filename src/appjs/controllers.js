@@ -242,7 +242,8 @@ controllers.controller('SidebarCtrl', [
             showForm: false
         };
         $scope.newProjectOpt = {
-            name: 'Add New Project'
+            name: 'Add New Project',
+            auth: false
         };
 
         $scope.uploader = new FileUploader({
@@ -262,15 +263,10 @@ controllers.controller('SidebarCtrl', [
 
         Project.query().$promise.then(function(projects) {
             $scope.projects = projects;
+            $scope.projects.push($scope.newProjectOpt);
 
             if (projects.length > 0) {
                 $scope.$parent.selectedProject = projects[0];
-            }
-
-            // Only show new project option if project list is empty
-            // or user is logged in (no example projects)
-            if (projects.length == 0 || !$scope.$parent.selectedProject.example) {
-                $scope.projects.push($scope.newProjectOpt);
             }
         });
 

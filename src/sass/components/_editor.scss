@@ -180,9 +180,8 @@
 	}
 
 	.CodeMirror {
-		margin-top: - $topbar-height;
-		padding-top: $topbar-height + 20px;
-		height: 100%;
+		padding-top: 10px;
+		height: calc(100% - #{$topbar-height});
 
 		.CodeMirror-gutters {
 			// background-color: $line-nums-bg-color;

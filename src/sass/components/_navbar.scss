@@ -24,10 +24,14 @@
 	.login-area,
 	.register-area {
 		float: right;
-		width: 2 * $topbar-height;
+		padding: 0 40px 0 40px;
 		height: 100%;
 		border-left: $border-width solid $nav-border-color;
 		display: table;
+		
+		i {
+			padding-left: 6px;
+		}
 
 		a {
 			display: table-cell;
