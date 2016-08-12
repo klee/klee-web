@@ -18,9 +18,9 @@
                 <div class="intro">
                     <img src="{{ dist }}img/klee-logo.svg" class="logo"/>
 
-                    <p>Hey <strong>{{ user.username }}</strong>! You can change
-                        your password here. To head back, <a
-                                href="{% url 'index' %}">click here</a>.</p>
+                    <p>Hey <strong>{{ user.username }}</strong>, change
+                        your password below, or 
+                        <a href="{% url 'index' %}">head back</a>.</p>
                 </div>
 
                 {% if messages %}
@@ -60,7 +60,7 @@
                         {{ form.password2.errors }}
                     </div>
                 </div>
-                <button type="submit" class="btn btn-primary">Submit</button>
+                <button type="submit" class="btn k-btn submit">Submit</button>
             </form>
         </div>
 {% endblock %}

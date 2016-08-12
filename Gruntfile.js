@@ -57,12 +57,32 @@ module.exports = function (grunt) {
                         src: ['style.css'],
                         dest: '<%= config.frontend_dist %>/css/vendor/eleganticons'
                     },
+                    {
+                        expand: true,
+                        cwd: '<%= config.lib %>/font-awesome/css',
+                        src: ['font-awesome.css'],
+                        dest: '<%= config.frontend_dist %>/css/vendor/font-awesome'
+                    },
+                    {
+                        expand: true,
+                        cwd: '<%= config.lib %>/font-awesome/fonts',
+                        src: ['fontawesome-webfont.woff2',
+                              'fontawesome-webfont.woff',
+                              'fontawesome-webfont.ttf'],
+                        dest: '<%= config.frontend_dist %>/css/vendor/fonts'
+                    },
+                    {
+                        expand: true,
+                        cwd: '<%= config.lib %>/bootstrap-social',
+                        src: ['bootstrap-social.css'],
+                        dest: '<%= config.frontend_dist %>/css/vendor/bootstrap-social'
+                    },
                     // Codemirror
                     {
                         expand: true,
                         cwd: '<%= config.lib %>/codemirror/lib',
-        				src: 'codemirror.css',
-        				dest: '<%= config.frontend_dist %>/css/vendor/codemirror'
+                        src: 'codemirror.css',
+                        dest: '<%= config.frontend_dist %>/css/vendor/codemirror'
         			},
                     {
                         expand: true,
