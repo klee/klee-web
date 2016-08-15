@@ -3,15 +3,16 @@
   "description": "End-To-End tests for KLEE Web",
   "version": "0.0.2",
   "scripts": {
-    "test": "node_modules/.bin/mocha e2e_tests.js"
+    "test": "node_modules/mocha/bin/mocha e2e_tests.js"
   },
   "devDependencies": {
     "mocha": "^2.5.3",
     "should": "^9.0.2"
   },
   "dependencies": {
+    "dnode-protocol": "*",
     "bluebird": "^3.4.1",
     "nightmare": "^1.6.5",
-    "phantomjs-prebuilt": "^2.1.7"
+    "phantomjs": "*"
   }
 }

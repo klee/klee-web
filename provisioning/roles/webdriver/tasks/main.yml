@@ -1,19 +1,10 @@
 ---
+- name: Install flake8
+  pip: name=flake8
 
-- pip: name=flake8
-
-- pip: name=httpie
-
-- name: "Add chris-lea/node.js"
-  apt_repository: repo='ppa:chris-lea/node.js'
-  when: not ci
-  tags: nodejs
-
-- name: "Install node.js"
-  apt: name=nodejs update_cache=yes
-  when: not ci
-  tags: nodejs
+- name: Install HTTPIE
+  pip: name=httpie
 
 - name: "Install E2E test dependencies"
-  npm: path={{ application_dir }}/tests
+  shell: npm install --dev chdir={{ application_dir }}/tests
   become: no
