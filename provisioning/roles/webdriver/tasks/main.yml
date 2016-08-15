@@ -6,5 +6,5 @@
   pip: name=httpie
 
 - name: "Install E2E test dependencies"
-  npm: path={{ application_dir }}/tests
+  shell: npm install --dev chdir={{ application_dir }}/tests
   become: no

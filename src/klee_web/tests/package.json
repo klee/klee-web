@@ -10,6 +10,7 @@
     "should": "^9.0.2"
   },
   "dependencies": {
+    "dnode-protocol": "*",
     "bluebird": "^3.4.1",
     "nightmare": "^1.6.5",
     "phantomjs": "*"
