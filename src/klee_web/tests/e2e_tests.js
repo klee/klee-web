@@ -7,7 +7,7 @@ var path = require('path');
 var inputDir = path.join(__dirname, "input");
 var outputDir= path.join(__dirname, "output");
 
-it('test all', function(done1) {
+it('tests that input files are processed correctly', function(done1) {
   this.timeout(20000);
   var testsRun = 0;
 
@@ -32,33 +32,39 @@ it('test all', function(done1) {
             .evaluate(getResult, function(actual) {
                 actual.replace(/(?:\r\n|\r|\n)/g, "\n").should.match(expected)
                 testsRun++;
-                if (testsRun == tests.length) {
-                  // notify that all the assertions happened
+                if(testsRun == tests.length) {
                   done1();
                 }
             }).run();
       })
     }
-    var n = new nightmare({ webSecurity: false });
+    
+  }
+
+  fs.readdirAsync(inputDir).then(runAllTests);
+});
+
+it('tests that the admin can login', function(done) {
+    this.timeout(60000);
+    var n = new nightmare({ waitTimeout: 1000, webSecurity: false });
 
     // Check that admin can login
     n.goto("http://localhost/admin")
     .wait('login')
     .type("#id_username", 'admin')
     .type("#id_password", 'development')
-
     .click('[type=submit]')
     .wait('dashboard')
-
     .evaluate(getTitle, function(res) {
       res.should.match("Site administration | Django site admin")
-      done1();
+      done();
     })
     .run();
-  }
-
-  fs.readdirAsync(inputDir).then(runAllTests);
 });
+
+function getTitle() {
+      return document.title;
+}
 
 function updateCode(newCode) {
   var codeMirrorElement = $("#codemirror").get(0);

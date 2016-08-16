@@ -1,7 +1,7 @@
 import datetime
 from django.contrib.auth.views import login as django_login
 from django.contrib.auth.decorators import login_required
-from django.forms.util import ErrorList
+from django.forms.utils import ErrorList
 
 from django.shortcuts import render, redirect
 from django.http import HttpResponse, HttpResponseNotFound
