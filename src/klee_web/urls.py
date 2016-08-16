@@ -11,6 +11,7 @@ urlpatterns = [
     url(r'^manage/', include('control_panel.urls', namespace="control_panel")),
     url(r'^accounts/login/$', auth.views.login,
         {'template_name': 'control_panel/login.html'}),
+    url(r'^soc/',  include('rest_framework_social_oauth2.urls'))
 ]
 
 urlpatterns += staticfiles_urlpatterns()

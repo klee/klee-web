@@ -20,6 +20,15 @@
                     <p>Welcome to KLEE. If you have an account, please log in
                         below. If not, you can <a href="{% url 'register' %}">sign
                             up here</a>.</p>
+                    <li>
+                              <a href="{% url 'social:begin' 'facebook' %}?next={{ request.path }}">Login with Facebook</a>
+                    </li>
+                    <li>
+                              <a href="{% url 'social:begin' 'google-oauth2' %}?next={{ request.path }}">Login with Google</a>
+                    </li>
+                    <li>
+                              <a href="{% url 'social:begin' 'github' %}?next={{ request.path }}">Login with Github</a>
+                    </li>
                 </div>
 
                 <div class="form-group">
