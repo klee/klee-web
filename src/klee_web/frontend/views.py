@@ -8,11 +8,13 @@ from django.http import HttpResponse, HttpResponseNotFound
 from django.views.decorators.csrf import csrf_exempt
 from django.core.urlresolvers import reverse
 from django.contrib import messages, auth
+from django.views.static import serve
 
 from forms import SubmitJobForm, UserCreationForm, UserChangePasswordForm
 from django.contrib.gis.geoip2 import GeoIP2
 from models import Task
 import json
+import os
 
 
 GeoIP = GeoIP2()
@@ -27,6 +29,15 @@ def store_data(task, type, data):
     d = {'type': type, 'data': data}
     task.current_output = json.dumps(d)
     task.save()
+
+
+def jobs_dl(request, file):
+    if request.method == 'GET':
+        fname = file + '.tar.gz'
+        file_path = '/tmp/' + fname
+        return serve(request, fname, os.path.dirname(file_path))
+    else:
+        return HttpResponseNotFound("This page only supports GET")
 
 
 @csrf_exempt
