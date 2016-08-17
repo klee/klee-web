@@ -66,7 +66,8 @@ def revoked_tasks(workers=None):
 
 
 def done_tasks():
-    tasks = Task.objects.filter(completed_at__isnull=False).values()
+    all_tasks = Task.objects.filter(completed_at__isnull=False)
+    tasks = all_tasks.order_by('-created_at').values()
     return map(populate_completed_task, tasks)
 
 
