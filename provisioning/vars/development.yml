@@ -8,3 +8,4 @@ db_password: development
 admin_password: development
 db_host: localhost
 db_port: 5432
+docker_var: development

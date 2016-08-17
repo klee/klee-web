@@ -7,3 +7,4 @@ celery_broker_url: "redis://{{ redis_host }}:{{ redis_port }}/{{ redis_db_number
 
 db_host: "{{ hostvars[groups['dbservers'][0]]['ansible_' + iface].ipv4.address }}"
 db_port: 5432
+docker_var: production

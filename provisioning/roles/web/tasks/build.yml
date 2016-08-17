@@ -6,7 +6,12 @@
     git: repo={{ docker_repo }} clone=yes dest={{ build_path }}
     when: not ci
 
-  - name: Build updated docker container
-    shell: source build.sh >> {{ build_path}}/build.log creates={{ build_path }}/build.log chdir={{ build_path }} executable=/bin/bash
+  - name: Gather updated resources for the docker container
+    shell: source build.sh chdir={{ build_path }} executable=/bin/bash
+    become: yes
+    when: not ci
+
+  - name: Build the docker container
+    shell: docker build -t helicopter88/klee_django:{{ docker_var }} chdir={{ build_path }}
     become: yes
     when: not ci

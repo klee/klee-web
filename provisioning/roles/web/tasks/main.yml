@@ -1,7 +1,5 @@
 ---
 
-- include: frontend.yml
-  tags: web
 - include: nginx.yml
   tags: nginx
 - include: build.yml
