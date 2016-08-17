@@ -7,8 +7,12 @@
     - python-dev
     - python-pip
     - libpq-dev
+    - supervisor
   tags: packages
 
+- name: Start supervisor service
+  service: name=supervisor state=started
+  
 - name: Install virtualenv
   command: pip install virtualenv
 

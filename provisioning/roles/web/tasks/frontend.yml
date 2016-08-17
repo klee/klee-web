@@ -1,5 +1,4 @@
 ---
-
 # Install frontend dependencies
 
 - name: "Add official NodeJS repo 6.x"

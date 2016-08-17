@@ -1,10 +1,5 @@
-# Install requirements for task runner
-- apt: name=libffi-dev
-- pip: requirements={{ application_dir }}/requirements.txt virtualenv={{ web_virtualenv }}
-  become_user: klee_web
-
-- name: Copy supervisor config file
-  template: src=supervisor_web.conf.j2 dest=/etc/supervisor/conf.d/web.conf
+- name: Pull Django docker image
+  shell: docker pull helicopter88/klee_django
 
 - name: Copy admin password script
   template: src=admin_psw.sh.j2 dest=/src/web/admin_psw.sh
@@ -41,20 +36,5 @@
     chdir: "{{ src_dir }}"
   when: ci|bool
 
-- name: Run Django South migrations
-  shell: . {{ web_virtualenv }}/bin/activate
-         && . /etc/profile.d/klee-web-environment.sh
-         && cd {{ application_dir }}
-         && python manage.py migrate --noinput
-
-- name: Run Django collectstatic
-  shell: . {{ web_virtualenv }}/bin/activate
-         && . /etc/profile.d/klee-web-environment.sh
-         && cd {{ application_dir }}
-         && python manage.py collectstatic --noinput
-
-- name: Create development admin user
-  shell: . /src/web/admin_psw.sh
-  
-- name: Start django process
-  shell: supervisorctl reload
+- name: Run Django from docker
+  shell: docker run -d --net="host" -v /tmp:/tmp -v /titb/src/static:/opt/static helicopter88/klee_django 
