@@ -3,6 +3,7 @@
 - hosts: all
   become: yes
   vars_files:
+  - vars/details.yml
   - vars/secrets.yml
   - vars/production.yml
   roles:
@@ -12,6 +13,7 @@
 - hosts: redisservers
   become: yes
   vars_files:
+    - vars/details.yml
     - vars/secrets.yml
     - vars/production.yml
   roles:
@@ -21,6 +23,7 @@
 - hosts: dbservers
   become: yes
   vars_files:
+    - vars/details.yml
     - vars/secrets.yml
     - vars/production.yml
   roles:
@@ -30,6 +33,7 @@
 - hosts: webservers
   become: yes
   vars_files:
+    - vars/details.yml
     - vars/secrets.yml
     - vars/production.yml
   roles:
@@ -39,6 +43,7 @@
 - hosts: workers
   become: yes
   vars_files:
+  - vars/details.yml
   - vars/secrets.yml
   - vars/production.yml
   roles:
