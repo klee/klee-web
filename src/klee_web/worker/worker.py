@@ -5,6 +5,7 @@ import re
 from celery import Celery
 from celery.worker.control import Panel
 from celery.exceptions import SoftTimeLimitExceeded
+from billiard import current_process
 
 from runner import WorkerRunner
 from worker_config import WorkerConfig
@@ -37,7 +38,10 @@ def get_uptime_stats(state):
 
 @celery.task(name='submit_code', bind=True)
 def submit_code(self, code, email, klee_args, endpoint):
-    with WorkerRunner(self.request.id, endpoint) as runner:
+    # name will hold the name of the current worker, which is in the format
+    # celery@name, so we split at @ and take the second part
+    name = current_process().initargs[1].split('@')[1]
+    with WorkerRunner(self.request.id, endpoint, worker_name=name) as runner:
         try:
             runner.run(code, email, klee_args)
         except SoftTimeLimitExceeded:

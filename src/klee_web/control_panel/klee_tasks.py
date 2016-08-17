@@ -66,7 +66,8 @@ def revoked_tasks(workers=None):
 
 
 def done_tasks():
-    tasks = Task.objects.filter(completed_at__isnull=False).values()
+    all_tasks = Task.objects.filter(completed_at__isnull=False)
+    tasks = all_tasks.order_by('-created_at').values()
     return map(populate_completed_task, tasks)
 
 
@@ -107,10 +108,11 @@ def get_task_from_redis(w):
 
 def populate_completed_task(db_task):
     task = {
-        'mach': 'Not applicable',
+        'mach': db_task['worker_name'],
         'id': db_task['task_id'],
         'ip_address': db_task['ip_address'],
-        'created_at': db_task['created_at']
+        'created_at': db_task['created_at'],
+        'location': db_task['location']
     }
 
     time = db_task['completed_at'] - db_task['created_at']

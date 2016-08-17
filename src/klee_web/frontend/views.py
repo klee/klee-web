@@ -10,8 +10,12 @@ from django.core.urlresolvers import reverse
 from django.contrib import messages, auth
 
 from forms import SubmitJobForm, UserCreationForm, UserChangePasswordForm
+from django.contrib.gis.geoip2 import GeoIP2
 from models import Task
 import json
+
+
+GeoIP = GeoIP2()
 
 
 def index(request):
@@ -31,13 +35,23 @@ def jobs_notify(request):
         type = request.POST.get('type')
         channel = request.POST.get('channel')
         task = Task.objects.get(task_id=channel)
+        task.worker_name = request.POST.get('worker_name')
         store_data(
             task,
             type,
             request.POST.get('data')
             )
         if type == 'job_complete' or type == 'job_failed':
+            try:
+                location = GeoIP.city(task.ip_address)
+                task.location = "{0}, {1}".format(location['city'],
+                                                  location['country_name'])
+            # If the IP is local or we cannot find a match in the database,
+            # Just set the location to something
+            except:
+                task.location = 'Non public IP'
             task.completed_at = datetime.datetime.now()
+
             task.save()
             return HttpResponse('Ok!')
     else:

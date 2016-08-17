@@ -14,6 +14,8 @@ class Task(models.Model):
     created_at = models.DateTimeField(auto_created=True)
     completed_at = models.DateTimeField(null=True)
     current_output = models.TextField(null=True)
+    worker_name = models.CharField(max_length=40, default='')
+    location = models.TextField(default='None')
 
 
 class Project(models.Model):
