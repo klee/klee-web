@@ -77,7 +77,9 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'bootstrapform',
     'rest_framework',
-    'rest_framework_nested'
+    'rest_framework_nested',
+    'oauth2_provider',
+    'social.apps.django_app.default',
 )
 
 MIDDLEWARE_CLASSES = (
@@ -120,6 +122,12 @@ USE_I18N = True
 
 USE_L10N = True
 
+AUTHENTICATION_BACKENDS = (
+    'social.backends.facebook.FacebookOAuth2',
+    'social.backends.google.GoogleOAuth2',
+    'social.backends.github.GithubOAuth2',
+    'django.contrib.auth.backends.ModelBackend',
+)
 
 GEOIP_PATH = os.path.join(BASE_DIR, 'geoip')
 
@@ -129,6 +137,18 @@ GEOIP_PATH = os.path.join(BASE_DIR, 'geoip')
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 AUTH_USER_MODEL = 'frontend.User'
+
+
+# Keys and secrets used to authenticate with Google, GitHub and Facebook
+SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = os.environ.get('GOOGLE_OAUTH_KEY') or ''
+SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = os.environ.get('GOOGLE_OAUTH_SECRET') or ''
+SOCIAL_AUTH_GITHUB_KEY = os.environ.get('GITHUB_OAUTH_KEY') or ''
+SOCIAL_AUTH_GITHUB_SECRET = os.environ.get('GITHUB_OAUTH_SECRET') or ''
+SOCIAL_AUTH_FACEBOOK_KEY = os.environ.get('FB_OAUTH_KEY') or ''
+SOCIAL_AUTH_FACEBOOK_SECRET = os.environ.get('FB_OAUTH_SECRET') or ''
+# Facebook login automatically redirects to /accounts/profile,
+# which does not exist, so we enforce redirection to /
+LOGIN_REDIRECT_URL = '/'
 
 REST_FRAMEWORK = {
     'DEFAULT_RENDERER_CLASSES': (

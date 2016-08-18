@@ -10,6 +10,10 @@
 .login-form {
 	padding: 40px 20px;
 	text-align: center;
+	
+	.btn:hover {
+		color: rgba(255, 255, 255, 1);
+	}
 
 	.logo {
 		width: 180px;
