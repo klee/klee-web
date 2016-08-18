@@ -85,7 +85,9 @@ class JobViewSet(viewsets.ViewSet):
     @list_route(methods=['POST'])
     def submit(self, request):
         worker_config = WorkerConfig()
-
+        user = 'Guest'
+        if request.user.is_authenticated():
+            user = request.user
         code = request.data.get("code")
         email = request.data.get("email")
         args = request.data.get("run_configuration", {})
@@ -101,6 +103,7 @@ class JobViewSet(viewsets.ViewSet):
         Task.objects.create(task_id=task.task_id,
                             email_address=email,
                             ip_address=get_client_ip(request),
-                            created_at=datetime.datetime.now())
+                            created_at=datetime.datetime.now(),
+                            user=user)
 
         return Response({'task_id': task.task_id})
