@@ -14,10 +14,10 @@ def load_fixtures(apps, schema_editor):
     fixtures_file = os.path.join(FIXTURE_DIR, 'fixtures.json')
     with open(fixtures_file) as fixtures_data:
         fixtures = json.loads(fixtures_data.read())    
-        # Create example project
-        add_fixtures(apps, fixtures, "Examples")
         # Create tutorial project
         add_fixtures(apps, fixtures, "Tutorials")
+        # Create example project
+        add_fixtures(apps, fixtures, "Examples")
 
 
 def add_fixtures(apps, fixtures, title):
