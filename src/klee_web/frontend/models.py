@@ -47,8 +47,8 @@ class File(models.Model):
     max_sym_args = models.IntegerField(default=0)
     size_sym_args = models.IntegerField(default=0)
 
-    options = models.TextField()
-    arguments = models.TextField()
+    options = models.TextField(null=True)
+    arguments = models.TextField(null=True)
 
     last_modified = models.DateTimeField(auto_now=True)
 
