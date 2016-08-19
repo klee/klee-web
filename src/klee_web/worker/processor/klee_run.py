@@ -53,7 +53,8 @@ class KleeRunProcessor(BaseProcessor):
         code_file = self.runner.DOCKER_CODE_FILE
         object_file = self.runner.DOCKER_OBJECT_FILE
         llvm_command = ['/usr/bin/clang-3.4',
-                        '-I', '/src/klee/include', '-emit-llvm', '-c', '-g',
+                        '-I', '/home/klee/klee_src/include/klee',
+                        '-emit-llvm', '-c', '-g',
                         code_file, '-o', object_file]
         self.runner.run_with_docker(llvm_command)
 
