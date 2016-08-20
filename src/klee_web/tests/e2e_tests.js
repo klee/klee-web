@@ -62,6 +62,23 @@ it('tests that the admin can login', function(done) {
     .run();
 });
 
+it('tests that logged users can add new projects', function(done) {
+    this.timeout(120000);
+    var n = new nightmare({ webSecurity: false });
+
+    n.goto("http://localhost/user/login")
+    .wait('[type=text]')
+    .type('[type=text]', 'admin')
+    .type('[type=password]', 'development')
+    .click('[type=submit]')
+    .wait('document')
+    .evaluate(getAddProjectLabel, function(res) {
+      res.should.match("Add New Project")
+      done();
+    })
+    .run();
+});
+
 function getTitle() {
       return document.title;
 }
@@ -76,4 +93,8 @@ function updateCode(newCode) {
 
 function getResult() {
   return document.querySelector('#result-output').innerText;
+}
+
+function getAddProjectLabel() {
+  return document.querySelector('option[label="Add New Project"]').label;
 }

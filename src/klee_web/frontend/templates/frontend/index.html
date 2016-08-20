@@ -19,7 +19,10 @@
             <div class="project-selector">
                 <select
                         ng-model="$parent.selectedProject"
-                        ng-options="project.name for project in projects"
+                        ng-options="project.name for project in projects 
+                        {% if not user.is_authenticated %}
+                          | filter: {auth:'!false'}
+                        {% endif %}"
                         ng-hide="projectToAdd"
                         ng-cloak>
                     <option value="">No Project Selected</option>
@@ -57,7 +60,7 @@
                 </p>
             </div>
 
-            <ul class="files">
+            <ul class="files" ng-hide="projectToAdd">
                 <li ng-repeat="file in files" ng-cloak>
                     <a href="#" ng-click="selectFile(file)">
                         <i class="icon_document_alt"></i> [[
@@ -100,8 +103,8 @@
                 </div>
                 {% if user.is_authenticated %}
                 <div class="login-area">
-                    <a href="user/settings">{{ user.username|truncatechars:8 }}&nbsp;&nbsp;<i
-                            class="icon_cogs"></i></a>
+                    <a href="user/settings">{{ user.username }}
+                      <i class="icon_cogs"></i></a>
                 </div>
                 {% endif %}
             </header>
