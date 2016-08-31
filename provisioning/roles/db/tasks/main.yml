@@ -1,5 +1,8 @@
 ---
 
+- name: Make sure acl is installed
+  apt: name=acl update_cache=yes state=latest
+
 - name: "Add postgresql repo"
   template: src=pgdg.list dest=/etc/apt/sources.list.d/pgdg.list
   when: not ci
