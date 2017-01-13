@@ -79,7 +79,7 @@ INSTALLED_APPS = (
     'rest_framework',
     'rest_framework_nested',
     'oauth2_provider',
-    'social.apps.django_app.default',
+    'social_django',
 )
 
 MIDDLEWARE_CLASSES = (
@@ -123,9 +123,9 @@ USE_I18N = True
 USE_L10N = True
 
 AUTHENTICATION_BACKENDS = (
-    'social.backends.facebook.FacebookOAuth2',
-    'social.backends.google.GoogleOAuth2',
-    'social.backends.github.GithubOAuth2',
+    'social_core.backends.facebook.FacebookOAuth2',
+    'social_core.backends.google.GoogleOAuth2',
+    'social_core.backends.github.GithubOAuth2',
     'django.contrib.auth.backends.ModelBackend',
 )
 
