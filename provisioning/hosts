@@ -1,11 +1,14 @@
 [dbservers]
-klee.doc.ic.ac.uk:22 ansible_ssh_user=ubuntu
+klee.doc.ic.ac.uk
 
 [redisservers]
-klee.doc.ic.ac.uk:22 ansible_ssh_user=ubuntu
+klee.doc.ic.ac.uk
 
 [webservers]
-klee.doc.ic.ac.uk:22 ansible_ssh_user=ubuntu
+klee.doc.ic.ac.uk
 
 [workers]
-klee.doc.ic.ac.uk:22 ansible_ssh_user=ubuntu
+cloud-vm-47-105.doc.ic.ac.uk
+cloud-vm-46-246.doc.ic.ac.uk
+cloud-vm-47-106.doc.ic.ac.uk
+klee.doc.ic.ac.uk
