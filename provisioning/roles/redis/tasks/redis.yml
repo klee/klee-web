@@ -2,10 +2,15 @@
   apt_repository: repo='ppa:chris-lea/redis-server'
 
 - name: Install Redis server
-  apt: name=redis-server update_cache=yes state=present
+  apt: name=redis-server update_cache=yes state=latest
 
 - name: Copy redis configuration file
-  template: src=redis.conf.j2 dest=/etc/redis/redis.conf
+  template:
+    src: redis.conf.j2
+    dest: /etc/redis/redis.conf
+    group: redis
+    owner: redis
+    mode: 0640
 
 - name: Restart Redis server
   service: name=redis-server state=restarted
