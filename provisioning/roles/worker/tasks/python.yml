@@ -18,15 +18,14 @@
 - name: Add worker to sudoers file
   lineinfile: "dest=/etc/sudoers state=present regexp='^worker' line='worker ALL=(ALL) NOPASSWD: ALL'"
 
-# Create folder for worker files
-- file: path={{ worker_working_dir }} owner=worker group=worker state=directory
+- name: Create folder for worker files
+  file: path={{ worker_working_dir }} owner=worker group=worker state=directory
+
+- name: Create folder for worker log files
+  file: path={{ worker_log_dir }} owner=worker group=worker state=directory
 
 # Install supervisor
 - apt: name=supervisor update_cache=yes state=present
 
 - name: Start supervisor service
   service: name=supervisor state=started
-
-# Create folder for worker log files
-- file: path={{ worker_log_dir }} owner=worker group=worker state=directory
-
