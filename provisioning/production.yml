@@ -3,11 +3,11 @@
 - hosts: all
   become: yes
   vars_files:
-  - vars/details.yml
-  - vars/secrets.yml
-  - vars/production.yml
+    - vars/details.yml
+    - vars/secrets.yml
+    - vars/production.yml
   roles:
-  - common
+    - common
 
 # Configure and deploy message queue servers.
 - hosts: redisservers
@@ -17,7 +17,7 @@
     - vars/secrets.yml
     - vars/production.yml
   roles:
-  - redis
+    - redis
 
 # Configure and deploy message database servers.
 - hosts: dbservers
@@ -27,7 +27,7 @@
     - vars/secrets.yml
     - vars/production.yml
   roles:
-  - db
+    - db
 
 # Configure and deploy the web servers.
 - hosts: webservers
@@ -37,14 +37,15 @@
     - vars/secrets.yml
     - vars/production.yml
   roles:
-  - web
+    - web
 
 # Configure and deploy the worker nodes.
 - hosts: workers
   become: yes
   vars_files:
-  - vars/details.yml
-  - vars/secrets.yml
-  - vars/production.yml
+    - vars/details.yml
+    - vars/secrets.yml
+    - vars/production.yml
   roles:
-  - worker
+    - docker.ubuntu
+    - worker

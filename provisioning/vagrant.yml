@@ -8,6 +8,7 @@
     - redis
     - db
     - web
+    - docker.ubuntu
     - worker
     - webdriver
   vars_files:
