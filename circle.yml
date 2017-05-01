@@ -3,10 +3,11 @@
 machine:
   node:
     version: 6.3.0
-    
-  services:
-    - docker
-    - rabbitmq-server
+
+checkout:
+  post:
+    - git submodule sync
+    - git submodule update --init
 
 dependencies:
   pre:
