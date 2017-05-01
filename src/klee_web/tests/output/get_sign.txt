@@ -1,5 +1,5 @@
 KLEE: output directory is "/tmp/code/klee-out-0"
-Using STP solver backend
+KLEE: Using STP solver backend
 
 KLEE: done: total instructions = 30
 KLEE: done: completed paths = 3
