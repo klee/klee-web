@@ -11,7 +11,7 @@ Make sure you have [VirtualBox](https://www.virtualbox.org/wiki/Downloads), [Vag
 
 First clone the repo:
 
-    git clone https://github.com/klee/klee-web.git
+    git clone --recursive https://github.com/klee/klee-web.git
 
 Start the development virtual machine (this may take a while on the first run):
 
