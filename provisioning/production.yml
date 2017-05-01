@@ -17,6 +17,7 @@
     - vars/secrets.yml
     - vars/production.yml
   roles:
+    - docker.ubuntu
     - redis
 
 # Configure and deploy message database servers.

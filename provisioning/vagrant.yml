@@ -4,11 +4,11 @@
   become_user: root
   become_method: sudo
   roles:
+    - docker.ubuntu
     - common
     - redis
     - db
     - web
-    - docker.ubuntu
     - worker
     - webdriver
   vars_files:
