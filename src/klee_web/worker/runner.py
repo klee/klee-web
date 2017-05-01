@@ -70,7 +70,7 @@ class WorkerRunner():
                  '--cpu-shares={}'.format(worker_config.cpu_share),
                  '-v', '{}:{}'.format(self.tempdir, self.DOCKER_MOUNT_DIR),
                  '-w', self.DOCKER_MOUNT_DIR,
-                 '--net="none"']
+                 '--net=none']
 
         # We have to disable cleanup on CircleCI (permissions issues)
         if not os.environ.get('CI'):
