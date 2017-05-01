@@ -40,7 +40,11 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
     mount_options: ["dmode=777,fmode=777"]
 
   config.vm.provision "ansible" do |ansible|
-    ansible.playbook = "provisioning/vagrant.yml"
+    ansible.config_file       = "ansible.cfg"
+    ansible.playbook          = "provisioning/vagrant.yml"
+    ansible.galaxy_role_file  = "requirements.yml"
+    # TODO(andronat): This path should been taken from ansible.cfg. This is a bug in Vagrant.
+    ansible.galaxy_roles_path = "~/.ansible-galaxy"
     # ansible.verbose = "vvvv"
   end
 

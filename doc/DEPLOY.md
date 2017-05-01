@@ -35,5 +35,6 @@ with
 ```cloud-vm-XX-YY.doc.ic.ac.uk:22 ansible_ssh_user=ubuntu```
 * Run
 ```bash
+ansible-galaxy install -r ./requirements.yml -f
 ansible-playbook -i provisioning/hosts --vault-password-file=~/.klee_vault_password provisioning/production.yml -v
 ```

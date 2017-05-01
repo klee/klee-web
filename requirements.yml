@@ -1,0 +1,4 @@
+---
+# Ansible Galaxy requirements
+
+- src: angstwad.docker_ubuntu

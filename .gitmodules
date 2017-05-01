@@ -1,3 +1,0 @@
-[submodule "provisioning/roles/docker.ubuntu"]
-	path = provisioning/roles/docker.ubuntu
-	url = git@github.com:angstwad/docker.ubuntu.git

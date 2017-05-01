@@ -4,11 +4,6 @@ machine:
   node:
     version: 6.3.0
 
-checkout:
-  post:
-    - git submodule sync
-    - git submodule update --init
-
 dependencies:
   pre:
     - sudo apt-get install software-properties-common
@@ -19,6 +14,7 @@ dependencies:
 
 test:
   pre:
+    - ansible-galaxy install --force --role-file=requirements.yml
     - ansible-playbook -i localhost, --syntax-check provisioning/vagrant.yml
     - ansible-playbook -i localhost, --connection=local -e ci=yes provisioning/vagrant.yml
   override:

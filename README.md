@@ -11,7 +11,7 @@ Make sure you have [VirtualBox](https://www.virtualbox.org/wiki/Downloads), [Vag
 
 First clone the repo:
 
-    git clone --recursive https://github.com/klee/klee-web.git
+    git clone https://github.com/klee/klee-web.git
 
 Start the development virtual machine (this may take a while on the first run):
 
@@ -73,4 +73,3 @@ Finally, let Grunt do the rest of the work (compiling/minifying SASS/JS etc), wi
 To watch for changes when modifying SASS, use
 
 	$ grunt watch
-
