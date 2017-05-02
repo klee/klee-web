@@ -3,10 +3,6 @@
 machine:
   node:
     version: 6.3.0
-    
-  services:
-    - docker
-    - rabbitmq-server
 
 dependencies:
   pre:
@@ -18,6 +14,7 @@ dependencies:
 
 test:
   pre:
+    - ansible-galaxy install --force --role-file=requirements.yml
     - ansible-playbook -i localhost, --syntax-check provisioning/vagrant.yml
     - ansible-playbook -i localhost, --connection=local -e ci=yes provisioning/vagrant.yml
   override:

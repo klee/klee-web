@@ -12,6 +12,9 @@ class S3Storage():
         s3_secret_key = secret_key or os.environ['AWS_SECRET_KEY']
 
         self.conn = S3Connection(s3_access_key, s3_secret_key)
+        # Make sure our S3 bucket exists.
+        # Buckets are like domain names. Must be unique accross S3!
+        self.conn.create_bucket(S3Storage.BUCKET)
 
     def store_file(self, file_path):
         bucket = self.conn.get_bucket(S3Storage.BUCKET)

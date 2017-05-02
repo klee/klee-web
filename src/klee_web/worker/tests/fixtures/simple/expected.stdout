@@ -1,5 +1,5 @@
 KLEE: output directory is "/tmp/code/klee-out-0"
-Using STP solver backend
+KLEE: Using STP solver backend
 KLEE: WARNING: undefined reference to function: printf
 KLEE: WARNING ONCE: calling external: printf\([0-9]+\)
 Hello world

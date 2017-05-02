@@ -4,6 +4,7 @@
   become_user: root
   become_method: sudo
   roles:
+    - angstwad.docker_ubuntu
     - common
     - redis
     - db

@@ -73,4 +73,3 @@ Finally, let Grunt do the rest of the work (compiling/minifying SASS/JS etc), wi
 To watch for changes when modifying SASS, use
 
 	$ grunt watch
-

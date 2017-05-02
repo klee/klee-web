@@ -1,11 +1,11 @@
 django<1.11
-uWSGI==2.0.13.1
+uWSGI
 celery==3.1.23
-boto==2.42.0
-requests==2.10.0
-psycopg2==2.6.2
-redis==2.10.5
-fakeredis==0.7.0
+boto
+requests
+psycopg2
+redis
+fakeredis
 django-bootstrap-form
 gcovparse
 djangorestframework==3.4.1

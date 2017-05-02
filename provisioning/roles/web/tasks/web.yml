@@ -21,12 +21,6 @@
 
 - shell: gunzip -f /titb/src/klee_web/geoip/GeoLite2-Country.mmdb.gz
 
-# Install supervisor
-- apt: name=supervisor update_cache=yes state=present
-
-- name: Start supervisor service
-  service: name=supervisor state=started
-
 - name: Create web user
   user: name=klee_web shell=/bin/bash
 
@@ -35,3 +29,9 @@
 
 - name: Create folder for web log files
   file: path={{ web_log_dir }} owner=klee_web group=klee_web state=directory
+
+# Install supervisor
+- apt: name=supervisor update_cache=yes state=present
+
+- name: Start supervisor service
+  service: name=supervisor state=started

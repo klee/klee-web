@@ -12,6 +12,10 @@
   when: not ci
   tags: nodejs
 
+- name: "Update npm"
+  npm: name=npm global=yes state=latest
+  when: not ci
+
 - name: "Install grunt-cli"
   npm: name=grunt-cli global=yes
   when: not ci
