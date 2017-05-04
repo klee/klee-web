@@ -1,11 +1,5 @@
-KLEE: NOTE: .*
-KLEE: NOTE: .*
-KLEE: Using STP solver backend
-KLEE: WARNING ONCE: .*
-KLEE: WARNING ONCE: .*
-KLEE: WARNING ONCE: .*
-KLEE: WARNING ONCE: .*
-goodbye!
+(?:KLEE: .*?
+)+goodbye!
 hello!
 
 KLEE: done: total instructions = [0-9]+

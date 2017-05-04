@@ -1,13 +1,7 @@
-KLEE: NOTE: .*
-KLEE: NOTE: .*
-KLEE: output directory is "/tmp/code/klee-out-0"
-KLEE: Using STP solver backend
-KLEE: WARNING ONCE: .*
-KLEE: WARNING ONCE: .*
-KLEE: WARNING ONCE: .*
-hello!
-goodbye!
-
+(?:KLEE: .*?
+)+(hello!
+|goodbye!
+){2}
 KLEE: done: total instructions = [0-9]+
 KLEE: done: completed paths = 2
 KLEE: done: generated tests = 2
