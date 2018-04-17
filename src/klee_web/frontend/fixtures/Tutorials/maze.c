@@ -88,7 +88,7 @@ int main (int argc, char *argv[])
 				break;
 			default:
 				printf("Wrong command!(Only w,s,a,d!)\n");
-				printf("You loose!\n");
+				printf("You lose!\n");
 				exit(-1);
 		}
 
@@ -114,9 +114,9 @@ int main (int argc, char *argv[])
 ("Iteration no. %d. Action: %c. %s\n",
 			i,program[i], ((ox==x && oy==y)?"Blocked!":""));
 
-	// If crashed to a wall! Exit, you loose
+	// If crashed to a wall! Exit, you lose
 		if (ox==x && oy==y){
-			printf("You loose\n");
+			printf("You lose\n");
 			exit(-2);
 		}
 
@@ -133,7 +133,7 @@ int main (int argc, char *argv[])
 		sleep(1);
 	}
 
-// You couldn't make it! You loose!
-	printf("You loose\n");
+// You couldn't make it! You lose!
+	printf("You lose\n");
 
 }
