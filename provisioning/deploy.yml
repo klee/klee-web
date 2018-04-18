@@ -2,7 +2,7 @@
 
 # Configure and deploy the web servers.
 - hosts: webservers
-  user: ubuntu
+  remote_user: ubuntu
   become: yes
   vars_files:
     - vars/secrets.yml
@@ -14,7 +14,7 @@
 
 # Configure and deploy the worker nodes.
 - hosts: workers
-  user: ubuntu
+  remote_user: ubuntu
   become: yes
   vars_files:
     - vars/secrets.yml
