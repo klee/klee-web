@@ -56,8 +56,8 @@ def redis_queue():
 
 # Returns tasks in redis queue and reserved by worker.
 def waiting_tasks():
-    l = map(get_task_from_redis, redis_queue())
-    return populate_task_data(reserved_tasks()) + l
+    task_rq_map = map(get_task_from_redis, redis_queue())
+    return populate_task_data(reserved_tasks()) + task_rq_map
 
 
 def revoked_tasks(workers=None):

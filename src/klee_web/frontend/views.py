@@ -51,7 +51,7 @@ def jobs_notify(request):
             task,
             type,
             request.POST.get('data')
-            )
+        )
         if type == 'job_complete' or type == 'job_failed':
             try:
                 location = GeoIP.city(task.ip_address)
