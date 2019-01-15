@@ -1,12 +1,14 @@
 ---
 
 - name: Install python dependencies
-  apt: name={{ item }} update_cache=yes state=installed
-  with_items:
-    - libffi-dev
-    - python-dev
-    - python-pip
-    - libpq-dev
+  apt:
+    name:
+      - libffi-dev
+      - python-dev
+      - python-pip
+      - libpq-dev
+    update_cache: yes
+    state: latest
   tags: packages
 
 - name: Install virtualenv
