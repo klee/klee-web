@@ -20,7 +20,7 @@ Where XX and YY are the penultimate and ultimate bytes of the IP address.
 * SSH into the VM from the Cloudstack console
 * Create a user named Ubuntu
 ```bash
-adduser --ingroup sudo  ubuntu
+adduser --ingroup sudo ubuntu
 ```
 * Login ubuntu and add your SSH key to ease the login process for ansible
 * Run `sudo visudo` and replace
