@@ -55,6 +55,6 @@
 
 - name: Create development admin user
   shell: . /src/web/admin_psw.sh
-  
+
 - name: Start django process
   shell: supervisorctl reload
