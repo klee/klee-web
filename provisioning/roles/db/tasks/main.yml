@@ -19,7 +19,8 @@
     - postgresql-9.5
     - postgresql-contrib-9.5
     - libpq-dev
-    - python-psycopg2
+    - python-psycopg2 # TODO: Move everything to python3
+    - python3-psycopg2
   tags: packages
 
 - name: Copy valid pg_hba.conf
@@ -30,6 +31,12 @@
 
 - name: Ensure the PostgreSQL service is running
   service: name=postgresql state=restarted enabled=yes
+
+# TODO: Can we find something better than this?
+- name: Hold until Postgresql is up and running
+  wait_for:
+    host: 0.0.0.0
+    port: 5432
 
 - name: Ensure database is created
   become: yes
