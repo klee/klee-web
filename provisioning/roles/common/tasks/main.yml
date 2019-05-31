@@ -1,12 +1,5 @@
 ---
 
-- name: Upgrade all APT packages
-  action: apt update_cache=yes upgrade=yes
-  when: not development
-
-- name: Generate all en_US locales
-  apt: name=language-pack-en-base update_cache=yes state=present
-
 - name: Make working directory
   file: path={{ working_dir }} state=directory
 
@@ -15,12 +8,6 @@
 
 - name: Make runner script executable
   file: path={{ python_runner }} mode=0755
-
-- name: Install core dependencies (git)
-  apt: name={{ item }} update_cache=yes state=latest
-  with_items:
-    - git
-  tags: coredeps
 
 - authorized_key: user="{{ ansible_ssh_user }}" key="ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCulrSaO3XKHztoSsYI0CdE4PcFSkXAKsHz6HQDZ0U2SzKop4/g6kSyE34iB6BWyqGxDKybgtVrRPiagktfTuVSQOS0XEa5T7MfTGmRrXhGx6CgjYda69Prg0eHXb/J5wxFIyrSVQS9tuA+PnWFSkao2OCxAcA64JFh0NX6EH58Nk2BoXfIpc4s5RJZwycrRLjv69ZgCs/c1hi4nGfITs0YviAfc1lQrSb2FpLSSQWqI7W3s31ZcFD6vyhGcNIE3PJKfFbuHCDyVEMyn6n4IMoGV+7WaEcsvGgXCM29FK5nNCcPJAMcs1LkIZ7H7meun80I9rT/hsdhICeD0BVRDD9n circleci"
   become: no

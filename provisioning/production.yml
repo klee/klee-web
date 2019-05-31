@@ -10,6 +10,7 @@
     - vars/secrets.yml
     - vars/production.yml
   roles:
+    - init
     - role: geerlingguy.pip
       pip_package: python3-pip
     # TODO: Move everything to python3. This is a dependency for Django

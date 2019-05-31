@@ -1,0 +1,14 @@
+---
+
+# - name: Upgrade packages
+#   apt:
+#     update_cache: yes
+#     upgrade: yes
+
+- name: Update and install core dependencies
+  apt:
+    name:
+      - git
+      - language-pack-en-base # TODO: do we really need this?
+    update_cache: yes
+    state: latest
