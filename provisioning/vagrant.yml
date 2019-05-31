@@ -1,13 +1,21 @@
 - hosts: all
   remote_user: vagrant
   become: yes
+  vars:
+    pip_install_packages:
+      - name: docker
+  vars_files:
+    - vars/development.yml
   roles:
-    - { role: angstwad.docker_ubuntu, when: not ci }
+    - role: geerlingguy.pip
+      pip_package: python3-pip
+    # TODO: Move everything to python3. This is a dependency for Django
+    - role: geerlingguy.pip
+      pip_package: python-pip
+    - geerlingguy.docker
     - common
     - redis
     - db
     - web
     - worker
     - webdriver
-  vars_files:
-    - vars/development.yml
