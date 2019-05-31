@@ -2,12 +2,20 @@
 # Apply common configuration to all hosts
 - hosts: all
   become: yes
+  vars:
+    pip_install_packages:
+      - name: docker
   vars_files:
     - vars/details.yml
     - vars/secrets.yml
     - vars/production.yml
   roles:
-    - angstwad.docker_ubuntu
+    - role: geerlingguy.pip
+      pip_package: python3-pip
+    # TODO: Move everything to python3. This is a dependency for Django
+    - role: geerlingguy.pip
+      pip_package: python-pip
+    - geerlingguy.docker
     - common
 
 # Configure and deploy message queue servers.
