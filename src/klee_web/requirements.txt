@@ -1,4 +1,4 @@
-django<1.11
+django==2.2.2
 uWSGI
 celery==3.1.23
 boto
