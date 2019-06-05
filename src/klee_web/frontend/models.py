@@ -24,7 +24,7 @@ class Project(models.Model):
                               blank=True)
     name = models.TextField()
     example = models.BooleanField(default=False)
-    default_file = models.ForeignKey("File", null=True, blank=True,
+    default_file = models.ForeignKey("File", on_delete=models.CASCADE, null=True, blank=True,
                                      related_name="default_project")
 
     def __unicode__(self):
@@ -32,7 +32,7 @@ class Project(models.Model):
 
 
 class File(models.Model):
-    project = models.ForeignKey(Project)
+    project = models.ForeignKey(Project, on_delete=models.CASCADE)
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now=True)
 
