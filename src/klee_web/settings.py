@@ -36,7 +36,7 @@ DEBUG = os.environ.get("DEVELOPMENT") is not None
 key = ''
 if DEBUG:
     # Long but silences flake8
-    k = [random.SystemRandom().choice(string.letters + string.digits)
+    k = [random.SystemRandom().choice(string.ascii_letters + string.digits)
          for _ in range(50)]
     key = ''.join(k)
 
