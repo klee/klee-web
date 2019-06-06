@@ -7,18 +7,18 @@ import codecs
 
 import requests
 
-from exceptions import KleeRunFailure
-from decorators import notify_on_entry
-from worker_config import WorkerConfig
+from .exceptions import KleeRunFailure
+from .decorators import notify_on_entry
+from .worker_config import WorkerConfig
 
-from mailer.mailgun_mailer import MailgunMailer
-from mailer.dummy_mailer import DummyMailer
+from .mailer.mailgun_mailer import MailgunMailer
+from .mailer.dummy_mailer import DummyMailer
 
-from processor.failed_test import FailedTestProcessor
-from processor.coverage import CoverageProcessor
-from processor.upload import UploadProcessor
-from processor.klee_run import KleeRunProcessor
-from processor.stats import StatsProcessor
+from .processor.failed_test import FailedTestProcessor
+from .processor.coverage import CoverageProcessor
+from .processor.upload import UploadProcessor
+from .processor.klee_run import KleeRunProcessor
+from .processor.stats import StatsProcessor
 
 ANSI_ESCAPE_PATTERN = re.compile(r'\x1b[^m]*m')
 LXC_MESSAGE_PATTERN = re.compile(r'lxc-start: .*')

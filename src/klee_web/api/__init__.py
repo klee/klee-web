@@ -1,6 +1,6 @@
 from rest_framework_nested import routers
 from rest_framework.routers import DefaultRouter
-from views import ProjectViewSet, FileViewSet, JobViewSet
+from .views import ProjectViewSet, FileViewSet, JobViewSet
 
 router = DefaultRouter()
 

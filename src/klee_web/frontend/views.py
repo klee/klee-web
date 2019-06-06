@@ -1,18 +1,18 @@
 import datetime
-from django.contrib.auth.views import login as django_login
+from django.contrib.auth import login as django_login
 from django.contrib.auth.decorators import login_required
 from django.forms.utils import ErrorList
 
 from django.shortcuts import render, redirect
 from django.http import HttpResponse, HttpResponseNotFound
 from django.views.decorators.csrf import csrf_exempt
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.contrib import messages, auth
 from django.views.static import serve
 
-from forms import SubmitJobForm, UserCreationForm, UserChangePasswordForm
+from .forms import SubmitJobForm, UserCreationForm, UserChangePasswordForm
 from django.contrib.gis.geoip2 import GeoIP2
-from models import Task
+from .models import Task
 import json
 import os
 

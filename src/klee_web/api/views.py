@@ -1,5 +1,5 @@
 import datetime
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 
 from rest_framework import viewsets, status
 from rest_framework.generics import get_object_or_404
