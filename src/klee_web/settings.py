@@ -129,7 +129,7 @@ AUTHENTICATION_BACKENDS = (
     'django.contrib.auth.backends.ModelBackend',
 )
 
-GEOIP_PATH = os.path.join(BASE_DIR, 'geoip')
+GEOIP_PATH = os.path.join(BASE_DIR, 'klee_web', 'geoip')
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.7/howto/static-files/
