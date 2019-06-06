@@ -2,16 +2,16 @@ import datetime
 import json
 
 from django.contrib import messages
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.http import HttpResponseRedirect, HttpResponse
 from django.shortcuts import render
 
-from decorators import group_required
-from forms import AdminConfigForm
+from .decorators import group_required
+from .forms import AdminConfigForm
 from worker.worker import celery
 from worker.worker_config import WorkerConfig
-import usage_stats
-import klee_tasks
+from . import usage_stats
+from . import klee_tasks
 
 
 HUMAN_READABLE_FIELD_NAMES = {

@@ -1,7 +1,7 @@
 from django import forms
 from frontend.models import User
 
-num_choices = [(x, x) for x in xrange(0, 10)]
+num_choices = [(x, x) for x in range(0, 10)]
 
 
 class SubmitJobForm(forms.Form):
