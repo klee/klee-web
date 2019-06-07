@@ -7,4 +7,4 @@
 
 - name: "Install E2E test dependencies"
   npm: path={{ application_dir }}/tests
-  become: no
+  become: yes
