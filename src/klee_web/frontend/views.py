@@ -95,13 +95,6 @@ def register(request):
     })
 
 
-def login(request, **kwargs):
-    if request.user.is_authenticated:
-        return redirect(reverse('index'))
-    else:
-        return django_login(request, **kwargs)
-
-
 @login_required
 def settings(request):
     if request.method == 'POST':
