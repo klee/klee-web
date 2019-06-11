@@ -11,9 +11,8 @@ urlpatterns = [
     url(r'^jobs/dl/([a-z0-9-]+)\.tar\.gz', views.jobs_dl, name='jobs_dl'),
 
     # User account
-    url(r'^user/login/$', views.login, name='login'),
+    url(r'^user/login/$', auth_views.LoginView.as_view(), name='login'),
     url(r'^user/settings/$', views.settings, name='settings'),
     url(r'^user/register/$', views.register, name="register"),
-    url(r'^user/logout/$', auth_views.LogoutView,
-        {'next_page': 'index'}, name='logout')
+    url(r'^user/logout/$', auth_views.LogoutView.as_view(), name='logout')
 ]

@@ -148,6 +148,7 @@ SOCIAL_AUTH_FACEBOOK_SECRET = os.environ.get('FB_OAUTH_SECRET') or ''
 # Facebook login automatically redirects to /accounts/profile,
 # which does not exist, so we enforce redirection to /
 LOGIN_REDIRECT_URL = '/'
+LOGOUT_REDIRECT_URL = '/'
 
 REST_FRAMEWORK = {
     'DEFAULT_RENDERER_CLASSES': (

@@ -7,7 +7,7 @@
   when: not ci
 
 - name: Install requirements for task runner
-  pip: requirements={{ application_dir }}/requirements.txt virtualenv={{ worker_virtualenv }}
+  pip: requirements={{ application_dir }}/requirements.txt virtualenv={{ worker_virtualenv }} virtualenv_python=python3
   become_user: worker
 
 - name: Copy supervisor config file

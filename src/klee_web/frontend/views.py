@@ -1,5 +1,4 @@
 import datetime
-from django.contrib.auth import login as django_login
 from django.contrib.auth.decorators import login_required
 from django.forms.utils import ErrorList
 
@@ -93,13 +92,6 @@ def register(request):
     return render(request, 'registration/register.html', {
         'form': user_form,
     })
-
-
-def login(request, **kwargs):
-    if request.user.is_authenticated:
-        return redirect(reverse('index'))
-    else:
-        return django_login(request, **kwargs)
 
 
 @login_required
