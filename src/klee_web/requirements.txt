@@ -4,7 +4,7 @@ celery==3.1.23
 boto
 requests
 psycopg2
-redis
+redis==2.10.6
 fakeredis
 django-bootstrap-form
 gcovparse
