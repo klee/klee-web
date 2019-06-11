@@ -19,7 +19,6 @@
     - postgresql-9.5
     - postgresql-contrib-9.5
     - libpq-dev
-    - python-psycopg2 # TODO: Move everything to python3
     - python3-psycopg2
   tags: packages
 

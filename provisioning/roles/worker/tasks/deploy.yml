@@ -8,7 +8,7 @@
 
   # todo: check if this is okay, or if I need to change python 2 in the virtualenv somewhere
 - name: Install requirements for task runner
-  pip: requirements={{ application_dir }}/requirements.txt executable=pip3
+  pip: requirements={{ application_dir }}/requirements.txt virtualenv={{ worker_virtualenv }} virtualenv_python=python3.5
   become_user: worker
 
 - name: Copy supervisor config file
