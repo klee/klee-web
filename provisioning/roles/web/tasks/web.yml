@@ -11,8 +11,6 @@
 
 - file: name=/titb/src/klee_web/geoip state=directory
 
-- file: name=/titb/src/geoip state=directory
-
 - get_url: url=https://geolite.maxmind.com/download/geoip/database/GeoLite2-City.mmdb.gz dest=/titb/src/klee_web/geoip/
 
 - get_url: url=https://geolite.maxmind.com/download/geoip/database/GeoLite2-Country.mmdb.gz dest=/titb/src/klee_web/geoip/
