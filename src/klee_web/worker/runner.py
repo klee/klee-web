@@ -137,11 +137,11 @@ class WorkerRunner():
 
         except KleeRunFailure as ex:
             print('KLEE Run Failed')
-            print(ex.message)
+            print(str(ex))
 
             result = {
                 'klee_run': {
-                    'output': ex.message
+                    'output': str(ex)
                 }
             }
             self.send_notification('job_failed', result)
