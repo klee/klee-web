@@ -10,6 +10,8 @@
 #include<stdio.h>
 #include<stdlib.h>
 
+#include "klee/klee.h"
+
 // Maze hardcoded dimensions
 #define H 7
 #define W 11
