@@ -90,8 +90,7 @@ class WorkerRunner():
         try:
             output = subprocess.check_output(
                 self.docker_command(env) + command,
-                universal_newlines=True) \
-                .decode('utf-8')
+                universal_newlines=True)
             return self.clean_stdout(output)
         except subprocess.CalledProcessError as ex:
             message = 'Error running {}:\n{}'.format(
