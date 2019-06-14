@@ -39,6 +39,7 @@ class KleeRunProcessor(BaseProcessor):
         return result
 
     def create_klee_command(self, arg_list):
+        # TODO: possibly reduce this to 'klee' in the future.
         klee_command = ['/home/klee/klee_build/bin/klee']
         if arg_list:
             klee_command += ['--posix-runtime', '-libc=uclibc']
