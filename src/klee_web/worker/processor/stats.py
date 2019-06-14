@@ -12,4 +12,4 @@ class StatsProcessor(BaseProcessor):
 
     def process(self):
         klee_last = os.path.join(self.runner.tempdir, 'klee-out-0')
-        return klee_stats.generate_stats([klee_last])
+        return list(klee_stats.generate_stats([klee_last]))
