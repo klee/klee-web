@@ -20,11 +20,16 @@ class Task(models.Model):
 
 
 class Project(models.Model):
-    owner = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, 
+    owner = models.ForeignKey(settings.AUTH_USER_MODEL,
+                              on_delete=models.CASCADE,
+                              null=True,
                               blank=True)
     name = models.TextField()
     example = models.BooleanField(default=False)
-    default_file = models.ForeignKey("File", on_delete=models.CASCADE, null=True, blank=True,
+    default_file = models.ForeignKey("File",
+                                     on_delete=models.CASCADE,
+                                     null=True,
+                                     blank=True,
                                      related_name="default_project")
 
     def __unicode__(self):

@@ -142,7 +142,7 @@ def getLabels(pr):
 
 def getRow(record, stats, pr):
     """Compose data for the current run into a row.
-    
+
     The record holds the following information:
     ('Instructions','FullBranches','PartialBranches','NumBranches','UserTime','NumStates',
     'MallocUsage','NumQueries','NumQueryConstructs','NumObjects','WallTime','CoveredInstructions',
