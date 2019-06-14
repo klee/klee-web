@@ -4,15 +4,15 @@
   apt:
     name:
       - libffi-dev
-      - python-dev
-      - python-pip
+      - python3.5-dev
+      - python3-pip
       - libpq-dev
     update_cache: yes
     state: latest
   tags: packages
 
 - name: Install virtualenv
-  command: pip install virtualenv
+  command: pip3 install virtualenv
 
 # Create worker user
 - user: name=worker shell=/bin/bash

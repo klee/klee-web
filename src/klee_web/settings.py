@@ -36,7 +36,7 @@ DEBUG = os.environ.get("DEVELOPMENT") is not None
 key = ''
 if DEBUG:
     # Long but silences flake8
-    k = [random.SystemRandom().choice(string.letters + string.digits)
+    k = [random.SystemRandom().choice(string.ascii_letters + string.digits)
          for _ in range(50)]
     key = ''.join(k)
 
@@ -82,12 +82,11 @@ INSTALLED_APPS = (
     'social_django',
 )
 
-MIDDLEWARE_CLASSES = (
+MIDDLEWARE = (
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 )
@@ -129,7 +128,7 @@ AUTHENTICATION_BACKENDS = (
     'django.contrib.auth.backends.ModelBackend',
 )
 
-GEOIP_PATH = os.path.join(BASE_DIR, 'geoip')
+GEOIP_PATH = os.path.join(BASE_DIR, 'geoip', '')
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.7/howto/static-files/
@@ -149,6 +148,7 @@ SOCIAL_AUTH_FACEBOOK_SECRET = os.environ.get('FB_OAUTH_SECRET') or ''
 # Facebook login automatically redirects to /accounts/profile,
 # which does not exist, so we enforce redirection to /
 LOGIN_REDIRECT_URL = '/'
+LOGOUT_REDIRECT_URL = '/'
 
 REST_FRAMEWORK = {
     'DEFAULT_RENDERER_CLASSES': (

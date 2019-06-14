@@ -1,5 +1,5 @@
 import datetime
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 
 from rest_framework import viewsets, status
 from rest_framework.generics import get_object_or_404
@@ -26,7 +26,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
         queryset = Project.objects.filter(example=True)
-        if user.is_authenticated():
+        if user.is_authenticated:
             queryset |= Project.objects.filter(owner=user)
         return queryset
 
@@ -86,7 +86,7 @@ class JobViewSet(viewsets.ViewSet):
     def submit(self, request):
         worker_config = WorkerConfig()
         user = 'Guest'
-        if request.user.is_authenticated():
+        if request.user.is_authenticated:
             user = request.user
         code = request.data.get("code")
         email = request.data.get("email")

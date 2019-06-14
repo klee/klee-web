@@ -39,7 +39,8 @@ class KleeRunProcessor(BaseProcessor):
         return result
 
     def create_klee_command(self, arg_list):
-        klee_command = ['klee']
+        # TODO: possibly reduce this to 'klee' in the future.
+        klee_command = ['/home/klee/klee_build/bin/klee']
         if arg_list:
             klee_command += ['--posix-runtime', '-libc=uclibc']
 
@@ -52,8 +53,8 @@ class KleeRunProcessor(BaseProcessor):
     def run_llvm(self):
         code_file = self.runner.DOCKER_CODE_FILE
         object_file = self.runner.DOCKER_OBJECT_FILE
-        llvm_command = ['/usr/bin/clang-3.4',
-                        '-I', '/home/klee/klee_src/include/klee',
+        llvm_command = ['/usr/bin/clang-6.0',
+                        '-I', '/home/klee/klee_src/include',
                         '-emit-llvm', '-c', '-g',
                         code_file, '-o', object_file]
         self.runner.run_with_docker(llvm_command)

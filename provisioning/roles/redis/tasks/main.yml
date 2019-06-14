@@ -4,6 +4,7 @@
   docker_image:
     name: redis
     tag: 3.2
+    source: pull
 
 - name: Start docker Redis
   docker_container:

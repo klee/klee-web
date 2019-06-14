@@ -7,8 +7,8 @@ from celery.worker.control import Panel
 from celery.exceptions import SoftTimeLimitExceeded
 from billiard import current_process
 
-from runner import WorkerRunner
-from worker_config import WorkerConfig
+from .runner import WorkerRunner
+from .worker_config import WorkerConfig
 
 
 celery = Celery(broker=os.environ['CELERY_BROKER_URL'], backend='rpc')

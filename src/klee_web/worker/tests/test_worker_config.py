@@ -23,7 +23,7 @@ class TestWorkerConfig(unittest.TestCase):
         self.assertEqual(value, self.worker_config.get_config(key))
 
     def test_redis_doesnt_cast_strings(self):
-        key, value = "key_string_casting", "value"
+        key, value = "key_string_casting", b"value"
         self.worker_config.set_config(key, value)
         self.assertEqual(value, self.worker_config.get_config(key))
 

@@ -13,9 +13,11 @@
     - init
     - role: geerlingguy.pip
       pip_package: python3-pip
+      timeout: 60
     # TODO: Move everything to python3. This is a dependency for Django
     - role: geerlingguy.pip
       pip_package: python-pip
+      timeout: 60
     - geerlingguy.docker
     - common
 
