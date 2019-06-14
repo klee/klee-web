@@ -141,9 +141,16 @@ def getLabels(pr):
 
 
 def getRow(record, stats, pr):
-    """Compose data for the current run into a row."""
+    """Compose data for the current run into a row.
+    
+    The record holds the following information:
+    ('Instructions','FullBranches','PartialBranches','NumBranches','UserTime','NumStates',
+    'MallocUsage','NumQueries','NumQueryConstructs','NumObjects','WallTime','CoveredInstructions',
+    'UncoveredInstructions','QueryTime','SolverTime','CexCacheTime','ForkTime','ResolveTime',
+    'QueryCexCacheMisses','QueryCexCacheHits',)
+    """
     I, BFull, BPart, BTot, T, St, Mem, QTot, QCon, \
-        _, Treal, SCov, SUnc, _, Ts, Tcex, Tf, Tr = record
+        _, Treal, SCov, SUnc, _, Ts, Tcex, Tf, Tr, _, _ = record
     maxMem, avgMem, maxStates, avgStates = stats
 
     # special case for straight-line code: report 100% branch coverage
