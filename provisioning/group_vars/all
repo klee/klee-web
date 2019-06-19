@@ -5,7 +5,8 @@ iface: '{{ ansible_default_ipv4.interface }}'
 private_iface: 'eth1'
 git_repo: https://github.com/klee-web/klee-web.git
 src_dir: /titb
-application_dir: "{{ src_dir }}/src/klee_web"
+code_dir: "{{ src_dir }}/src"
+application_dir: "{{ code_dir }}/klee_web"
 working_dir: /src
 python_runner: "{{ working_dir }}/python_runner.sh"
 ci: no

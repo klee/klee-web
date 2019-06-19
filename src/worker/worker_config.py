@@ -3,6 +3,9 @@ import redis
 
 
 class WorkerConfig():
+    """
+    Change the settings for the redis queue within the 'klee_worker' namespace.
+    """
     NAMESPACE = 'klee_worker'
     MEMORY_UNIT = 'm'
 
