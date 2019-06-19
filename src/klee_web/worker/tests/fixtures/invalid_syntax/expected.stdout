@@ -1,6 +1,0 @@
-Error running /usr/bin/clang-3.4 -I /home/klee/klee_src/include/klee -emit-llvm -c -g /tmp/code/code.c -o /tmp/code/code.o:
-/tmp/code/code.c:4:9: warning: missing terminating '"' character \[-Winvalid-pp-token\]
-        printf\("Hello world\\n\);
-               \^
-/tmp/code/code.c:4:9: error: expected expression
-1 warning and 1 error generated.

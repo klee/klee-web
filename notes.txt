@@ -1,0 +1,23 @@
+References:
+
+* src/klee_web/api/views.py
+    from worker.worker import submit_code
+        basically a POST request that will be translated to calling the
+        submit_code function
+    from worker.worker_config import WorkerConfig
+        here only the timeout is needed -> so can get the timeout as an
+        api GET.
+
+* control_panel/klee_task.py
+    from worker.worker import celery
+        instance of celery -> replace this entirely with api GET calls.
+
+* control_panel/views.py
+    from worker.worker import celery
+        additional stats that need to be exposed via GET
+    from worker.worker_config import WorkerConfig
+        should be able to do POST and GET, given that the WorkerConfig class
+        just adapts the global redis queue
+        
+* tests/testcase_generate.py
+    this will be tricky, need to think about how to rewrite the test.

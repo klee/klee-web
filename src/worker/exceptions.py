@@ -1,0 +1,2 @@
+class KleeRunFailure(Exception):
+    pass
