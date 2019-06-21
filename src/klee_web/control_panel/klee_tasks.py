@@ -6,7 +6,7 @@ import datetime
 
 import redis
 
-from worker.worker import celery
+from src.worker.worker import celery
 from frontend.models import Task
 
 

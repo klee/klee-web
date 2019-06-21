@@ -1,6 +1,6 @@
 [program:worker]
 command={{ python_runner }} {{ worker_virtualenv }}/bin/celery -A worker.worker worker {{ "--autoreload" if development else ""}}
-directory={{ application_dir }}
+directory={{ code_dir }}
 autostart=true
 autorestart=true
 stdout_logfile={{ worker_log_dir }}/worker.log
