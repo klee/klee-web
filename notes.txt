@@ -21,3 +21,19 @@ References:
         
 * tests/testcase_generate.py
     this will be tricky, need to think about how to rewrite the test.
+
+
+imports overall:
+* celery  -> could instantiate it separately in both places, or have a
+  "common library"
+* WorkerConfig
+    this one is tricky because it is actually used in multiple places in
+    both directories.
+    * can use another celery task to query these values.
+* submit_code -> can use signatures
+    * http://docs.celeryproject.org/en/latest/userguide/canvas.html
+    * https://stackoverflow.com/questions/36974580/how-can-i-use-celery-with-different-code-base-in-api-and-workers
+
+so: either keep the export PYTHONPATH and just import the worker from src, or
+  make the WorkerConfig also celery tasks, export the signatures (need to try)
+  and instantiate celery in projects.
