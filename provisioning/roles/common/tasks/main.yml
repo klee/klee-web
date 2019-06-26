@@ -26,5 +26,9 @@
   file: path={{ src_dir }} state=directory owner=klide
   when: not ci
 
+- name: Create docker network {{ container_network }}
+  docker_network:
+    name: "{{ container_network }}"
+
 - include: deploy.yml
   tags: deploy

@@ -16,3 +16,4 @@ src/klee_web/frontend/static/frontend/dist
 src/sass/bootstrap/
 src/klee_web/geoip/
 .vscode
+notes*

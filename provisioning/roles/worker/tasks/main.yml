@@ -1,6 +1,54 @@
 ---
 
-- include: python.yml
-  tags: python
-- include: deploy.yml
-  tags: python
+- name: Get KLEE image from Docker Hub (this may take a while...)
+  docker_image:
+    name: klee/klee
+    tag: latest
+  when: not ci
+
+- name: Copy python_runner.sh file to worker directory
+  copy:
+    src: "{{ python_runner }}"
+    dest: "{{ runner_path }}"
+    remote_src: yes
+
+- name: Copy klee-web-environment.sh file from worker directory
+  copy:
+    src: "{{ klee_env_path_etc }}"
+    dest: "{{ klee_env_path_worker }}"
+    remote_src: yes
+
+- name: Build docker image Worker
+  docker_image:
+    build:
+      args:
+        environment: "klee-web-environment.sh"
+        python_runner: "python_runner.sh"
+        klee_environment_path: "{{ klee_env_path_etc }}"
+      path: "{{ worker_dir }}"
+    name: celery_worker
+    force: yes
+
+- name: Delete python_runner.sh file from worker directory
+  file:
+    path: "{{ runner_path }}"
+    state: absent
+    
+- name: Delete klee-web-environment.sh file from worker directory
+  file:
+    path: "{{ klee_env_path_worker }}"
+    state: absent
+
+- name: Start docker Worker
+  docker_container:
+    name: worker_1
+    image: celery_worker
+    command: "/bin/bash {{ runner_path }} celery -A worker.worker worker"
+    restart_policy: always
+    volumes: 
+    - /var/run/docker.sock:/var/run/docker.sock
+    # not sure if below one is needed
+    - /jobs/status/:/jobs/status/
+    - /tmp/:/tmp/
+    networks: 
+      - name: "{{ container_network }}"
