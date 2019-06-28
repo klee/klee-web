@@ -21,6 +21,7 @@
 
 - shell: gunzip -f /titb/src/geoip/GeoLite2-Country.mmdb.gz
 
+# need to create this within docker?
 - name: Create web user
   user: name=klee_web shell=/bin/bash
 

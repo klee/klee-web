@@ -1,0 +1,6 @@
+celery==3.1.23
+boto
+requests
+redis==2.10.6
+fakeredis
+gcovparse

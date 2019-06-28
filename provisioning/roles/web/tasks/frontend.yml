@@ -99,6 +99,12 @@
   become: no
   when: ci|bool
 
+# STOPPED HERE
+# maybe because it is not ubuntu but alpine?
+# tried these commands and ran into errors:
+# apt-get install -y software-properties-common
+# apt-add-repository -y ppa:brightbox/ruby-ng
+# POSSIBLE ALTERNATIVE TO THE BELOW 3: apt install ruby-full
 - name: "Add brightbox ruby"
   apt_repository: repo='ppa:brightbox/ruby-ng'
   tags: setup

@@ -1,0 +1,44 @@
+# THIS IS WORK IN PROGRESS
+
+version: "3"
+services:
+  worker:
+    image: worker
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          cpus: "0.1"
+          memory: 50M
+      restart_policy:
+        condition: on-failure
+    volumes:
+    - /var/run/docker.sock:/var/run/docker.sock
+    # stdin_open: true
+    # tty: true
+
+
+# version: "3"
+# services:
+#   web:
+#     # replace username/repo:tag with your name and image details
+#     image: username/repo:tag
+#     deploy:
+#       replicas: 5
+#       resources:
+#         limits:
+#           # use maximum of 10% of a single CPU
+#           cpus: "0.1"
+#           # use up to 50 MB of RAM
+#           memory: 50M
+#       restart_policy:
+#         # immediately restart if one fails
+#         condition: on-failure
+#     ports:
+#       # port 4000 on the host to 80 on the guest container 
+#       - "4000:80"
+#     networks:
+#       - webnet
+# networks:
+#   # define internal network, which already has load balancing
+#   webnet:
