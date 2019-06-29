@@ -18,6 +18,7 @@
     dest: "{{ klee_env_path_worker }}"
     remote_src: yes
 
+    # possibly add: source: local
 - name: Build docker image Worker
   docker_image:
     build:

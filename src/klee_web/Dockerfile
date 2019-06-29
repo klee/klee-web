@@ -32,9 +32,10 @@ RUN npm install grunt-contrib-copy
 RUN npm install grunt-contrib-concat
 RUN npm install grunt-contrib-uglify
 RUN npm install -g bower
-COPY .bowerrc Gruntfile.js bower.json package.json package-lock.json requirements.txt /titb/
+COPY ./klee_web/.bowerrc ./klee_web/Gruntfile.js ./klee_web/bower.json ./klee_web/package.json \
+     ./klee_web/package-lock.json ./klee_web/requirements.txt /titb/
 # TODO: delete the above files from the Docker /titb/src/klee_web folder
-COPY . /titb/src/klee_web
+COPY ./klee_web /titb/src/klee_web
 RUN npm install 
 
 # WILL MAYBE BREAK RUBY
@@ -45,7 +46,7 @@ RUN gem install sass
 
 # ---- DEPLOY INSTALLATIONS ----
 RUN pip install -r /titb/requirements.txt
-COPY admin_psw.sh /src/web
+# COPY ./klee_web/admin_psw.sh /src/web
 # RUN useradd -r -s /bin/bash klide
 # USER klide
 # NOTE: these differ between ci and no ci
@@ -54,11 +55,11 @@ RUN grunt
 # # TODO: maybe make ARG for application_dir
 
 # TODO: remove this after testing and add the klee-web-environment like with worker
-COPY admin_psw.sh /src/web/admin_psw.sh
-COPY environment_dev.sh /etc/profile.d/klee-web-environment.sh
+COPY ./klee_web/admin_psw.sh /src/web/admin_psw.sh
+COPY ./klee_web/environment_dev.sh /etc/profile.d/klee-web-environment.sh
 
 # TODO maybe move this line up somewhere -> find better way to copy worker
-COPY worker /titb/src/
+RUN mv ./src/klee_web/worker/ ./src/
 # RUN . /etc/profile.d/klee-web-environment.sh && cd /titb/src/klee_web && python manage.py migrate --noinput
 
 # RUN . /etc/profile.d/klee-web-environment.sh && cd /titb/src/klee_web && python manage.py collectstatic --noinput
