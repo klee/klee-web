@@ -62,12 +62,24 @@ COPY ./klee_web/environment_dev.sh /etc/profile.d/klee-web-environment.sh
 RUN mv ./src/klee_web/worker/ ./src/
 # RUN . /etc/profile.d/klee-web-environment.sh && cd /titb/src/klee_web && python manage.py migrate --noinput
 
+# # INSTALL POSTGRES TOOLS
+# # sudo apt install postgresql postgresql-contrib
+
 # RUN . /etc/profile.d/klee-web-environment.sh && cd /titb/src/klee_web && python manage.py collectstatic --noinput
 # RUN . /src/web/admin_psw.sh
 # START THE APPLICATION WITHOUT SUPERVISOR!
+# . /etc/profile.d/klee-web-environment.sh && cd /titb/src/klee_web && python manage.py migrate --noinput && python manage.py collectstatic --noinput && . /src/web/admin_psw.sh
 
-
+# {{ python_runner }} {{ web_virtualenv }}/bin/uwsgi -s /tmp/uwsgi.sock -w wsgi:application -H {{ web_virtualenv }} --chmod-socket=666 {{ "--py-autoreload=1 --catch-exceptions" if development else ""}}
+# uwsgi -s /tmp/uwsgi.sock -w wsgi:application --chmod-socket=666
+CMD . /etc/profile.d/klee-web-environment.sh && cd /titb/src/klee_web && \
+    python manage.py migrate --noinput && \
+    python manage.py collectstatic --noinput && \
+    . /src/web/admin_psw.sh && \
+    uwsgi -s /tmp/uwsgi.sock -w wsgi:application --chmod-socket=666
 
 
 # TODO: need to copy the python runner file and run the application!
 
+# HOW TO RUN THE DOCKER CONTAINER:
+# sudo docker run --rm -it --network web_network -v /tmp:/tmp klee_web

@@ -73,4 +73,11 @@
 #     name: klee_web
 #     force: yes
 
-# - name: Start docker klee-web
+- name: Start docker klee-web
+  docker_container:
+    name: django_app
+    image: klee_web
+    networks: 
+      - name: "{{ container_network }}"
+    volumes:
+      - /tmp:/tmp

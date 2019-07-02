@@ -1,3 +1,4 @@
+# CHANGE THIS TO PYTHON IMAGE -> 3.7, choose the latest one. whatever is longest maintained.
 FROM ubuntu:latest
 
 # Install Python dependencies
