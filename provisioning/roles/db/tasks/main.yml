@@ -1,4 +1,5 @@
 ---
+# --- BUILD ---
 - name: Copy pg_hba.conf into db directory
   template: src=pg_hba.conf.j2 dest="{{ db_dir }}/pg_hba.conf"
 
@@ -30,6 +31,7 @@
     path: "{{ db_dir }}/pgdg.list"
     state: absent
 
+# --- DEPLOY ---
 - name: Run Docker postgres container
   docker_container:
     name: postgres_container

@@ -1,5 +1,5 @@
 ---
 - include: nginx.yml
   tags: nginx
-- include: deploy.yml
-  tags: deploy
+- include: django_frontend.yml
+  tags: django_frontend

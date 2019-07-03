@@ -1,11 +1,5 @@
 ---
-
-- name: Get KLEE image from Docker Hub (this may take a while...)
-  docker_image:
-    name: klee/klee
-    tag: latest
-  when: not ci
-
+# --- BUILD ---
 - name: Copy python_runner.sh file into worker directory
   copy:
     src: "{{ python_runner }}"
@@ -39,6 +33,13 @@
   file:
     path: "{{ klee_env_path_worker }}"
     state: absent
+
+# --- DEPLOY ---
+- name: Get KLEE image from Docker Hub (this may take a while...)
+  docker_image:
+    name: klee/klee
+    tag: latest
+  when: not ci
 
 - name: Start docker Worker
   docker_container:
