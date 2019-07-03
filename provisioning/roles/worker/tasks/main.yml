@@ -6,13 +6,13 @@
     tag: latest
   when: not ci
 
-- name: Copy python_runner.sh file to worker directory
+- name: Copy python_runner.sh file into worker directory
   copy:
     src: "{{ python_runner }}"
     dest: "{{ runner_path }}"
     remote_src: yes
 
-- name: Copy klee-web-environment.sh file from worker directory
+- name: Copy klee-web-environment.sh file into worker directory
   copy:
     src: "{{ klee_env_path_etc }}"
     dest: "{{ klee_env_path_worker }}"

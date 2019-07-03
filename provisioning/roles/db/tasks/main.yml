@@ -64,6 +64,20 @@
 #                    role_attr_flags=NOSUPERUSER,NOCREATEDB
 #                    state=present
 
+# - name: Copy python_runner.sh file to worker directory
+#   copy:
+#     src: "{{ python_runner }}"
+#     dest: "{{ runner_path }}"
+#     remote_src: yes
+
+# - name: Copy pg_hba.conf into db directory
+#   template: src=pg_hba.conf.j2 dest="{{ db_dir }}/pg_hba.conf"
+
+# - name: Copy postgresql.conf into db directory
+#   template: src=postgresql.conf.j2 dest="{{ db_dir }}/postgresql.conf"
+
+# - name: Copy pgdg.list into db directory
+#   template: src=pgdg.list dest="{{ db_dir }}/pgdg.list"
 
 - name: Build Docker image for postgres
   docker_image:
@@ -72,7 +86,21 @@
     name: klee_postgres
     force: yes
 
-# CREATE RULES TO PULL POSTGRESQL IMAGE AND CONFIGURE
+# - name: Delete pg_hba.conf file from db directory
+#   file:
+#     path: "{{ db_dir }}/pg_hba.conf"
+#     state: absent
+
+# - name: Delete postgresql.conf file from db directory
+#   file:
+#     path: "{{ db_dir }}/postgresql.conf"
+#     state: absent
+
+# - name: Delete pgdg.list file from db directory
+#   file:
+#     path: "{{ db_dir }}/pgdg.list"
+#     state: absent
+
 - name: Run Docker postgres container
   docker_container:
     name: postgres_container
@@ -86,5 +114,3 @@
       - name: "{{ container_network }}"
     recreate: yes 
     # TODO: delete recreate
-
-# docker run --name some-postgres -e POSTGRES_PASSWORD=mysecretpassword -d postgres
