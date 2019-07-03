@@ -1,0 +1,38 @@
+---
+# --- BUILD ---
+- name: Copy admin password script into klee_web directory
+  template: src=admin_psw.sh.j2 dest={{ application_dir }}/admin_psw.sh
+
+- name: Copy klee-web-environment.sh file into klee_web directory
+  copy:
+    src: /etc/profile.d/klee-web-environment.sh
+    dest: "{{ application_dir }}/klee-web-environment.sh"
+    remote_src: yes
+
+- name: Build klee_web container
+  command: docker build --file ./klee_web/Dockerfile -t klee_web .
+  args:
+    chdir: "{{ code_dir }}"
+    executable: /bin/bash
+  when: not ci
+
+- name: Delete admin_psw.sh file from klee_web directory
+  file:
+    path: "{{ application_dir }}/admin_psw.sh"
+    state: absent
+
+- name: Delete klee-web-environment.sh file from klee_web directory
+  file:
+    path: "{{ application_dir }}/klee-web-environment.sh"
+    state: absent
+
+# --- DEPLOY ---
+- name: Start docker klee-web
+  docker_container:
+    name: django_app
+    image: klee_web
+    restart_policy: always
+    networks: 
+      - name: "{{ container_network }}"
+    volumes:
+      - /tmp:/tmp

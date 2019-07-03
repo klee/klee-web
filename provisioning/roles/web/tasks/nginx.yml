@@ -1,26 +1,37 @@
-- name: Install nginx
-  apt: pkg=nginx state=latest
+---
+# --- BUILD ---
+- name: Copy nginx.conf into nginx directory
+  template: src=nginx.conf.j2 dest="{{ nginx_dir }}/nginx.conf"
 
-- name: Remove the default site
-  file: name=/etc/nginx/sites-enabled/default state=absent
+- name: Copy sites-available_titb.conf into nginx directory
+  template: src=sites-available_titb.conf.j2 dest="{{ nginx_dir }}/sites-available_titb.conf"
 
-- name: Remove the sites config, if exists
-  file: name=/etc/nginx/sites-enabled/default state=absent
+- name: Build Docker image for nginx
+  docker_image:
+    build:
+      path: "{{ nginx_dir }}"
+    name: nginx_image
+    force: yes
 
-- name: Remove the default sites symlink, if exists
-  file: name=/etc/nginx/sites-enabled/titb state=absent
+- name: Delete nginx.conf file from nginx directory
+  file:
+    path: "{{ nginx_dir }}/nginx.conf"
+    state: absent
 
-- name: Remove existing nginx conf
-  file: name=/etc/nginx/nginx.conf state=absent
+- name: Delete sites-available_titb.conf file from nginx directory
+  file:
+    path: "{{ nginx_dir }}/sites-available_titb.conf"
+    state: absent
 
-- name: Configure nginx
-  template: src=nginx.conf.j2 dest=/etc/nginx/nginx.conf
-
-- name: Configure nginx for the app
-  template: src=sites-available_titb.conf.j2 dest=/etc/nginx/sites-available/titb group=www-data owner=www-data force=yes
-
-- name: Enable the app
-  file: src=/etc/nginx/sites-available/titb dest=/etc/nginx/sites-enabled/titb state=link
-
-- name: Restart nginx
-  action: service name=nginx state=restarted
+# --- DEPLOY ---
+- name: Run Docker nginx container
+  docker_container:
+    name: nginx_container
+    image: nginx_image
+    restart_policy: always
+    networks:
+      - name: "{{ container_network }}"
+    ports: 
+      - "80:80"
+    volumes:
+      - /tmp:/tmp

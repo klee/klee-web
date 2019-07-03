@@ -5,6 +5,21 @@
 - name: Install HTTPIE
   pip: name=httpie
 
+# INSTALL NPM NOW THAT IT IS INSTALLED WITHIN THE DOCKER CONTAINER
+- name: "Add official NodeJS repo 6.x"
+  shell: curl -sL https://deb.nodesource.com/setup_6.x | sudo -E bash -
+  when: not ci
+  tags: nodejs
+
+- name: "Install node.js"
+  apt: name=nodejs update_cache=yes
+  when: not ci
+  tags: nodejs
+
+- name: "Update npm"
+  npm: name=npm global=yes state=latest
+  when: not ci
+
 - name: "Install E2E test dependencies"
   npm: path={{ application_dir }}/tests
   become: yes
