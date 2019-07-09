@@ -1,10 +1,8 @@
 ---
 
-- include: web.yml
-  tags: web
-- include: frontend.yml
-  tags: web
 - include: nginx.yml
-  tags: nginx
-- include: deploy.yml
-  tags: deploy
+    tags: nginx
+- include: django_build.yml
+  tags: ['build', 'build_django']
+- include: django_deploy.yml
+  tags: ['deploy_container']

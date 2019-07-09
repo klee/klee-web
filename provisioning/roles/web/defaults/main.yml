@@ -1,4 +1,3 @@
 ---
-web_working_dir: /src/web
-web_log_dir: "{{ web_working_dir }}/logs"
-web_virtualenv: "{{ web_working_dir }}/env"
+admin_ps_dir: /src/web
+klee_web_env: /etc/profile.d/klee-web-environment.sh

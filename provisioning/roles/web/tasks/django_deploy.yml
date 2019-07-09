@@ -1,0 +1,16 @@
+---
+- name: Start docker klee-web
+  docker_container:
+    name: django_app
+    image: klee_web
+    restart_policy: always
+    networks: 
+      - name: "{{ container_network }}"
+    volumes:
+      - /tmp:/tmp
+      # source code folders:
+      - "{{ code_dir }}:{{ code_dir }}"
+      # files for secrets and environmental variables:
+      - "{{ admin_ps_dir }}/admin_psw.sh:{{ admin_ps_dir }}/admin_psw.sh"
+      - "{{ klee_web_env }}:{{ klee_web_env }}"
+    recreate: yes
