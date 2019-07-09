@@ -27,7 +27,9 @@ Vagrant.configure("2") do |config|
     # TODO(andronat): This path should been taken from ansible.cfg. This is a bug in Vagrant.
     ansible.galaxy_roles_path = "~/.ansible-galaxy"
     # ansible.verbose = "vvvv"
-    # ansible.tags              = "e2e"
+
+    # uncomment following line to only provision tasks with specified tags.
+    # ansible.tags              = "deploy_container"
   end
 
   config.vm.provider "virtualbox" do |v|
