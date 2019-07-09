@@ -1,6 +1,5 @@
 ---
-
-- include: python.yml
-  tags: python
+- include: build.yml
+  tags: ['build', 'build_worker']
 - include: deploy.yml
-  tags: python
+  tags: deploy_container
