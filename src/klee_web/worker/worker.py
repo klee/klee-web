@@ -38,9 +38,8 @@ def get_uptime_stats(state):
 
 @celery.task(name='submit_code', bind=True)
 def submit_code(self, code, email, klee_args, endpoint):
-    # name will hold the name of the current worker, which is in the format
-    # celery@name, so we split at @ and take the second part
-    name = current_process().initargs[1].split('@')[1]
+    # name will hold the name of the current worker
+    name = self.request.hostname
     with WorkerRunner(self.request.id, endpoint, worker_name=name) as runner:
         try:
             runner.run(code, email, klee_args)
