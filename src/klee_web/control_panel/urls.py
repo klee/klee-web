@@ -1,6 +1,7 @@
 from django.conf.urls import url
 from control_panel import example_manager, views
 
+app_name = 'control_panel'
 
 urlpatterns = [
     url(r'^$', views.index, name='index'),

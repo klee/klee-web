@@ -20,12 +20,66 @@
   npm: name=grunt-cli global=yes
   when: not ci
 
+- name: "Install grunt"
+  npm: name=grunt path="{{ src_dir }}"
+  when: not ci
+
+- name: "Install grunt module sass"
+  npm: name=grunt-contrib-sass path="{{ src_dir }}"
+  when: not ci
+
+- name: "Install grunt module watch"
+  npm: name=grunt-contrib-watch path="{{ src_dir }}"
+  when: not ci
+
+- name: "Install grunt module copy"
+  npm: name=grunt-contrib-copy path="{{ src_dir }}"
+  when: not ci
+
+- name: "Install grunt module concat"
+  npm: name=grunt-contrib-concat path="{{ src_dir }}"
+  when: not ci
+
+- name: "Install grunt module uglify"
+  npm: name=grunt-contrib-uglify path="{{ src_dir }}"
+  when: not ci
+
 - name: "Install bower"
   npm: name=bower global=yes
   when: not ci
 
 - name: "Install grunt-cli"
   npm: name=grunt-cli global=yes
+  become: no
+  when: ci|bool
+
+- name: "Install grunt"
+  npm: name=grunt path="{{ src_dir }}"
+  become: no
+  when: ci|bool
+
+- name: "Install grunt module sass"
+  npm: name=grunt-contrib-sass path="{{ src_dir }}"
+  become: no
+  when: ci|bool
+
+- name: "Install grunt module watch"
+  npm: name=grunt-contrib-watch path="{{ src_dir }}"
+  become: no
+  when: ci|bool
+
+- name: "Install grunt module copy"
+  npm: name=grunt-contrib-copy path="{{ src_dir }}"
+  become: no
+  when: ci|bool
+
+- name: "Install grunt module concat"
+  npm: name=grunt-contrib-concat path="{{ src_dir }}"
+  become: no
+  when: ci|bool
+
+- name: "Install grunt module uglify"
+  npm: name=grunt-contrib-uglify path="{{ src_dir }}"
   become: no
   when: ci|bool
 

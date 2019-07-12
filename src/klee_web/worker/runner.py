@@ -7,18 +7,18 @@ import codecs
 
 import requests
 
-from exceptions import KleeRunFailure
-from decorators import notify_on_entry
-from worker_config import WorkerConfig
+from .exceptions import KleeRunFailure
+from .decorators import notify_on_entry
+from .worker_config import WorkerConfig
 
-from mailer.mailgun_mailer import MailgunMailer
-from mailer.dummy_mailer import DummyMailer
+from .mailer.mailgun_mailer import MailgunMailer
+from .mailer.dummy_mailer import DummyMailer
 
-from processor.failed_test import FailedTestProcessor
-from processor.coverage import CoverageProcessor
-from processor.upload import UploadProcessor
-from processor.klee_run import KleeRunProcessor
-from processor.stats import StatsProcessor
+from .processor.failed_test import FailedTestProcessor
+from .processor.coverage import CoverageProcessor
+from .processor.upload import UploadProcessor
+from .processor.klee_run import KleeRunProcessor
+from .processor.stats import StatsProcessor
 
 ANSI_ESCAPE_PATTERN = re.compile(r'\x1b[^m]*m')
 LXC_MESSAGE_PATTERN = re.compile(r'lxc-start: .*')
@@ -90,8 +90,7 @@ class WorkerRunner():
         try:
             output = subprocess.check_output(
                 self.docker_command(env) + command,
-                universal_newlines=True) \
-                .decode('utf-8')
+                universal_newlines=True)
             return self.clean_stdout(output)
         except subprocess.CalledProcessError as ex:
             message = 'Error running {}:\n{}'.format(
@@ -137,11 +136,11 @@ class WorkerRunner():
 
         except KleeRunFailure as ex:
             print('KLEE Run Failed')
-            print(ex.message)
+            print(str(ex))
 
             result = {
                 'klee_run': {
-                    'output': ex.message
+                    'output': str(ex)
                 }
             }
             self.send_notification('job_failed', result)
