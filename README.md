@@ -13,6 +13,10 @@ First clone the repo:
 
     git clone https://github.com/klee/klee-web.git
 
+Install the necessary vagrant plugins:
+
+    vagrant plugin install vagrant-disksize
+
 Start the development virtual machine (this may take a while on the first run):
 
     vagrant up

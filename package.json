@@ -8,8 +8,5 @@
     "grunt-contrib-sass": "^1.0.0",
     "grunt-contrib-uglify": "^1.0.0",
     "grunt-contrib-watch": "^1.0.0"
-  },
-  "dependencies": {
-    "E2E-Tests": "file:src/klee_web/tests"
   }
 }

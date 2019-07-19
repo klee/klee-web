@@ -22,7 +22,7 @@ it('tests that input files are processed correctly', function(done1) {
 
       Promise.join(inputFuture, expectedOutputFuture, function(input, expected) {
           var n = new nightmare({load: 1000, webSecurity: false});
-          n.goto("http://localhost")
+          n.goto("http://192.168.33.10")
             // Type in the code we want to pass to KLEE
             .evaluate(updateCode, function(res){}, input)
             .click("#run-klee-btn")
@@ -49,7 +49,7 @@ it('tests that the admin can login', function(done) {
     var n = new nightmare({ waitTimeout: 1000, webSecurity: false });
 
     // Check that admin can login
-    n.goto("http://localhost/admin")
+    n.goto("http://192.168.33.10/admin")
     .wait('login')
     .type("#id_username", 'admin')
     .type("#id_password", 'development')
@@ -66,7 +66,7 @@ it('tests that logged users can add new projects', function(done) {
     this.timeout(120000);
     var n = new nightmare({ webSecurity: false });
 
-    n.goto("http://localhost/user/login")
+    n.goto("http://192.168.33.10/user/login")
     .wait('[type=text]')
     .type('[type=text]', 'admin')
     .type('[type=password]', 'development')

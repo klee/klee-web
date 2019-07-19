@@ -1,10 +1,7 @@
 ---
-- name: Install flake8
-  pip: name=flake8
-
-- name: Install HTTPIE
-  pip: name=httpie
-
-- name: "Install E2E test dependencies"
-  npm: path={{ application_dir }}/tests
-  become: no
+- name: Build E2E_test container
+  docker_image:
+    build:
+      path: "{{ src_dir }}"
+      dockerfile: ./src/klee_web/tests/Dockerfile
+    name: e2e_test

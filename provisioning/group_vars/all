@@ -11,3 +11,4 @@ python_runner: "{{ working_dir }}/python_runner.sh"
 ci: no
 db_name: klee_web
 db_user: klee_web
+container_network: web_network

@@ -5,7 +5,7 @@
 #     update_cache: yes
 #     upgrade: yes
 
-- name: Update and install core dependencies
+- name: Update and install git
   apt:
     name:
       - git

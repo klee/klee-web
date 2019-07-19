@@ -1,0 +1,19 @@
+---
+version: 2
+jobs:
+  build:
+    machine: 
+      image: ubuntu-1604:201903-01
+    steps:
+      - checkout  
+      - run: sudo apt-get update -qq
+      - run: sudo apt-get install software-properties-common
+      - run: sudo apt install python3-pip
+      - run: sudo pip install ansible
+      - run: sudo ln -s /home/circleci/project/ /titb
+      - run: sudo ansible-galaxy install --force --role-file=requirements.yml
+      - run: cd /titb/
+      - run: sudo ansible-playbook -i localhost, --syntax-check ./provisioning/vagrant.yml
+      - run: sudo ansible-playbook -i localhost, --connection=local -vvv -e ci=yes ./provisioning/vagrant.yml
+      - run: sudo ansible-playbook -i localhost, --connection=local -vvv ./provisioning/e2e.yml
+      - run: sudo docker run --rm -it --network web_network -v /var/run/docker.sock:/var/run/docker.sock -v /tmp/:/tmp/ e2e_test
