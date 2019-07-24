@@ -2,16 +2,16 @@
   "name": "E2E-Tests",
   "description": "End-To-End tests for KLEE Web",
   "version": "0.0.2",
+  "jest": {
+    "preset": "jest-puppeteer"
+  },
   "scripts": {
-    "test": "node_modules/mocha/bin/mocha e2e_tests.js"
+    "test": "jest"
   },
   "devDependencies": {
+    "jest": "^24.8.0",
+    "jest-puppeteer": "^4.3.0",
+    "puppeteer": "^1.19.0",
     "should": "^9.0.2"
-  },
-  "dependencies": {
-    "bluebird": "^3.5.0",
-    "mocha": "^2.5.3",
-    "nightmare": "^1.6.5",
-    "phantomjs-prebuilt": "^2.1.14"
   }
 }
