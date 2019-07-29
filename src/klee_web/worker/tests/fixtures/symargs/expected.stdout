@@ -3,5 +3,5 @@
 (hello!|goodbye!)
 
 KLEE: done: total instructions = [0-9]+
-KLEE: done: completed paths = 2
-KLEE: done: generated tests = 2
+KLEE: done: completed paths = 3
+KLEE: done: generated tests = 3
