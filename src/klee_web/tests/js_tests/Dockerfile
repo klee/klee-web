@@ -1,8 +1,11 @@
 FROM node:12.7.0
 
-COPY /tests /titb/src/klee_web/tests
+COPY jest-puppeteer.config.js \
+     package.json \
+     package-lock.json \
+     /titb/src/klee_web/tests/js_tests/
 
-WORKDIR /titb/src/klee_web/tests
+WORKDIR /titb/src/klee_web/tests/js_tests
 RUN npm install
 
 # Install latest chrome dev package and fonts to support major charsets (Chinese, Japanese, Arabic, Hebrew, Thai and a few others)

@@ -1,5 +1,7 @@
 const puppeteer = require('puppeteer');
 
+jest.setTimeout(15000);
+
 describe('Input', () => {
   beforeAll(async () => {
 
@@ -23,7 +25,7 @@ describe('Input', () => {
 
 describe('Admin', () => {
   beforeAll(async () => {
-
+    // TODO: sometimes this fails because await page.title() loads empty title before the website is loaded.
     await page.goto('http://192.168.33.10/admin');
     await page.waitForSelector('#id_username');
     await page.type('#id_username', 'admin');

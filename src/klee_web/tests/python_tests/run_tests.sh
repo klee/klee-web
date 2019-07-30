@@ -1,6 +1,6 @@
 #!/bin/bash -e
 
-. src/klee_web/tests/klee-web-environment.sh 
+. src/klee_web/tests/python_tests/klee-web-environment.sh 
 
 # solve nodejs OPENSSL issues
 export OPENSSL_CONF=
