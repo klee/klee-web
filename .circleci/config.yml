@@ -16,5 +16,5 @@ jobs:
       - run: sudo ansible-playbook -i localhost, --syntax-check ./provisioning/vagrant.yml
       - run: sudo ansible-playbook -i localhost, --connection=local -vvv -e ci=yes ./provisioning/vagrant.yml
       - run: sudo ansible-playbook -i localhost, --connection=local -vvv ./provisioning/e2e.yml
-      - run: sudo docker run --rm -it --network web_network -v /var/run/docker.sock:/var/run/docker.sock -v /tmp/:/tmp/ e2e_test
+      - run: sudo docker run --rm -it --network web_network -v /etc/profile.d/:/etc/profile.d/ -v /var/run/docker.sock:/var/run/docker.sock -v /tmp/:/tmp/ -v /titb/:/titb/ e2e_test
       - run: sudo docker run --rm -it -v /titb/src/klee_web/tests/js_tests/test_files/:/titb/src/klee_web/tests/js_tests/test_files/ e2e_test_js
