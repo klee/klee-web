@@ -5,7 +5,7 @@ jest.setTimeout(15000);
 describe('Input', () => {
   beforeAll(async () => {
 
-    await page.goto('http://192.168.33.10/');
+    await page.goto('http://localhost/');
     await page.waitForSelector('[ng-repeat="file in files"]');
     await page.click('[ng-repeat="file in files"]');  // select first file ... use page.select instead?
     await page.click('#run-klee-btn');
@@ -25,8 +25,8 @@ describe('Input', () => {
 
 describe('Admin', () => {
   beforeAll(async () => {
-    // TODO: sometimes this fails because await page.title() loads empty title before the website is loaded.
-    await page.goto('http://192.168.33.10/admin');
+
+    await page.goto('http://localhost/admin');
     await page.waitForSelector('#id_username');
     await page.type('#id_username', 'admin');
     await page.type('#id_password', 'development');
@@ -41,7 +41,7 @@ describe('Admin', () => {
 describe('New Projects', () => {
   beforeAll(async () => {
 
-    await page.goto('http://192.168.33.10/');
+    await page.goto('http://localhost/user/login');
     await page.type('[type=text]', 'admin');
     await page.type('[type=password]', 'development');
     await Promise.all([page.click('[type=submit]'), page.waitForNavigation()]);
