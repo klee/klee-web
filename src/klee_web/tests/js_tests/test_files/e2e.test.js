@@ -1,11 +1,13 @@
+
 const puppeteer = require('puppeteer');
 
-jest.setTimeout(15000);
+jest.setTimeout(40000);
+var WEBPAGE = process.env.WEBPAGE;
 
 describe('Input', () => {
   beforeAll(async () => {
 
-    await page.goto('http://localhost/');
+    await page.goto('http://' + WEBPAGE + '/user/logout');
     await page.waitForSelector('[ng-repeat="file in files"]');
     await page.click('[ng-repeat="file in files"]');  // select first file ... use page.select instead?
     await page.click('#run-klee-btn');
@@ -26,7 +28,8 @@ describe('Input', () => {
 describe('Admin', () => {
   beforeAll(async () => {
 
-    await page.goto('http://localhost/admin');
+    await page.goto('http://' + WEBPAGE + '/user/logout');
+    await page.goto('http://' + WEBPAGE + '/admin');
     await page.waitForSelector('#id_username');
     await page.type('#id_username', 'admin');
     await page.type('#id_password', 'development');
@@ -41,7 +44,8 @@ describe('Admin', () => {
 describe('New Projects', () => {
   beforeAll(async () => {
 
-    await page.goto('http://localhost/user/login');
+    await page.goto('http://' + WEBPAGE + '/user/logout');
+    await page.goto('http://' + WEBPAGE + '/user/login');
     await page.type('[type=text]', 'admin');
     await page.type('[type=password]', 'development');
     await Promise.all([page.click('[type=submit]'), page.waitForNavigation()]);
