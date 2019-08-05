@@ -2,8 +2,8 @@
 - name: Build Python e2e_test image
   docker_image:
     build:
-      path: "{{ src_dir }}"
-      dockerfile: ./src/klee_web/tests/python_tests/Dockerfile
+      path: "{{ application_dir }}"
+      dockerfile: ./tests/python_tests/Dockerfile
     name: e2e_test
 
 - name: Build JavaScript e2e_test image
