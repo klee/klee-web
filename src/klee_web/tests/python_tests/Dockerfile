@@ -9,5 +9,3 @@ RUN pip install flake8
 RUN pip install httpie
 COPY src/klee_web/requirements.txt /requirements.txt
 RUN pip install -r /requirements.txt && rm -f /requirements.txt
-
-CMD /bin/bash /titb/src/klee_web/tests/python_tests/run_tests.sh 
