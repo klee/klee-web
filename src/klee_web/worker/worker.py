@@ -5,7 +5,6 @@ import re
 from celery import Celery
 from celery.worker.control import Panel
 from celery.exceptions import SoftTimeLimitExceeded
-from billiard import current_process
 
 from .runner import WorkerRunner
 from .worker_config import WorkerConfig

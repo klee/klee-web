@@ -18,8 +18,10 @@ class Task(models.Model):
     location = models.CharField(max_length=255, default='None')
     user = models.CharField(max_length=255, default='Guest')
 
+
 # TODO: Added on_delete=models.CASCADE during django upgrade to v2.2
-# CASCADE is possibly not the desired behaviour. Need to look into if we want to change that.
+# CASCADE is possibly not the desired behaviour. Need to look into
+# if we want to change that.
 class Project(models.Model):
     owner = models.ForeignKey(settings.AUTH_USER_MODEL,
                               on_delete=models.CASCADE,
