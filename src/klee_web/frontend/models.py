@@ -8,18 +8,20 @@ class User(AbstractUser):
 
 
 class Task(models.Model):
-    task_id = models.CharField(max_length=40, unique=True)
+    task_id = models.CharField(max_length=255, unique=True)
     ip_address = models.GenericIPAddressField()
     email_address = models.EmailField(null=True)
     created_at = models.DateTimeField(auto_created=True)
     completed_at = models.DateTimeField(null=True)
     current_output = models.TextField(null=True)
-    worker_name = models.CharField(max_length=40, default='')
-    location = models.CharField(max_length=40, default='None')
-    user = models.CharField(max_length=40, default='Guest')
+    worker_name = models.CharField(max_length=255, default='')
+    location = models.CharField(max_length=255, default='None')
+    user = models.CharField(max_length=255, default='Guest')
+
 
 # TODO: Added on_delete=models.CASCADE during django upgrade to v2.2
-# CASCADE is possibly not the desired behaviour. Need to look into if we want to change that.
+# CASCADE is possibly not the desired behaviour. Need to look into
+# if we want to change that.
 class Project(models.Model):
     owner = models.ForeignKey(settings.AUTH_USER_MODEL,
                               on_delete=models.CASCADE,

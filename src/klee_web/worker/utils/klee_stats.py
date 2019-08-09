@@ -96,7 +96,7 @@ def getKeyIndex(key, labels):
     """Get the index of the specified key in labels."""
 
     def normalizeKey(key):
-        return re.split('\W', key)[0]
+        return re.split(r'\W', key)[0]
 
     for i, title in enumerate(labels):
         if normalizeKey(title) == normalizeKey(key):

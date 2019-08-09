@@ -9,6 +9,5 @@
   apt:
     name:
       - git
-      - language-pack-en-base # TODO: do we really need this?
     update_cache: yes
     state: latest

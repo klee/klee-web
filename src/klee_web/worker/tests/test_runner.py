@@ -38,9 +38,9 @@ class TestWorkerRunner(unittest.TestCase):
         flags = re.M | re.DOTALL | re.UNICODE
         expected_regex = re.compile(u"{}$".format(expected_out), flags)
         if expect_failure:
-            self.assertRaisesRegexp(KleeRunFailure, expected_regex,
-                                    self.runner.execute_pipeline, code,
-                                    run_configuration)
+            self.assertRaisesRegex(KleeRunFailure, expected_regex,
+                                   self.runner.execute_pipeline, code,
+                                   run_configuration)
         else:
             result = self.runner.execute_pipeline(code, run_configuration)
             stdout = result['klee_run']['output']
