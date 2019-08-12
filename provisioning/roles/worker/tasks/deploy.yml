@@ -13,8 +13,7 @@
     - "{{ klee_env_path_etc }}:{{ klee_env_path_etc }}"
     - "{{ python_runner }}:{{ python_runner }}"
     - "{{ worker_dir }}:{{ worker_dir }}"
-    networks: 
-      - name: "{{ container_network }}"
+    network_mode: bridge
     recreate: yes
   with_sequence: start=1 end="{{ number_of_workers }}"
 

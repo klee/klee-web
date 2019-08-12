@@ -13,3 +13,6 @@ ci: no
 db_name: klee_web
 db_user: klee_web
 container_network: web_network
+network_address_base: 172.18.0.
+network_subnet: "{{ network_address_base }}0/16"
+network_gateway: "{{ network_address_base }}1"

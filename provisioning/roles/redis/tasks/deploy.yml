@@ -6,4 +6,6 @@
     restart_policy: always
     networks: 
       - name: "{{ container_network }}"
+    ports:
+      - "6379:6379"
     recreate: yes

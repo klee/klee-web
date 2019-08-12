@@ -18,7 +18,25 @@
     - role: geerlingguy.docker
       when: not ci
     - common
+
+- hosts: master
+  remote_user: vagrant
+  become: yes
+  vars_files:
+    - vars/development.yml
+  roles:
     - redis
     - db
     - web
+
+- hosts: worker
+  remote_user: vagrant
+  become: yes
+  roles:
     - worker
+
+- hosts: testing
+  remote_user: vagrant
+  become: yes
+  roles:
+    - e2e-tests

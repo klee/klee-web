@@ -16,7 +16,6 @@ jobs:
       - run: cd /titb/
       - run: sudo ansible-playbook -i localhost, --syntax-check ./provisioning/vagrant.yml
       - run: sudo ansible-playbook -i localhost, --connection=local -vvv -e ci=yes ./provisioning/vagrant.yml
-      - run: sudo ansible-playbook -i localhost, --connection=local -vvv ./provisioning/e2e.yml
       # choose second bridge network, which is the private network
       # ---- Python related tests ----
       - run: sudo docker run --rm -it

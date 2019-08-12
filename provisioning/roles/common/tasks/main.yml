@@ -1,5 +1,4 @@
 ---
-
 - name: Make working directory
   file: path={{ working_dir }} state=directory
 
@@ -29,6 +28,9 @@
 - name: Create docker network {{ container_network }}
   docker_network:
     name: "{{ container_network }}"
+    ipam_config:
+      - subnet: "{{ network_subnet }}"
+        gateway: "{{ network_gateway }}"
 
 - include: deploy.yml
   tags: deploy
