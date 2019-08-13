@@ -1,0 +1,17 @@
+{
+  "name": "E2E-Tests",
+  "description": "End-To-End tests for KLEE Web",
+  "version": "0.0.2",
+  "jest": {
+    "preset": "jest-puppeteer"
+  },
+  "scripts": {
+    "test": "jest"
+  },
+  "devDependencies": {
+    "jest": "^24.8.0",
+    "jest-puppeteer": "^4.3.0",
+    "puppeteer": "^1.19.0",
+    "should": "^9.0.2"
+  }
+}

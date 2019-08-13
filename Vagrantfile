@@ -3,6 +3,7 @@
 
 Vagrant.configure("2") do |config|
   config.vm.box = "ubuntu/xenial64"
+  config.disksize.size = '30GB'
 
   # Create a private network, which allows host-only access to the machine
   # using a specific IP.
@@ -26,6 +27,7 @@ Vagrant.configure("2") do |config|
     # TODO(andronat): This path should been taken from ansible.cfg. This is a bug in Vagrant.
     ansible.galaxy_roles_path = "~/.ansible-galaxy"
     # ansible.verbose = "vvvv"
+    # ansible.tags              = "e2e"
   end
 
   config.vm.provider "virtualbox" do |v|

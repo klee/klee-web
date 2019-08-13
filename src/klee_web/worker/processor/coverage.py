@@ -22,7 +22,7 @@ class CoverageProcessor(BaseProcessor):
         coverage_obj_file = os.path.join(mount_dir, 'code_cov.o')
         docker_result_path = os.path.join(mount_dir, 'klee-out-0')
 
-        clang_command = ['/usr/bin/clang-3.4', '-g', '--coverage', '-L',
+        clang_command = ['/usr/bin/clang-6.0', '-g', '--coverage', '-L',
                          '/home/klee/klee_build/klee/Release+Asserts/lib/',
                          runner.DOCKER_CODE_FILE, '-lkleeRuntest',
                          '-o', coverage_obj_file]

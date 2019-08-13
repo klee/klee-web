@@ -12,3 +12,6 @@
     published_ports:
       - 6379:6379
     restart_policy: always
+    networks: 
+      - name: "{{ container_network }}"
+  tags: redis
