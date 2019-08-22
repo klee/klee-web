@@ -19,7 +19,7 @@
       when: not ci
     - common
 
-- hosts: master
+- hosts: "{{ 'all' if (ci|bool) else 'master' }}"
   remote_user: vagrant
   become: yes
   vars_files:
@@ -29,13 +29,13 @@
     - db
     - web
 
-- hosts: worker
+- hosts: "{{ 'all' if (ci|bool) else 'worker' }}"
   remote_user: vagrant
   become: yes
   roles:
     - worker
 
-- hosts: testing
+- hosts: "{{ 'all' if (ci|bool) else 'testing' }}"
   remote_user: vagrant
   become: yes
   roles:

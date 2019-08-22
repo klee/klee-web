@@ -14,7 +14,7 @@ jobs:
       - run: sudo ln -s /home/circleci/project/ /titb
       - run: sudo ansible-galaxy install --force --role-file=requirements.yml
       - run: cd /titb/
-      - run: sudo ansible-playbook -i localhost, --syntax-check ./provisioning/vagrant.yml
+      - run: sudo ansible-playbook -i localhost, --syntax-check -e ci=yes ./provisioning/vagrant.yml
       - run: sudo ansible-playbook -i localhost, --connection=local -vvv -e ci=yes ./provisioning/vagrant.yml
       # choose second bridge network, which is the private network
       # ---- Python related tests ----
