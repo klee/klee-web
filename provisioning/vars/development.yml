@@ -1,6 +1,6 @@
 development: yes
 
-redis_host: hostvars['master']['http_host']
+redis_host: "{{ network_gateway if (ci) else hostvars['master']['http_host'] }}"
 redis_port: 6379
 redis_db_number: 0
 celery_broker_url: "redis://{{ redis_host }}:{{ redis_port }}/{{ redis_db_number }}"
