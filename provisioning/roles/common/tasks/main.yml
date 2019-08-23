@@ -32,5 +32,9 @@
       - subnet: "{{ network_subnet }}"
         gateway: "{{ network_gateway }}"
 
-- include: deploy.yml
-  tags: deploy
+- name: Clone TITB code
+  git: repo={{ git_repo }} dest={{ src_dir }} accept_hostkey=yes force=yes
+  become: yes
+  become_user: klide
+  when: not development
+  tags: pull_code

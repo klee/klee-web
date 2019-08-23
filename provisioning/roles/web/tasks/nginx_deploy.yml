@@ -10,4 +10,5 @@
       - "80:80"
     volumes:
       - /tmp:/tmp
+      - /titb:/titb
     recreate: yes

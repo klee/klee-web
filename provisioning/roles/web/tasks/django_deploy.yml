@@ -1,7 +1,7 @@
 ---
 - name: Start docker klee-web
   docker_container:
-    name: django_app
+    name: "{{ django_container }}"
     image: klee_web
     restart_policy: always
     networks: 
