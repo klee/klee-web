@@ -3,7 +3,8 @@
 
 iface: '{{ ansible_default_ipv4.interface }}'
 private_iface: 'eth1'
-git_repo: https://github.com/klee-web/klee-web.git
+# Change this repo if need to provision for production from differen klee-web forks
+git_repo: https://github.com/Denis-Gavrielov/klee-web.git
 src_dir: /titb
 code_dir: "{{ src_dir }}/src"
 application_dir: "{{ code_dir }}/klee_web"
@@ -12,7 +13,11 @@ python_runner: "{{ working_dir }}/python_runner.sh"
 ci: no
 db_name: klee_web
 db_user: klee_web
+
+# Docker related variables
 container_network: web_network
 network_address_base: 172.18.0.
 network_subnet: "{{ network_address_base }}0/16"
 network_gateway: "{{ network_address_base }}1"
+django_container: django_app
+redis_container: kleeweb-redis

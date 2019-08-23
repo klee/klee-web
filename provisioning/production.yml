@@ -1,60 +1,56 @@
 ---
-# Apply common configuration to all hosts
 - hosts: all
+  remote_user: vagrant
   become: yes
   vars:
     pip_install_packages:
       - name: docker
   vars_files:
-    - vars/details.yml
     - vars/secrets.yml
-    - vars/production.yml
+    - vars/worker-prod.yml
+    - vars/common.yml
   roles:
     - init
-    - role: geerlingguy.pip
-      pip_package: python3-pip
-    # TODO: Move everything to python3. This is a dependency for Django
+    # Need to install Python2 as well for Docker dependencies.
     - role: geerlingguy.pip
       pip_package: python-pip
-    - geerlingguy.docker
+    - role: geerlingguy.pip
+      pip_package: python3-pip
+      pip_executable: pip3
+    - role: geerlingguy.docker
     - common
 
-# Configure and deploy message queue servers.
-- hosts: redisservers
+- hosts: master
+  remote_user: vagrant
   become: yes
   vars_files:
-    - vars/details.yml
     - vars/secrets.yml
-    - vars/production.yml
+    - vars/master-prod.yml
+    - vars/common.yml
   roles:
+    - env_files
     - redis
-
-# Configure and deploy message database servers.
-- hosts: dbservers
-  become: yes
-  vars_files:
-    - vars/details.yml
-    - vars/secrets.yml
-    - vars/production.yml
-  roles:
     - db
-
-# Configure and deploy the web servers.
-- hosts: webservers
-  become: yes
-  vars_files:
-    - vars/details.yml
-    - vars/secrets.yml
-    - vars/production.yml
-  roles:
     - web
 
-# Configure and deploy the worker nodes.
-- hosts: workers
+- hosts: worker
+  remote_user: vagrant
   become: yes
   vars_files:
-    - vars/details.yml
     - vars/secrets.yml
-    - vars/production.yml
+    - vars/worker-prod.yml
+    - vars/common.yml
   roles:
+    - env_files
     - worker
+
+- hosts: testing
+  remote_user: vagrant
+  become: yes
+  vars_files:
+    - vars/secrets.yml
+    - vars/worker-prod.yml
+    - vars/common.yml
+  roles:
+    - env_files
+    - e2e-tests

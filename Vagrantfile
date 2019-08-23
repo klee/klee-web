@@ -27,9 +27,7 @@ Vagrant.configure("2") do |config|
     }
 
     ansible.groups = {
-      "redisservers" => [MASTER_NAME],
-      "dbservers" => [MASTER_NAME],
-      "webservers" => [MASTER_NAME],
+      "master" => [MASTER_NAME],
       "worker" => ["worker[1:#{WORKER_COUNT}]"],
       "testing" => ["testing"],
     }

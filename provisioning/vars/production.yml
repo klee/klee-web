@@ -1,9 +1,0 @@
-development: no
-
-redis_host: "{{ hostvars[groups['redisservers'][0]]['ansible_' + iface].ipv4.address }}"
-redis_port: 6379
-redis_db_number: 0
-celery_broker_url: "redis://{{ redis_host }}:{{ redis_port }}/{{ redis_db_number }}"
-
-db_host: "{{ hostvars[groups['dbservers'][0]]['ansible_' + iface].ipv4.address }}"
-db_port: 5432

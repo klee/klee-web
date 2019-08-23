@@ -1,15 +1,8 @@
 ---
-
 - name: Copying environment variable file
   template: src=environment_dev.j2 dest=/etc/profile.d/klee-web-environment.sh
   when: development
 
 - name: Copying production only variable file
   template: src=environment_prod.j2 dest=/etc/profile.d/klee-web-environment.sh
-  when: not development
-
-- name: Clone TITB code
-  git: repo={{ git_repo }} dest={{ src_dir }} accept_hostkey=yes
-  become: yes
-  become_user: klide
   when: not development
