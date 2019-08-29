@@ -19,3 +19,4 @@ src/geoip/
 ubuntu-xenial*.log
 .vscode/
 note*.txt
+doc/*.pdf

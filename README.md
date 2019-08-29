@@ -36,17 +36,35 @@ In order to invoke KLEE (from within the virtual machine):
     sudo docker run -t -v PATH_TO_SOURCE_DIR:/code klee/klee klee FILE.bc
 
 
-In order to see any server side changes run (from within the virtual machine):
+In order to see any server side changes provision the machines again with:
 
-    sudo supervisorctl reload
+    vagrant provision
+
+A more detailed documentation on how to interact with Vagrant is provided in `doc/VAGRANT.md`.
+
+
 
 
 Running tests
 ===========================
-Before submitting a pull request it's a good idea to run our test suite locally with the following command
+Before submitting a pull request it's a good idea to run our test suite locally.
 
-    $ vagrant ssh -c "/titb/run_tests.sh"
+To run the Flake8 and Javascript end-to-end tests run:
 
+    $ vagrant ssh testing -c "/titb/run_global_tests.sh"
+
+To run the Worker service unit tests run:
+
+    $ vagrant ssh worker1 -c "/titb/run_unit_tests.sh"
+
+Circle CI
+=======
+
+Circle CI is being used to run tests for commits before they get merged into the master branch on the main fork. 
+
+It is important to understand that within the Circle CI testing VM there is only one VM overall where all processes run. This is different from the development and production environment where the application is distributed accross multipe VMs. Other than that it runs with the same Ansible Playbook as in the development stage. 
+
+The provisioning of the Circle CI VM and the tests that are run can be found in the `.circleci/config.yml` file. 
 
 Building Frontend
 ===========================
@@ -77,3 +95,16 @@ Finally, let Grunt do the rest of the work (compiling/minifying SASS/JS etc), wi
 To watch for changes when modifying SASS, use
 
 	$ grunt watch
+
+Debugging Dockerized Services
+===========================
+The `doc/DEBUGGING_DOCKER.md` file holds a detailed discussion on best practices for working with dockerized services and tips for debugging Docker containers. 
+
+Deploying to Production
+===========================
+Deployment is further explained in the `doc/DEPLOY.md` file.
+
+
+Receiving Automated Production Status Emails
+===========================
+How to configure the automated emails is explained in the `doc/EMAIL_NOTIFICATIONS.ms` file.
