@@ -3,9 +3,9 @@ import os
 import unittest
 import codecs
 
-from src.worker.runner import WorkerRunner
-from src.worker.processor.klee_run import KleeRunProcessor
-from src.worker.exceptions import KleeRunFailure
+from worker.runner import WorkerRunner
+from worker.processor.klee_run import KleeRunProcessor
+from worker.exceptions import KleeRunFailure
 
 
 BASE_DIR = os.path.dirname(os.path.realpath(__file__))
