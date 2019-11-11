@@ -1,6 +1,6 @@
 import os
-from src.worker.processor.base import BaseProcessor
-from src.worker.utils import klee_stats
+from worker.processor.base import BaseProcessor
+from worker.utils import klee_stats
 
 
 class StatsProcessor(BaseProcessor):
