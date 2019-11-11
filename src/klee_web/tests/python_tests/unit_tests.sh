@@ -4,4 +4,4 @@ echo "Running Python Unit tests"
 . /etc/profile.d/klee-web-environment.sh
 
 # run tests:
-cd /titb/src/klee_web && python -m unittest discover -s worker/tests/ -p 'test_*.py'
+cd /titb/src/klee_web && python -m unittest discover -s /titb/src/worker/tests/ -p 'test_*.py'

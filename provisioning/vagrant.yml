@@ -6,19 +6,41 @@
       - name: docker
   vars_files:
     - vars/development.yml
+    - vars/common.yml
   roles:
     - init
+    # Need to install Python2 as well for Docker dependencies.
+    - role: geerlingguy.pip
+      pip_package: python-pip
     - role: geerlingguy.pip
       pip_package: python3-pip
       pip_executable: pip3
-    # For now need to keep this in to be able to do task Docker pull Redis 3.2 
-    # on the NON-FIRST run of vagrant provision
-    - role: geerlingguy.pip
-      pip_package: python-pip
     - role: geerlingguy.docker
       when: not ci
     - common
+    - env_files
+
+- hosts: "{{ 'all' if (ci|bool) else 'master' }}"
+  remote_user: vagrant
+  become: yes
+  vars_files:
+    - vars/development.yml
+    - vars/common.yml
+  roles:
     - redis
     - db
     - web
+
+- hosts: "{{ 'all' if (ci|bool) else 'worker' }}"
+  remote_user: vagrant
+  become: yes
+  roles:
     - worker
+
+- hosts: "{{ 'all' if (ci|bool) else 'testing' }}"
+  remote_user: vagrant
+  become: yes
+  vars_files:
+    - vars/development.yml
+  roles:
+    - e2e-tests

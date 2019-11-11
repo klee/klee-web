@@ -1,4 +1,4 @@
 ---
-worker_working_dir: /src/worker
-worker_log_dir: "{{ worker_working_dir }}/logs"
-worker_virtualenv: "{{ worker_working_dir }}/env"
+worker_dir: "{{ code_dir }}/worker"
+klee_env_path_etc: /etc/profile.d/klee-web-environment.sh
+number_of_workers: 2

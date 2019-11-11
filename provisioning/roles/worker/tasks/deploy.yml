@@ -1,17 +1,31 @@
 ---
+- name: Start docker Worker
+  docker_container:
+    name: "worker-{{ item }}"
+    image: celery_worker
+    restart_policy: always
+    volumes: 
+    # can start other containers:
+    - /var/run/docker.sock:/var/run/docker.sock
+    # can place results into /tmp/ folder
+    - /tmp/:/tmp/
+    # connect source code paths 
+    - "{{ klee_env_path_etc }}:{{ klee_env_path_etc }}"
+    - "{{ python_runner }}:{{ python_runner }}"
+    - "{{ worker_dir }}:{{ worker_dir }}"
+    network_mode: "{{ 'host' if (ci) else 'bridge' }}"
+    recreate: yes
+  with_sequence: start=1 end="{{ number_of_workers }}"
 
-- name: Get KLEE image from Docker Hub (this may take a while...)
-  docker_image:
-    name: klee/klee
-    tag: latest
+- name: Create klee user for cronjob
+  user: name=klee shell=/bin/bash groups=sudo
   when: not ci
 
-- name: Install requirements for task runner
-  pip: requirements={{ application_dir }}/requirements.txt virtualenv={{ worker_virtualenv }} virtualenv_python=python3
-  become_user: worker
-
-- name: Copy supervisor config file
-  template: src=supervisor_worker.conf.j2 dest=/etc/supervisor/conf.d/worker.conf
-
-- name: Reload supervisor configuration
-  shell: supervisorctl reload
+- name: Add cronjob to restart worker on missed celery heartbeat
+  cron:
+    name: "Restart worker-{{ item }} if celery heartbeat missed"
+    minute: "30"
+    job: "if [ $(sudo docker logs worker-{{ item }} &> ~/logs-{{ item }}.txt ; tail -1 ~/logs-{{ item }}.txt | grep \"missed heartbeat from celery\" | wc -l) -eq 1 ]; then $(sudo docker restart worker-{{ item }}); fi"
+    user: klee 
+  when: not ci  
+  with_sequence: start=1 end="{{ number_of_workers }}"

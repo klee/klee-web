@@ -2,8 +2,8 @@
 - name: Build Python e2e_test image
   docker_image:
     build:
-      path: "{{ src_dir }}"
-      dockerfile: ./src/klee_web/tests/python_tests/Dockerfile
+      path: "{{ application_dir }}"
+      dockerfile: ./tests/python_tests/Dockerfile
     name: e2e_test
 
 - name: Build JavaScript e2e_test image
@@ -11,3 +11,16 @@
     build:
       path: "{{ application_dir }}/tests/js_tests"
     name: e2e_test_js
+
+- name: Create klee user for cronjob
+  user: name=klee shell=/bin/bash groups=sudo
+  when: not ci
+
+- name: Add cronjob for automated tests daily at 2pm
+  cron:
+    name: "Test Klee Web"
+    minute: "0"
+    hour: "14"
+    job: "/src/python_runner.sh /usr/bin/python3 /titb/src/klee_web/tests/automated_e2e_tests.py"
+    user: klee 
+  when: not ci  

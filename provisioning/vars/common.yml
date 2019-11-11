@@ -1,0 +1,7 @@
+---
+main_webpage: "{{ redis_host if (webpage is undefined) else webpage }}"
+redis_port: 6379
+redis_db_number: 0
+celery_broker_url: "redis://{{ redis_host }}:{{ redis_port }}/{{ redis_db_number }}"
+db_host: postgres_container
+db_port: 5432

@@ -1,0 +1,12 @@
+---
+- name: Create directory for admin password script
+  file: path="{{ admin_ps_dir }}" state=directory
+
+- name: Copy admin password script into klee_web directory
+  template: src=admin_psw.sh.j2 dest={{ admin_ps_dir }}/admin_psw.sh
+
+- name: Build klee_web container
+  command: docker build -t klee_web .
+  args:
+    chdir: "{{ application_dir }}"
+    executable: /bin/bash

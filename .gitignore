@@ -18,3 +18,5 @@ src/klee_web/geoip/
 src/geoip/
 ubuntu-xenial*.log
 .vscode/
+note*.txt
+doc/*.pdf

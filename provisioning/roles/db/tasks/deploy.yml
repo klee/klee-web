@@ -1,0 +1,15 @@
+---
+- name: Run Docker postgres container
+  docker_container:
+    name: postgres_container
+    image: klee_postgres
+    restart_policy: always
+    env:
+      POSTGRES_PASSWORD: "{{ db_password }}"
+      POSTGRES_USER: "{{ db_user }}"
+      POSTGRES_DB: "{{ db_name }}"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    networks:
+      - name: "{{ container_network }}"
+    recreate: yes

@@ -1,0 +1,8 @@
+---
+- name: Copying environment variable file
+  template: src=environment_dev.j2 dest=/etc/profile.d/klee-web-environment.sh
+  when: development
+
+- name: Copying production only variable file
+  template: src=environment_prod.j2 dest=/etc/profile.d/klee-web-environment.sh
+  when: not development

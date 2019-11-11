@@ -1,17 +1,5 @@
 ---
-
-- name: Docker pull Redis 3.2
-  docker_image:
-    name: redis
-    tag: 3.2
-
-- name: Start docker Redis
-  docker_container:
-    name: kleeweb-redis
-    image: redis:3.2
-    published_ports:
-      - 6379:6379
-    restart_policy: always
-    networks: 
-      - name: "{{ container_network }}"
-  tags: redis
+- include: build.yml
+  tags: ['build', 'build_redis']
+- include: deploy.yml
+  tags: deploy_container
