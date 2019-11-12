@@ -1,21 +1,24 @@
 ---
 - name: Start docker Worker
   docker_container:
-    name: "worker-{{ item }}"
+    name: "kleeweb-worker"
     image: celery_worker
     restart_policy: always
-    volumes: 
-    # can start other containers:
-    - /var/run/docker.sock:/var/run/docker.sock
-    # can place results into /tmp/ folder
-    - /tmp/:/tmp/
-    # connect source code paths 
-    - "{{ klee_env_path_etc }}:{{ klee_env_path_etc }}"
-    - "{{ python_runner }}:{{ python_runner }}"
-    - "{{ worker_dir }}:{{ worker_dir }}"
+    env:
+      MAILGUN_API_KEY: "{{ mailgun_api_key if (mailgun_api_key is defined) else '' }}"
+      AWS_ACCESS_KEY: "{{ aws_access_key if (aws_access_key is defined) else '' }}"
+      AWS_SECRET_KEY: "{{ aws_secret_key if (aws_secret_key is defined) else '' }}"
+      REDIS_HOST: "{{ redis_host }}"
+      REDIS_PORT: "{{ redis_port | string }}"
+      CELERY_BROKER_URL: "{{ celery_broker_url }}"
+      DEVELOPMENT: "{{ '0' if (production is defined) else '1'}}"
+    volumes:
+      # can start other containers:
+      - /var/run/docker.sock:/var/run/docker.sock
+      # can place results into /tmp/ folder
+      - /tmp/:/tmp/
     network_mode: "{{ 'host' if (ci) else 'bridge' }}"
     recreate: yes
-  with_sequence: start=1 end="{{ number_of_workers }}"
 
 - name: Create klee user for cronjob
   user: name=klee shell=/bin/bash groups=sudo
@@ -23,9 +26,8 @@
 
 - name: Add cronjob to restart worker on missed celery heartbeat
   cron:
-    name: "Restart worker-{{ item }} if celery heartbeat missed"
+    name: "Restart kleeweb-worker if celery heartbeat missed"
     minute: "30"
-    job: "if [ $(sudo docker logs worker-{{ item }} &> ~/logs-{{ item }}.txt ; tail -1 ~/logs-{{ item }}.txt | grep \"missed heartbeat from celery\" | wc -l) -eq 1 ]; then $(sudo docker restart worker-{{ item }}); fi"
-    user: klee 
-  when: not ci  
-  with_sequence: start=1 end="{{ number_of_workers }}"
+    job: 'if [ $(sudo docker logs kleeweb-worker &> ~/logs-kleeweb-worker.txt ; tail -1 ~/logs-kleeweb-worker.txt | grep "missed heartbeat from celery" | wc -l) -eq 1 ]; then $(sudo docker restart kleeweb-worker); fi'
+    user: klee
+  when: not ci

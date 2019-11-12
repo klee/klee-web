@@ -24,6 +24,9 @@
 
 - hosts: workers
   become: yes
+  vars_files:
+    - vars/development.yml
+    - vars/common.yml
   roles:
     - worker
 

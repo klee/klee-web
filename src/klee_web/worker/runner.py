@@ -7,22 +7,22 @@ import codecs
 
 import requests
 
-from .exceptions import KleeRunFailure
-from .decorators import notify_on_entry
-from .worker_config import WorkerConfig
+from worker.exceptions import KleeRunFailure
+from worker.decorators import notify_on_entry
+from worker.worker_config import WorkerConfig
 
-from .mailer.mailgun_mailer import MailgunMailer
-from .mailer.dummy_mailer import DummyMailer
+from worker.mailer.mailgun_mailer import MailgunMailer
+from worker.mailer.dummy_mailer import DummyMailer
 
-from .processor.failed_test import FailedTestProcessor
-from .processor.coverage import CoverageProcessor
-from .processor.upload import UploadProcessor
-from .processor.klee_run import KleeRunProcessor
-from .processor.stats import StatsProcessor
+from worker.processor.failed_test import FailedTestProcessor
+from worker.processor.coverage import CoverageProcessor
+from worker.processor.upload import UploadProcessor
+from worker.processor.klee_run import KleeRunProcessor
+from worker.processor.stats import StatsProcessor
 
 ANSI_ESCAPE_PATTERN = re.compile(r'\x1b[^m]*m')
 LXC_MESSAGE_PATTERN = re.compile(r'lxc-start: .*')
-DEVELOPMENT = os.environ.get('DEVELOPMENT') is not None
+DEVELOPMENT = True if os.environ['DEVELOPMENT'] == "1" else False
 
 worker_config = WorkerConfig()
 

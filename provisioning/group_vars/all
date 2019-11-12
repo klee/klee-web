@@ -13,6 +13,7 @@ db_user: klee_web
 src_dir: /titb
 code_dir: "{{ src_dir }}/src"
 application_dir: "{{ code_dir }}/klee_web"
+worker_dir: "{{ application_dir }}/worker"
 nginx_dir: "{{ src_dir }}/src/nginx"
 e2e_dir: "{{ src_dir }}/src/e2e"
 working_dir: /src

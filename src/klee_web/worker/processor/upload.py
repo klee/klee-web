@@ -1,11 +1,11 @@
 import os
 import subprocess
-from worker.processor.base import BaseProcessor
 
+from worker.processor.base import BaseProcessor
 from worker.storage.dummy_storage import DummyStorage
 from worker.storage.s3_storage import S3Storage
 
-DEVELOPMENT = os.environ.get('DEVELOPMENT') is not None
+DEVELOPMENT = True if os.environ['DEVELOPMENT'] == "1" else False
 
 
 class UploadProcessor(BaseProcessor):
