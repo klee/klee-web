@@ -1,6 +1,6 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
-BOX_IMAGE = "ubuntu/xenial64"
+BOX_IMAGE = "ubuntu/bionic64"
 WORKER_COUNT = 1
 MASTER_IP = "192.168.33.10"
 MASTER_NAME = "master"
@@ -31,7 +31,7 @@ Vagrant.configure("2") do |config|
       "worker" => ["worker[1:#{WORKER_COUNT}]"],
       "testing" => ["testing"],
     }
-    
+
     ansible.extra_vars = {ci: false}
     ansible.playbook          = "provisioning/vagrant.yml"
     ansible.galaxy_role_file  = "requirements.yml"
