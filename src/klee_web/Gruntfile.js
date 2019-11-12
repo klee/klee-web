@@ -1,9 +1,9 @@
 var config = {
-  lib: 'src/components',
-  assets: 'src/assets',
-  sass: 'src/sass',
-  app: 'src/appjs',
-  frontend_dist: 'src/klee_web/frontend/static/frontend/dist'
+  lib: './frontend/components',
+  assets: './frontend/assets',
+  sass: './frontend/sass',
+  app: './frontend/appjs',
+  frontend_dist: './frontend/static/frontend/dist'
 };
 
 module.exports = function (grunt) {
@@ -127,7 +127,7 @@ module.exports = function (grunt) {
                             '<%= bower.directory %>/jquery/dist/jquery.min.js',
                             '<%= bower.directory %>/underscore/underscore-min.js',
                         ],
-                        '<%= config.frontend_dist %>/js/vendor/angular-custom.min.js': 
+                        '<%= config.frontend_dist %>/js/vendor/angular-custom.min.js':
                             [
                                 '<%= bower.directory %>/angular/angular.min.js',
                                 '<%= bower.directory %>/angular-resource/angular-resource.min.js',
