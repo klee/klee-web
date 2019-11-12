@@ -1,35 +1,6 @@
 ---
-- name: Copy pg_hba.conf into db directory
-  template: src=pg_hba.conf.j2 dest="{{ db_dir }}/pg_hba.conf"
-
-- name: Copy postgresql.conf into db directory
-  template: src=postgresql.conf.j2 dest="{{ db_dir }}/postgresql.conf"
-
-- name: Copy pgdg.list into db directory
-  template: src=pgdg.list dest="{{ db_dir }}/pgdg.list"
-
-- name: Build Docker image for postgres
+- name: Docker pull Postgres
   docker_image:
-    build:
-      path: "{{ code_dir }}/db"
-    name: klee_postgres
-    force: yes
-
-- name: Delete pg_hba.conf file from db directory
-  file:
-    path: "{{ db_dir }}/pg_hba.conf"
-    state: absent
-
-- name: Delete postgresql.conf file from db directory
-  file:
-    path: "{{ db_dir }}/postgresql.conf"
-    state: absent
-
-- name: Delete pgdg.list file from db directory
-  file:
-    path: "{{ db_dir }}/pgdg.list"
-    state: absent
-
-- name: Create postgres volume
-  docker_volume:
-    name: postgres_data
+    name: postgres
+    tag: "12"
+    source: pull

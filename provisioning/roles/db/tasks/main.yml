@@ -1,5 +1,5 @@
 ---
 - include: build.yml
-  tags: ['build', 'build_db']
+  tags: ["build", "build_db"]
 - include: deploy.yml
   tags: deploy_container
