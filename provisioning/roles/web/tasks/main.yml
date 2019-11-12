@@ -1,9 +1,9 @@
 ---
 - include: nginx_build.yml
-  tags: ['build', 'build_nginx']
+  tags: ["build", "build_nginx"]
 - include: nginx_deploy.yml
-  tags: ['deploy_container']
+  tags: ["deploy_container"]
 - include: django_build.yml
-  tags: ['build', 'build_django']
+  tags: ["build", "build_django"]
 - include: django_deploy.yml
-  tags: ['deploy_container']
+  tags: ["deploy_container"]

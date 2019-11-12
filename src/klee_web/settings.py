@@ -10,16 +10,12 @@ https://docs.djangoproject.com/en/1.7/ref/settings/
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import os
-import sys
 from time import gmtime, strftime
 
 import string
 import random
 
-BASE_DIR = os.path.dirname(os.path.dirname(__file__))
-
-# Add path of klee-web python code to allow importing of worker code
-sys.path.insert(0, os.path.join(BASE_DIR, ".."))
+BASE_DIR = os.path.dirname(__file__)
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.7/howto/deployment/checklist/
@@ -28,19 +24,19 @@ sys.path.insert(0, os.path.join(BASE_DIR, ".."))
 
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get("DEVELOPMENT") is not None
+# TODO: due to complexity and old frontend frameworks DEBUG mode is broken
+# DEBUG = True if os.environ['DEVELOPMENT'] == "1" else False
+DEBUG = True
+
+SECRET_KEY = os.environ["DJANGO_SECRET_KEY"]
 
 # If we're in debug mode, generate a random key
 # so that we don't need to provide one
-
-key = ''
-if DEBUG:
+if os.environ['DEVELOPMENT'] == "1":
     # Long but silences flake8
     k = [random.SystemRandom().choice(string.ascii_letters + string.digits)
          for _ in range(50)]
-    key = ''.join(k)
-
-SECRET_KEY = key if DEBUG else os.environ.get("DJANGO_SECRET_KEY")
+    SECRET_KEY = ''.join(k)
 
 ALLOWED_HOSTS = ['*']
 
@@ -134,9 +130,8 @@ GEOIP_PATH = 'geoip'
 # https://docs.djangoproject.com/en/1.7/howto/static-files/
 
 STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+STATIC_ROOT = os.path.join(BASE_DIR, 'frontend', 'static')
 AUTH_USER_MODEL = 'frontend.User'
-
 
 # Keys and secrets used to authenticate with Google, GitHub and Facebook
 SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = os.environ.get('GOOGLE_OAUTH_KEY') or ''

@@ -3,7 +3,8 @@ var config = {
   assets: './frontend/assets',
   sass: './frontend/sass',
   app: './frontend/appjs',
-  frontend_dist: './frontend/static/frontend/dist'
+  frontend_dist: './frontend/static/frontend/dist',
+  frontend_static: './frontend/static/components'
 };
 
 module.exports = function (grunt) {
@@ -115,6 +116,12 @@ module.exports = function (grunt) {
                         cwd: '<%= config.lib %>/nanobar',
                         src: 'nanobar.min.js',
                         dest: '<%= config.frontend_dist %>/js/vendor'
+                    },
+                    {
+                        expand: true,
+                        cwd: '<%= config.lib %>',
+                        src: ['**/*'],
+                        dest: '<%= config.frontend_static %>'
                     }
         		]
         	}
