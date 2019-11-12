@@ -17,6 +17,7 @@ ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD')
 password = os.environ.get('GMAIL_PASSWORD')
 sender_email = "klee.tests@gmail.com"
 receivers_email = ["denis.gavrielov18@ic.ac.uk"]
+DEVELOPMENT = True if os.environ['DEVELOPMENT'] == "1" else False
 
 
 def add_attachment(filename: str):
@@ -75,7 +76,7 @@ message.attach(MIMEText(body, "plain"))
 message.attach(add_attachment(home + "/e2e_report_stdout.txt"))
 message.attach(add_attachment(home + "/e2e_report_stderr.txt"))
 
-if os.environ.get('DEVELOPMENT') is None:
+if DEVELOPMENT:
     with smtplib.SMTP_SSL("smtp.gmail.com", port, context=context) as server:
         server.login(sender_email, password)
         server.sendmail(sender_email, receivers_email, message.as_string())

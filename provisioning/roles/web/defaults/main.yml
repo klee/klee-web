@@ -1,3 +1,0 @@
----
-admin_ps_dir: /src/web
-klee_web_env: /etc/profile.d/klee-web-environment.sh

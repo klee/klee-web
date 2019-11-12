@@ -20,3 +20,6 @@ ubuntu-*.log
 .vscode/
 note*.txt
 doc/*.pdf
+src/frontend/static/*
+src/klee_web/frontend/components/*
+src/klee_web/frontend/sass/bootstrap/*

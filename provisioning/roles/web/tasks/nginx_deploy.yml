@@ -13,5 +13,5 @@
       # Shares static files from kleeweb
       # TODO: Ideally we should have kleeweb exporting the static content
       # and then coping it into the nginx container.
-      - /titb/src/static:/static
+      - /static:/static
     recreate: yes

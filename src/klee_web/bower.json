@@ -1,10 +1,7 @@
 {
   "name": "klee-web",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "homepage": "https://github.com/klee-web/klee-web",
-  "authors": [
-    "ben-chin <ben.chin101@gmail.com>"
-  ],
   "moduleType": [
     "node"
   ],
