@@ -1,0 +1,16 @@
+FROM kleeweb
+
+RUN apt-get update
+RUN apt-get install -y sudo docker.io
+
+WORKDIR /klee_web
+
+RUN pip install flake8
+
+CMD docker pull klee/klee:latest \
+  && python manage.py collectstatic --noinput \
+  && python manage.py migrate --noinput \
+  && python manage.py update_admin_user --username=admin --password=${ADMIN_PASSWORD} \
+  && uwsgi --master --uid www-data --gid www-data --http :3031 --wsgi wsgi:application --daemonize2 /tmp/logs \
+  && flake8 --ignore=E722 --max-complexity 12 --exclude=migrations . \
+  && python -m unittest discover -s ./worker/tests/ -p 'test_*.py'
