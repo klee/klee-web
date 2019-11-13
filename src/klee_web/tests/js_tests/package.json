@@ -9,9 +9,9 @@
     "test": "jest"
   },
   "devDependencies": {
-    "jest": "^24.8.0",
-    "jest-puppeteer": "^4.3.0",
-    "puppeteer": "^1.19.0",
-    "should": "^9.0.2"
+    "jest": "*",
+    "jest-puppeteer": "*",
+    "puppeteer": "^2.0.0",
+    "should": "^13.2.3"
   }
 }
