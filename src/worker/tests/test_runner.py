@@ -31,7 +31,7 @@ class TestWorkerRunner(unittest.TestCase):
                          encoding='utf-8') as f:
             code = f.read()
 
-        with codecs.open(os.path.join(test_fixtures, 'expected.stdout'), 'U',
+        with codecs.open(os.path.join(test_fixtures, 'expected.stdout'),
                          encoding='utf-8') as f:
             expected_out = f.read()
 
