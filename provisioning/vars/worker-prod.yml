@@ -1,3 +1,4 @@
 development: no
 
+iface: '{{ ansible_default_ipv4.interface }}'
 redis_host: "{{ hostvars[groups['master'][0]]['ansible_' + iface].ipv4.address }}"

@@ -28,7 +28,7 @@ Vagrant.configure("2") do |config|
 
     ansible.groups = {
       "master" => [MASTER_NAME],
-      "worker" => ["worker[1:#{WORKER_COUNT}]"],
+      "worker" => ["worker-[1:#{WORKER_COUNT}]"],
       "testing" => ["testing"],
     }
 
@@ -51,9 +51,9 @@ Vagrant.configure("2") do |config|
   end
 
   (1..WORKER_COUNT).each do |i|
-    config.vm.define "worker#{i}" do |subconfig|
+    config.vm.define "worker-#{i}" do |subconfig|
       subconfig.vm.box = BOX_IMAGE
-      subconfig.vm.hostname = "worker#{i}"
+      subconfig.vm.hostname = "worker-#{i}"
       subconfig.vm.network "private_network", ip: "192.168.33.#{i + 10}"
     end
   end
