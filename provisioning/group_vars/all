@@ -1,12 +1,15 @@
 ---
+development: no
+ci: no
+
 # Change this repo if need to provision for production from differen klee-web forks
 git_repo: https://github.com/Denis-Gavrielov/klee-web.git
 src_dir: /titb
 code_dir: "{{ src_dir }}/src"
 application_dir: "{{ code_dir }}/klee_web"
+e2e_dir: "{{ src_dir }}/src/e2e"
 working_dir: /src
 python_runner: "{{ working_dir }}/python_runner.sh"
-ci: no
 db_name: klee_web
 db_user: klee_web
 
@@ -17,3 +20,4 @@ network_subnet: "{{ network_address_base }}0/16"
 network_gateway: "{{ network_address_base }}1"
 django_container: django_app
 redis_container: kleeweb-redis
+e2e_container: kleeweb-e2e
