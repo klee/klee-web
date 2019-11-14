@@ -1,10 +1,10 @@
 ---
-- name: Start docker Redis
+- name: Start Redis container
   docker_container:
     name: "{{ redis_container }}"
-    image: redis:3.2
+    image: redis
     restart_policy: always
-    networks: 
+    networks:
       - name: "{{ container_network }}"
     ports:
       - "6379:6379"

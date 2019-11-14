@@ -1,3 +1,5 @@
+#!/bin/bash
+
 echo "Running Python Unit tests"
 
 # export environmental variables:

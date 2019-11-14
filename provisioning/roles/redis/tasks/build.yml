@@ -1,6 +1,6 @@
 ---
-- name: Docker pull Redis 3.2
+- name: Docker pull Redis
   docker_image:
     name: redis
-    tag: 3.2
+    tag: "5"
     source: pull

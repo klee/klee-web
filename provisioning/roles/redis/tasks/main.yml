@@ -1,5 +1,5 @@
 ---
 - include: build.yml
-  tags: ['build', 'build_redis']
+  tags: ["build", "build_redis"]
 - include: deploy.yml
   tags: deploy_container

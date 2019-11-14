@@ -1,8 +1,12 @@
 ---
-- name: Run Docker postgres container
+- name: Create Postgres volume
+  docker_volume:
+    name: postgres_data
+
+- name: Run Postgres container
   docker_container:
     name: postgres_container
-    image: klee_postgres
+    image: postgres
     restart_policy: always
     env:
       POSTGRES_PASSWORD: "{{ db_password }}"
