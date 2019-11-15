@@ -1,8 +1,8 @@
 ---
-- name: Build the klee_web container
+- name: Build the kleeweb container
   docker_image:
     build:
       path: "{{ application_dir }}"
       pull: yes
-    name: klee_web
+    name: "{{ kleeweb_container }}"
     source: build

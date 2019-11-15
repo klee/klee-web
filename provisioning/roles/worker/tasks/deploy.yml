@@ -1,8 +1,8 @@
 ---
-- name: Start docker Worker
+- name: "Start {{ kleeweb_worker_container }} container"
   docker_container:
-    name: "kleeweb-worker"
-    image: celery_worker
+    name: "{{ kleeweb_worker_container }}"
+    image: "{{ kleeweb_worker_container }}"
     restart_policy: always
     env:
       MAILGUN_API_KEY: "{{ mailgun_api_key if (mailgun_api_key is defined) else '' }}"
@@ -13,9 +13,9 @@
       CELERY_BROKER_URL: "{{ celery_broker_url }}"
       DEVELOPMENT: "{{ '0' if (production is defined) else '1'}}"
     volumes:
-      # can start other containers:
+      # To start other containers
       - /var/run/docker.sock:/var/run/docker.sock
-      # can place results into /tmp/ folder
+      # For Klee to place results
       - /tmp/:/tmp/
     network_mode: "{{ 'host' if (ci) else 'bridge' }}"
     recreate: yes

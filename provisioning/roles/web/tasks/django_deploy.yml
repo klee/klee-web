@@ -1,8 +1,8 @@
 ---
-- name: Start docker klee-web
+- name: "Start {{ kleeweb_container }} container"
   docker_container:
-    name: "{{ django_container }}"
-    image: klee_web
+    name: "{{ kleeweb_container }}"
+    image: "{{ kleeweb_container }}"
     restart_policy: always
     env:
       REDIS_HOST: "{{ redis_host }}"
@@ -36,6 +36,7 @@
 
       DEVELOPMENT: "{{ '0' if (production is defined) else '1'}}"
     volumes:
+      # For nginx to uWSGI's socket
       - /tmp:/tmp
     networks:
       - name: "{{ container_network }}"
