@@ -140,8 +140,8 @@ Again, variables are used to keep the codebase [DRY](https://en.wikipedia.org/wi
 ```yml
 - name: Run Docker nginx container
   docker_container:
-    name: nginx-container
-    image: nginx_image
+    name: kleeweb-nginx
+    image: kleeweb-nginx
     restart_policy: always
     networks:
       - name: "{{ container_network }}"
@@ -174,13 +174,13 @@ There are also convenient commands to find the dynamically allocated IP address 
 For example, with
 
 ```bash
-sudo docker inspect nginx-container
+sudo docker inspect kleeweb-nginx
 ```
 
 information about the NGINX container is exposed in a format similar to [nested Python dictionaries](https://www.geeksforgeeks.org/python-nested-dictionary/). After inspecting the structure of this nested dictionaries, you could return the IP address of the container within the private network with the following command
 
 ```bash
-sudo docker inspect -f "{{ .NetworkSettings.Networks.web_network.IPAddress }}" nginx-container
+sudo docker inspect -f "{{ .NetworkSettings.Networks.web_network.IPAddress }}" kleeweb-nginx
 ```
 
 ## Logs

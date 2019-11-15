@@ -1,8 +1,8 @@
 ---
-- name: Run Docker nginx container
+- name: "Run {{ nginx_container }} container"
   docker_container:
-    name: nginx-container
-    image: nginx_image
+    name: "{{ nginx_container }}"
+    image: "{{ nginx_container }}"
     restart_policy: always
     networks:
       - name: "{{ container_network }}"
@@ -10,5 +10,8 @@
       - "80:80"
     volumes:
       - /tmp:/tmp
-      - /titb:/titb
+      # Shares static files from kleeweb
+      # TODO: Ideally we should have kleeweb exporting the static content
+      # and then coping it into the nginx container.
+      - /titb/src/static:/static
     recreate: yes
