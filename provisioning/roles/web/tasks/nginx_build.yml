@@ -1,23 +1,8 @@
 ---
-- name: Copy nginx.conf into nginx directory
-  template: src=nginx.conf.j2 dest="{{ nginx_dir }}/nginx.conf"
-
-- name: Copy sites-available_titb.conf into nginx directory
-  template: src=sites-available_titb.conf.j2 dest="{{ nginx_dir }}/sites-available_titb.conf"
-
-- name: Build Docker image for nginx
+- name: Build "{{ nginx_container }}" container
   docker_image:
     build:
       path: "{{ nginx_dir }}"
-    name: nginx_image
-    force: yes
-
-- name: Delete nginx.conf file from nginx directory
-  file:
-    path: "{{ nginx_dir }}/nginx.conf"
-    state: absent
-
-- name: Delete sites-available_titb.conf file from nginx directory
-  file:
-    path: "{{ nginx_dir }}/sites-available_titb.conf"
-    state: absent
+      pull: yes
+    name: "{{ nginx_container }}"
+    source: build

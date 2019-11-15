@@ -26,12 +26,12 @@ jobs:
              -v /var/run/docker.sock:/var/run/docker.sock -v /etc/profile.d/:/etc/profile.d/ -v /tmp/:/tmp/ -v /titb/:/titb/
              e2e_test /bin/bash /titb/src/klee_web/tests/python_tests/unit_tests.sh
       - run: sudo docker run --rm -it
-             -e WEBPAGE=$(sudo docker inspect -f "{{ .NetworkSettings.Networks.web_network.IPAddress }}" nginx-container)
+             -e WEBPAGE=$(sudo docker inspect -f "{{ .NetworkSettings.Networks.web_network.IPAddress }}" kleeweb-nginx)
              --network $(sudo docker network ls | grep bridge | sed -n '2 p' | awk '{print $2}')
              -v /titb/src/klee_web/tests/python_tests/:/titb/src/klee_web/tests/python_tests/
              e2e_test /bin/bash /titb/src/klee_web/tests/python_tests/webserver_test.sh
       # ---- JavaScript end-to-end tests ----
       - run: sudo docker run --rm -it
-             -e WEBPAGE=$(sudo docker inspect -f "{{ .NetworkSettings.Networks.web_network.IPAddress }}" nginx-container)
+             -e WEBPAGE=$(sudo docker inspect -f "{{ .NetworkSettings.Networks.web_network.IPAddress }}" kleeweb-nginx)
              --network $(sudo docker network ls | grep bridge | sed -n '2 p' | awk '{print $2}')
              -v /titb/src/klee_web/tests/js_tests/test_files/:/titb/src/klee_web/tests/js_tests/test_files/ e2e_test_js
