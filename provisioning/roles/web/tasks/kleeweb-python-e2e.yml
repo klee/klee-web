@@ -1,0 +1,51 @@
+- name: "Build {{ e2e_container }} container"
+  docker_image:
+    build:
+      path: "{{ application_dir }}"
+      dockerfile: Dockerfile-tests
+      pull: no
+    name: "{{ e2e_container }}"
+    source: build
+
+# TODO: I don't want run, I want execute
+- name: "Run {{ e2e_container }} container"
+  docker_container:
+    name: "{{ e2e_container }}"
+    image: "{{ e2e_container }}"
+    env:
+      REDIS_HOST: "{{ redis_host }}"
+      REDIS_DB_NUMBER: "{{ redis_db_number | string }}"
+      REDIS_PORT: "{{ redis_port | string }}"
+      MAIN_WEBPAGE: "{{ main_webpage }}"
+
+      CELERY_BROKER_URL: "{{ celery_broker_url }}"
+
+      DB_USER: "{{ db_user }}"
+      DB_PASSWORD: "{{ db_password }}"
+      DB_HOST: "{{ db_host }}"
+      DB_PORT: "{{ db_port | string }}"
+      DB_NAME: "{{ db_name }}"
+
+      ADMIN_PASSWORD: "{{ admin_password }}"
+
+      AWS_ACCESS_KEY: "{{ aws_access_key if (aws_access_key is defined) else '' }}"
+      AWS_SECRET_KEY: "{{ aws_secret_key if (aws_secret_key is defined) else '' }}"
+
+      MAILGUN_API_KEY: "{{ mailgun_api_key if (mailgun_api_key is defined) else '' }}"
+      DJANGO_SECRET_KEY: "{{ django_secret_key if (django_secret_key is defined) else '' }}"
+
+      GOOGLE_OAUTH_KEY: "{{ google_oauth_key if (google_oauth_key is defined) else '' }}"
+      GOOGLE_OAUTH_SECRET: "{{ google_oauth_secret if (google_oauth_secret is defined) else '' }}"
+      GITHUB_OAUTH_KEY: "{{ github_oauth_key if (github_oauth_key is defined) else '' }}"
+      GITHUB_OAUTH_SECRET: "{{ github_oauth_secret if (github_oauth_secret is defined) else '' }}"
+      FB_OAUTH_KEY: "{{ fb_oauth_key if (fb_oauth_key is defined) else '' }}"
+      FB_OAUTH_SECRET: "{{ fb_oauth_secret if (fb_oauth_secret is defined) else '' }}"
+      GMAIL_PASSWORD: "{{ gmail_password if (gmail_password is defined) else '' }}"
+
+      DEVELOPMENT: "1"
+    volumes:
+      # To start other containers
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - name: "{{ container_network }}"
+    recreate: yes

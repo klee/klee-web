@@ -7,3 +7,6 @@
   tags: ["build", "build_django"]
 - include: django_deploy.yml
   tags: ["deploy_container"]
+  when: production
+- include: kleeweb-python-e2e.yml
+  when: not production

@@ -9,5 +9,4 @@ cloud-vm-41-188.doc.ic.ac.uk
 cloud-vm-41-189.doc.ic.ac.uk
 
 [all:vars]
-# Change the user below to your imperial account
-ansible_ssh_user=dg3718
+ansible_ssh_user=aa5615

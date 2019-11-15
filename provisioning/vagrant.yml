@@ -11,12 +11,13 @@
     - role: geerlingguy.docker
       when: not ci
     - common
-    - env_files
 
 - hosts: master
   become: yes
   vars_files:
     - vars/common.yml
+  vars:
+    - production: no
   roles:
     - redis
     - db
