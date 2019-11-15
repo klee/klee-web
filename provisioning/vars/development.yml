@@ -1,5 +1,0 @@
-development: yes
-
-redis_host: "{{ network_gateway if (ci) else hostvars['master']['http_host'] }}"
-db_password: development
-admin_password: development
