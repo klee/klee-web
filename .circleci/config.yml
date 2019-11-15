@@ -16,12 +16,12 @@ jobs:
       - run: cd /titb/
       - run: sudo ansible-playbook -i ./provisioning/hosts-ci --syntax-check ./provisioning/vagrant.yml
       - run: sudo ansible-playbook -i ./provisioning/hosts-ci -vvv ./provisioning/vagrant.yml
-      # choose second bridge network, which is the private network
+      # TODO: We will enable them again soon
       # ---- Python related tests ----
-      - run: sudo docker run --rm -it
-             -v /titb/:/titb/
-             e2e_test /bin/bash /titb/src/klee_web/tests/python_tests/flake8_test.sh
-      - run: sudo docker run --rm -it
-             --network $(sudo docker network ls | grep bridge | sed -n '2 p' | awk '{print $2}')
-             -v /var/run/docker.sock:/var/run/docker.sock -v /etc/profile.d/:/etc/profile.d/ -v /tmp/:/tmp/ -v /titb/:/titb/
-             e2e_test /bin/bash /titb/src/klee_web/tests/python_tests/unit_tests.sh
+#       - run: sudo docker run --rm -it
+#              -v /titb/:/titb/
+#              e2e_test /bin/bash /titb/src/klee_web/tests/python_tests/flake8_test.sh
+#       - run: sudo docker run --rm -it
+#              --network $(sudo docker network ls | grep bridge | sed -n '2 p' | awk '{print $2}')
+#              -v /var/run/docker.sock:/var/run/docker.sock -v /etc/profile.d/:/etc/profile.d/ -v /tmp/:/tmp/ -v /titb/:/titb/
+#              e2e_test /bin/bash /titb/src/klee_web/tests/python_tests/unit_tests.sh
