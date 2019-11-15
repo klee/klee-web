@@ -95,13 +95,13 @@ class JobViewSet(viewsets.ViewSet):
         email = request.data.get("email")
         args = request.data.get("run_configuration", {})
 
-        endpoint = request.build_absolute_uri(reverse('jobs_notify'))
-        if "localhost" in endpoint:
-            endpoint = endpoint.replace(
-                'localhost', socket.gethostbyname(socket.gethostname()))
-
-        task = submit_code.apply_async([code, email, args, endpoint],
-                                       soft_time_limit=worker_config.timeout)
+        task = submit_code.apply_async(
+            [code,
+             email,
+             args,
+             request.build_absolute_uri(reverse('jobs_notify'))],
+            soft_time_limit=worker_config.timeout
+        )
 
         Task.objects.create(task_id=task.task_id,
                             email_address=email,
