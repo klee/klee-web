@@ -86,15 +86,20 @@ class WorkerRunner():
         s = LXC_MESSAGE_PATTERN.sub('', s)
         return s.strip()
 
-    def run_with_docker(self, command, env=None):
+    def run_with_docker(self, command, env=None, timeout=600):
         try:
             output = subprocess.check_output(
                 self.docker_command(env) + command,
+                timeout=timeout,
                 universal_newlines=True)
             return self.clean_stdout(output)
         except subprocess.CalledProcessError as ex:
             message = 'Error running {}:\n{}'.format(
                 ' '.join(command), self.clean_stdout(ex.output))
+            raise KleeRunFailure(message)
+        except subprocess.TimeoutExpired as ex:
+            message = 'Timeout error after {} for {}:\n{}'.format(
+                timeout, ' '.join(command), self.clean_stdout(ex.output or ''))
             raise KleeRunFailure(message)
 
     def send_notification(self, notification_type, data):

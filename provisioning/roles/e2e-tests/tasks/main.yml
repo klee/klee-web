@@ -6,6 +6,7 @@
       pull: yes
     name: "{{ e2e_container }}"
     source: build
+    force_source: yes
 
 - name: "Start {{ e2e_container }} container"
   docker_container:
@@ -26,6 +27,7 @@
       pull: no
     name: "{{ worker_e2e_container }}"
     source: build
+    force_source: yes
 
 - name: "Start {{ worker_e2e_container }} container"
   docker_container:
@@ -35,7 +37,6 @@
       REDIS_HOST: "{{ redis_host }}"
       REDIS_PORT: "{{ redis_port | string }}"
       DEVELOPMENT: "1"
-      # CELERY_BROKER_URL: "{{ celery_broker_url }}"
     volumes:
       # To start other containers
       - /var/run/docker.sock:/var/run/docker.sock

@@ -70,6 +70,14 @@ class TestWorkerRunner(unittest.TestCase):
     def test_fail_on_invalid_syntax(self):
         self.run_klee_test('invalid_syntax', expect_failure=True)
 
+    def test_timeout_container(self):
+        try:
+            self.runner.run_with_docker(['/bin/sleep', '10'], timeout=1)
+        except KleeRunFailure as ex:
+            self.assertIn('Timeout error after 1', str(ex))
+            return
+        self.assertTrue(False)
+
 
 if __name__ == '__main__':
     unittest.main()
