@@ -6,10 +6,7 @@
     restart_policy: always
     env:
       REDIS_HOST: "{{ redis_host }}"
-      REDIS_DB_NUMBER: "{{ redis_db_number | string }}"
       REDIS_PORT: "{{ redis_port | string }}"
-      MAIN_WEBPAGE: "{{ main_webpage }}"
-
       CELERY_BROKER_URL: "{{ celery_broker_url }}"
 
       DB_USER: "{{ db_user }}"
@@ -35,14 +32,13 @@
       GMAIL_PASSWORD: "{{ gmail_password }}"
 
       DEVELOPMENT: "{{ '1' if (development) else '0' }}"
-      PYTHONPATH: "/titb/"
     volumes:
       # For nginx to uWSGI's socket
       - /tmp:/tmp
       # For static content
       - "/static:{{ application_dir }}/frontend/static"
-      # source code folders:
-      - "{{ code_dir }}:{{ code_dir }}"
+      # Source code folders for live code editing during development
+      # - "{{ application_dir }}:/kleeweb"
     networks:
       - name: "{{ container_network }}"
     recreate: yes
