@@ -1,17 +1,18 @@
-FROM python:3.8-rc-buster
+FROM python:3.8-buster
 
 # Install Docker dependencies
 RUN apt-get update
-RUN apt --assume-yes install docker.io
-RUN apt install sudo
+RUN apt-get install -y sudo docker.io
 
-# create non-root user with sudo access
+# Create non-root user with sudo access
 RUN useradd -r worker
 RUN echo "worker ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers
 
-COPY requirements.txt /titb/src/requirements.txt
-WORKDIR /titb/src/
-RUN pip install -r requirements.txt
-RUN rm requirements.txt
+COPY ./requirements.txt /
+RUN pip install -r /requirements.txt
+RUN rm /requirements.txt
 
-CMD /src/python_runner.sh celery -l INFO -A worker.worker worker
+WORKDIR /worker
+COPY . /worker/worker
+
+CMD celery worker --app worker.worker --loglevel=info

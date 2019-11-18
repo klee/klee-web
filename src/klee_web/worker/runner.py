@@ -22,7 +22,7 @@ from worker.processor.stats import StatsProcessor
 
 ANSI_ESCAPE_PATTERN = re.compile(r'\x1b[^m]*m')
 LXC_MESSAGE_PATTERN = re.compile(r'lxc-start: .*')
-DEVELOPMENT = os.environ.get('DEVELOPMENT') is not None
+DEVELOPMENT = True if os.environ['DEVELOPMENT'] == "1" else False
 
 worker_config = WorkerConfig()
 

@@ -1,4 +1,0 @@
----
-worker_dir: "{{ code_dir }}/worker"
-klee_env_path_etc: /etc/profile.d/klee-web-environment.sh
-number_of_workers: 2
