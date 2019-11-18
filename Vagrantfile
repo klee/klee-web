@@ -47,14 +47,9 @@ Vagrant.configure("2") do |config|
 
   config.vm.define "worker-vm" do |subconfig|
     subconfig.vm.box = BOX_IMAGE
+    subconfig.disksize.size = '30GB'
     subconfig.vm.hostname = "worker-vm"
     subconfig.vm.network "private_network", ip: "192.168.33.11"
-  end
-
-  config.vm.define "testing-vm" do |testing|
-    testing.vm.box = BOX_IMAGE
-    testing.vm.hostname = "testing-vm"
-    testing.vm.network "private_network", ip: "192.168.33.9"
   end
 
   config.vm.provider "virtualbox" do |v|
