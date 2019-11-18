@@ -51,12 +51,6 @@ Vagrant.configure("2") do |config|
     subconfig.vm.network "private_network", ip: "192.168.33.11"
   end
 
-  config.vm.define "testing-vm" do |testing|
-    testing.vm.box = BOX_IMAGE
-    testing.vm.hostname = "testing-vm"
-    testing.vm.network "private_network", ip: "192.168.33.9"
-  end
-
   config.vm.provider "virtualbox" do |v|
     v.memory = 2048
     v.cpus = 2
