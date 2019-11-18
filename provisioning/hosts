@@ -1,7 +1,7 @@
 [master]
 cloud-vm-41-210.doc.ic.ac.uk
 
-[worker]
+[workers]
 cloud-vm-40-70.doc.ic.ac.uk
 cloud-vm-41-188.doc.ic.ac.uk
 

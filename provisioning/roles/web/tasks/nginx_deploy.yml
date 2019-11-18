@@ -1,12 +1,12 @@
 ---
 - name: Run Docker nginx container
   docker_container:
-    name: nginx_container
+    name: nginx-container
     image: nginx_image
     restart_policy: always
     networks:
       - name: "{{ container_network }}"
-    ports: 
+    ports:
       - "80:80"
     volumes:
       - /tmp:/tmp

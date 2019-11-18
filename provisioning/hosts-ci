@@ -1,0 +1,13 @@
+[master]
+localhost
+
+[workers]
+localhost
+
+[testing]
+localhost
+
+[ci:children]
+master
+workers
+testing
