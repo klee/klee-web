@@ -18,6 +18,28 @@
     detach: no
     cleanup: yes
 
+- name: "Build {{ worker_e2e_container }} container"
+  docker_image:
+    build:
+      path: "{{ worker_dir }}"
+      dockerfile: Dockerfile-tests
+      pull: no
+    name: "{{ worker_e2e_container }}"
+    source: build
+
+- name: "Start {{ worker_e2e_container }} container"
+  docker_container:
+    name: "{{ worker_e2e_container }}"
+    image: "{{ worker_e2e_container }}"
+    volumes:
+      # To start other containers
+      - /var/run/docker.sock:/var/run/docker.sock
+      # For Klee to place results
+      - /tmp/:/tmp/
+    network_mode: "{{ container_network }}"
+    detach: no
+    cleanup: yes
+
 - name: Create klee user for cronjob
   user: name=klee shell=/bin/bash groups=sudo
   when: not ci

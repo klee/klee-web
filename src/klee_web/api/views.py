@@ -1,5 +1,4 @@
 import datetime
-import socket
 
 from django.urls import reverse
 
