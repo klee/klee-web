@@ -3,8 +3,6 @@
   vars:
     pip_install_packages:
       - name: docker
-  vars_files:
-    - vars/common.yml
   pre_tasks:
     - name: apt-get update
       apt:
@@ -19,8 +17,6 @@
 
 - hosts: master
   become: yes
-  vars_files:
-    - vars/common.yml
   roles:
     - redis
     - db

@@ -6,6 +6,12 @@ ci: no
 git_repo: https://github.com/Denis-Gavrielov/klee-web.git
 
 python_runner: "{{ working_dir }}/python_runner.sh"
+
+redis_port: 6379
+redis_db_number: 0
+celery_broker_url: "redis://{{ redis_host }}:{{ redis_port }}/{{ redis_db_number }}"
+db_host: "{{ postgres_container }}"
+db_port: 5432
 db_name: klee_web
 db_user: klee_web
 
