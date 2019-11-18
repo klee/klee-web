@@ -2,7 +2,7 @@
 development: yes
 ci: yes
 
-main_webpage: nginx-container
+main_webpage: "{{ nginx_container }}"
 redis_host: "{{ redis_container }}"
 db_password: development
 admin_password: development

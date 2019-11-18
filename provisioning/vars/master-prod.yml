@@ -1,4 +1,4 @@
 development: no
 
 redis_host: "{{ redis_container }}"
-webpage: "{{ django_container }}"
+webpage: "{{ kleeweb_container }}"
