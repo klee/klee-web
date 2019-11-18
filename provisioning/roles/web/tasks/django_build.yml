@@ -6,3 +6,4 @@
       pull: yes
     name: "{{ kleeweb_container }}"
     source: build
+    force_source: yes

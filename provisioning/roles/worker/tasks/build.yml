@@ -6,6 +6,7 @@
       pull: yes
     name: "{{ kleeweb_worker_container }}"
     source: build
+    force_source: yes
 
 - name: Get KLEE image from Docker Hub (this may take a while...)
   docker_image:
