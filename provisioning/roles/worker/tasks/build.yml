@@ -12,3 +12,4 @@
   docker_image:
     name: klee/klee
     tag: latest
+    source: pull
