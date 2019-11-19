@@ -14,5 +14,13 @@ WORKDIR /kleeweb
 COPY . /kleeweb
 
 RUN DEVELOPMENT=1 ./build.sh
+RUN ln -s /kleeweb/frontend/static /static
+
+# For nginx static content
+# TODO: Is there a way to avoid the symlink?
+VOLUME /static/
+# For nginx to uWSGI's socket
+# TODO: The following doesn't work, we have to manually export the socket
+# VOLUME /tmp
 
 CMD ./run.sh
