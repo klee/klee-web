@@ -1,4 +1,7 @@
 ---
+- include: python_e2e.yml
+  when: development
+
 - name: "Build the {{ e2e_container }} container"
   docker_image:
     build:
@@ -15,33 +18,6 @@
     env:
       WEBPAGE: "{{ main_webpage }}"
       ADMIN_PASSWORD: "{{ admin_password }}"
-    network_mode: "{{ container_network }}"
-    detach: no
-    cleanup: yes
-
-- name: "Build {{ worker_e2e_container }} container"
-  docker_image:
-    build:
-      path: "{{ worker_dir }}"
-      dockerfile: Dockerfile-tests
-      pull: no
-    name: "{{ worker_e2e_container }}"
-    source: build
-    force_source: yes
-
-- name: "Start {{ worker_e2e_container }} container"
-  docker_container:
-    name: "{{ worker_e2e_container }}"
-    image: "{{ worker_e2e_container }}"
-    env:
-      REDIS_HOST: "{{ redis_host }}"
-      REDIS_PORT: "{{ redis_port | string }}"
-      DEVELOPMENT: "1"
-    volumes:
-      # To start other containers
-      - /var/run/docker.sock:/var/run/docker.sock
-      # For Klee to place results
-      - /tmp/:/tmp/
     network_mode: "{{ container_network }}"
     detach: no
     cleanup: yes
