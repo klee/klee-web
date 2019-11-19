@@ -9,9 +9,8 @@
     ports:
       - "80:80"
     volumes:
+      # For nginx to uWSGI's socket
       - /tmp:/tmp
-      # Shares static files from kleeweb
-      # TODO: Ideally we should have kleeweb exporting the static content
-      # and then coping it into the nginx container.
-      - /static:/static
+    volumes_from:
+      - "{{ kleeweb_container }}"
     recreate: yes

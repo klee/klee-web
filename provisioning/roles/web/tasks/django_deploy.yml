@@ -35,8 +35,6 @@
     volumes:
       # For nginx to uWSGI's socket
       - /tmp:/tmp
-      # For static content
-      - "/static:{{ application_dir }}/frontend/static"
       # Source code folders for live code editing during development
       # - "{{ application_dir }}:/kleeweb"
     networks:
