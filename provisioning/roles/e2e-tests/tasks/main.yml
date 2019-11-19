@@ -31,6 +31,11 @@
   docker_container:
     name: "{{ worker_e2e_container }}"
     image: "{{ worker_e2e_container }}"
+    env:
+      REDIS_HOST: "{{ redis_host }}"
+      REDIS_PORT: "{{ redis_port | string }}"
+      DEVELOPMENT: "1"
+      # CELERY_BROKER_URL: "{{ celery_broker_url }}"
     volumes:
       # To start other containers
       - /var/run/docker.sock:/var/run/docker.sock
