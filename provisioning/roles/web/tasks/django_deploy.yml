@@ -1,16 +1,48 @@
 ---
-- name: Start docker klee-web
+- name: "Start {{ kleeweb_container }} container"
   docker_container:
     name: "{{ kleeweb_container }}"
-    image: klee_web
+    image: "{{ kleeweb_container }}"
     restart_policy: always
-    networks:
-      - name: "{{ container_network }}"
+    env:
+      REDIS_HOST: "{{ redis_host }}"
+      REDIS_DB_NUMBER: "{{ redis_db_number | string }}"
+      REDIS_PORT: "{{ redis_port | string }}"
+      MAIN_WEBPAGE: "{{ main_webpage }}"
+
+      CELERY_BROKER_URL: "{{ celery_broker_url }}"
+
+      DB_USER: "{{ db_user }}"
+      DB_PASSWORD: "{{ db_password }}"
+      DB_HOST: "{{ db_host }}"
+      DB_PORT: "{{ db_port | string }}"
+      DB_NAME: "{{ db_name }}"
+
+      ADMIN_PASSWORD: "{{ admin_password }}"
+
+      AWS_ACCESS_KEY: "{{ aws_access_key }}"
+      AWS_SECRET_KEY: "{{ aws_secret_key }}"
+
+      MAILGUN_API_KEY: "{{ mailgun_api_key }}"
+      DJANGO_SECRET_KEY: "{{ django_secret_key }}"
+
+      GOOGLE_OAUTH_KEY: "{{ google_oauth_key }}"
+      GOOGLE_OAUTH_SECRET: "{{ google_oauth_secret }}"
+      GITHUB_OAUTH_KEY: "{{ github_oauth_key }}"
+      GITHUB_OAUTH_SECRET: "{{ github_oauth_secret }}"
+      FB_OAUTH_KEY: "{{ fb_oauth_key }}"
+      FB_OAUTH_SECRET: "{{ fb_oauth_secret }}"
+      GMAIL_PASSWORD: "{{ gmail_password }}"
+
+      DEVELOPMENT: "{{ '1' if (development) else '0' }}"
+      PYTHONPATH: "/titb/"
     volumes:
+      # For nginx to uWSGI's socket
       - /tmp:/tmp
+      # For static content
+      - "/static:{{ application_dir }}/frontend/static"
       # source code folders:
       - "{{ code_dir }}:{{ code_dir }}"
-      # files for secrets and environmental variables:
-      - "{{ admin_ps_dir }}/admin_psw.sh:{{ admin_ps_dir }}/admin_psw.sh"
-      - "{{ klee_web_env }}:{{ klee_web_env }}"
+    networks:
+      - name: "{{ container_network }}"
     recreate: yes

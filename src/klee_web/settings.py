@@ -25,22 +25,19 @@ sys.path.insert(0, os.path.join(BASE_DIR, ".."))
 # See https://docs.djangoproject.com/en/1.7/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-
-
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get("DEVELOPMENT") is not None
+DEBUG = True if os.environ['DEVELOPMENT'] == "1" else False
 
 # If we're in debug mode, generate a random key
 # so that we don't need to provide one
 
-key = ''
+SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "")
+
 if DEBUG:
     # Long but silences flake8
     k = [random.SystemRandom().choice(string.ascii_letters + string.digits)
          for _ in range(50)]
-    key = ''.join(k)
-
-SECRET_KEY = key if DEBUG else os.environ.get("DJANGO_SECRET_KEY")
+    SECRET_KEY = ''.join(k)
 
 ALLOWED_HOSTS = ['*']
 
@@ -102,11 +99,11 @@ WSGI_APPLICATION = 'wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': os.environ["DB_NAME"],
-        'USER': os.environ["DB_USER"],
-        'PASSWORD': os.environ["DB_PASSWORD"],
-        'HOST': os.environ["DB_HOST"],
-        'PORT': os.environ["DB_PORT"],
+        'NAME': os.environ.get("DB_NAME", ""),
+        'USER': os.environ.get("DB_USER", ""),
+        'PASSWORD': os.environ.get("DB_PASSWORD", ""),
+        'HOST': os.environ.get("DB_HOST", ""),
+        'PORT': os.environ.get("DB_PORT", ""),
     }
 }
 
@@ -134,9 +131,8 @@ GEOIP_PATH = 'geoip'
 # https://docs.djangoproject.com/en/1.7/howto/static-files/
 
 STATIC_URL = '/static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+STATIC_ROOT = os.path.join(os.path.dirname(__file__), 'frontend', 'static')
 AUTH_USER_MODEL = 'frontend.User'
-
 
 # Keys and secrets used to authenticate with Google, GitHub and Facebook
 SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = os.environ.get('GOOGLE_OAUTH_KEY') or ''
