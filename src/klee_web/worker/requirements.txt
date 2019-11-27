@@ -4,3 +4,4 @@ requests==2.22.*
 redis==3.2.*
 fakeredis==1.0.*
 gcovparse==0.0.*
+flake8

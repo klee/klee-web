@@ -1,7 +1,7 @@
 import unittest
 
 import fakeredis
-from src.worker.worker_config import WorkerConfig
+from worker.worker_config import WorkerConfig
 
 
 class TestWorkerConfig(unittest.TestCase):

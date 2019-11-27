@@ -1,21 +1,28 @@
 ---
-- name: Start docker Worker
+- name: "Start {{ kleeweb_worker_container }} container"
   docker_container:
-    name: "worker-{{ item }}"
-    image: celery_worker
+    name: "{{ kleeweb_worker_container }}"
+    image: "{{ kleeweb_worker_container }}"
     restart_policy: always
-    volumes: 
-    # can start other containers:
-    - /var/run/docker.sock:/var/run/docker.sock
-    # can place results into /tmp/ folder
-    - /tmp/:/tmp/
-    # connect source code paths 
-    - "{{ klee_env_path_etc }}:{{ klee_env_path_etc }}"
-    - "{{ python_runner }}:{{ python_runner }}"
-    - "{{ worker_dir }}:{{ worker_dir }}"
+    env:
+      REDIS_HOST: "{{ redis_host }}"
+      REDIS_PORT: "{{ redis_port | string }}"
+      CELERY_BROKER_URL: "{{ celery_broker_url }}"
+
+      MAILGUN_API_KEY: "{{ mailgun_api_key if (mailgun_api_key is defined) else '' }}"
+      AWS_ACCESS_KEY: "{{ aws_access_key if (aws_access_key is defined) else '' }}"
+      AWS_SECRET_KEY: "{{ aws_secret_key if (aws_secret_key is defined) else '' }}"
+
+      DEVELOPMENT: "{{ '1' if (development) else '0' }}"
+    volumes:
+      # To start other containers
+      - /var/run/docker.sock:/var/run/docker.sock
+      # For Klee to place results
+      - /tmp/:/tmp/
+      # Source code folders for live code editing during development
+      # - "{{ worker_dir }}:/worker/worker"
     network_mode: "{{ container_network if (ci) else 'bridge' }}"
     recreate: yes
-  with_sequence: start=1 end="{{ number_of_workers }}"
 
 - name: Create klee user for cronjob
   user: name=klee shell=/bin/bash groups=sudo
@@ -23,9 +30,8 @@
 
 - name: Add cronjob to restart worker on missed celery heartbeat
   cron:
-    name: "Restart worker-{{ item }} if celery heartbeat missed"
+    name: "Restart {{ kleeweb_worker_container }} if celery heartbeat missed"
     minute: "30"
-    job: "if [ $(sudo docker logs worker-{{ item }} &> ~/logs-{{ item }}.txt ; tail -1 ~/logs-{{ item }}.txt | grep \"missed heartbeat from celery\" | wc -l) -eq 1 ]; then $(sudo docker restart worker-{{ item }}); fi"
-    user: klee 
-  when: not ci  
-  with_sequence: start=1 end="{{ number_of_workers }}"
+    job: 'if [ $(sudo docker logs {{ kleeweb_worker_container }} &> ~/logs-{{ kleeweb_worker_container }}.txt ; tail -1 ~/logs-{{ kleeweb_worker_container }}.txt | grep "missed heartbeat from celery" | wc -l) -eq 1 ]; then $(sudo docker restart {{ kleeweb_worker_container }}); fi'
+    user: klee
+  when: not ci

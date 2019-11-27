@@ -6,6 +6,12 @@ ci: no
 git_repo: https://github.com/Denis-Gavrielov/klee-web.git
 
 python_runner: "{{ working_dir }}/python_runner.sh"
+
+redis_port: 6379
+redis_db_number: 0
+celery_broker_url: "redis://{{ redis_host }}:{{ redis_port }}/{{ redis_db_number }}"
+db_host: "{{ postgres_container }}"
+db_port: 5432
 db_name: klee_web
 db_user: klee_web
 
@@ -13,6 +19,7 @@ db_user: klee_web
 src_dir: /titb
 code_dir: "{{ src_dir }}/src"
 application_dir: "{{ code_dir }}/klee_web"
+worker_dir: "{{ application_dir }}/worker"
 nginx_dir: "{{ src_dir }}/src/nginx"
 e2e_dir: "{{ src_dir }}/src/e2e"
 working_dir: /src
@@ -33,6 +40,7 @@ redis_container: "{{ project_prefix }}-redis"
 postgres_container: "{{ project_prefix }}-postgres"
 nginx_container: "{{ project_prefix }}-nginx"
 e2e_container: "{{ project_prefix }}-e2e"
+worker_e2e_container: "{{ kleeweb_worker_container }}-e2e"
 
 # Kleeweb internal variables
 aws_access_key: ""

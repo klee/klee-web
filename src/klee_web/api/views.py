@@ -1,5 +1,4 @@
 import datetime
-import socket
 
 from django.urls import reverse
 
@@ -16,8 +15,8 @@ from api.permissions import IsOwnerOrReadOnly
 from api.serializers import ProjectSerializer, FileSerializer
 from frontend.models import Project, File, Task
 
-from src.worker.worker import submit_code
-from src.worker.worker_config import WorkerConfig
+from worker.worker import submit_code
+from worker.worker_config import WorkerConfig
 
 
 class ProjectViewSet(viewsets.ModelViewSet):

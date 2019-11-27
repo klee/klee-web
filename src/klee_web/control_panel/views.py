@@ -8,8 +8,8 @@ from django.shortcuts import render
 
 from .decorators import group_required
 from .forms import AdminConfigForm
-from src.worker.worker import celery
-from src.worker.worker_config import WorkerConfig
+from worker.worker import celery
+from worker.worker_config import WorkerConfig
 from . import usage_stats
 from . import klee_tasks
 

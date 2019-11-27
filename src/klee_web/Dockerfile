@@ -6,15 +6,21 @@ RUN apt-get install -y ruby-full nodejs
 RUN npm install -g bower grunt-cli
 RUN gem install sass
 
-WORKDIR /titb/src/klee_web
-COPY . /titb/src/klee_web
+COPY ./requirements.txt /
+RUN pip install -r /requirements.txt
+RUN rm /requirements.txt
 
-RUN pip install -r ./requirements.txt
+WORKDIR /kleeweb
+COPY . /kleeweb
 
-ENV DEVELOPMENT=1
-RUN ./build.sh
+RUN DEVELOPMENT=1 ./build.sh
+RUN ln -s /kleeweb/frontend/static /static
 
-CMD ./build.sh \
-  && python manage.py migrate --noinput \
-  && python manage.py update_admin_user --username=admin --password=$ADMIN_PASSWORD \
-  && uwsgi --master --uid www-data --gid www-data -s /tmp/uwsgi.sock -w wsgi:application --chmod-socket=666
+# For nginx static content
+# TODO: Is there a way to avoid the symlink?
+VOLUME /static/
+# For nginx to uWSGI's socket
+# TODO: The following doesn't work, we have to manually export the socket
+# VOLUME /tmp
+
+CMD ./run.sh

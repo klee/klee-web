@@ -1,11 +1,15 @@
 ---
-- name: Build docker image Worker
+- name: "Build {{ kleeweb_worker_container }} image"
   docker_image:
     build:
       path: "{{ worker_dir }}"
-    name: celery_worker
+      pull: yes
+    name: "{{ kleeweb_worker_container }}"
+    source: build
+    force_source: yes
 
 - name: Get KLEE image from Docker Hub (this may take a while...)
   docker_image:
     name: klee/klee
     tag: latest
+    source: pull
