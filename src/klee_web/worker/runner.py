@@ -86,7 +86,10 @@ class WorkerRunner():
         s = LXC_MESSAGE_PATTERN.sub('', s)
         return s.strip()
 
-    def run_with_docker(self, command, env=None, timeout=600):
+    def run_with_docker(self,
+                        command,
+                        env=None,
+                        timeout=worker_config.container_timeout):
         try:
             output = subprocess.check_output(
                 self.docker_command(env) + command,

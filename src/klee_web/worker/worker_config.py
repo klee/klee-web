@@ -25,6 +25,10 @@ class WorkerConfig():
     def timeout(self):
         return self.get_config('timeout', default=30)
 
+    @property
+    def container_timeout(self):
+        return self.get_config('container_timeout', default=600)
+
     def get_config(self, key, default=None):
         value = self.r.get('{}:{}'.format(WorkerConfig.NAMESPACE, key))
         if value is not None and value.isdigit():
