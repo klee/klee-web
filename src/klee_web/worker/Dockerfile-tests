@@ -7,6 +7,6 @@ WORKDIR /worker
 
 RUN pip install flake8
 
-CMD flake8 --ignore=E722 --max-complexity 12 . \
+CMD flake8 --extend-ignore=E722 --max-complexity 12 . \
   && docker pull klee/klee:latest \
   && python -m unittest discover -s ./worker/tests/ -p 'test_*.py'

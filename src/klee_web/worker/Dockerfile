@@ -15,6 +15,6 @@ RUN rm /requirements.txt
 WORKDIR /worker
 COPY . /worker/worker
 
-RUN flake8 --ignore=E722 --max-complexity 12 .
+RUN flake8 --extend-ignore=E722 --max-complexity 12 .
 
 CMD celery worker --app worker.worker --loglevel=info
