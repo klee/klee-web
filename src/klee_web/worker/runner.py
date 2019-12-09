@@ -33,11 +33,15 @@ class WorkerRunner():
     DOCKER_MOUNT_DIR = '/tmp/code'
     DOCKER_CODE_FILE = os.path.join(DOCKER_MOUNT_DIR, CODE_FILE_NAME)
     DOCKER_OBJECT_FILE = os.path.join(DOCKER_MOUNT_DIR, OBJECT_FILE_NAME)
-    DEFAULT_PROCESSOR_PIPELINE = [KleeRunProcessor, UploadProcessor,
-                                  FailedTestProcessor, StatsProcessor,
-                                  CoverageProcessor]
+    DEFAULT_PROCESSOR_PIPELINE = [
+        KleeRunProcessor, UploadProcessor, FailedTestProcessor, StatsProcessor,
+        CoverageProcessor
+    ]
 
-    def __init__(self, task_id, callback_endpoint=None, pipeline=None,
+    def __init__(self,
+                 task_id,
+                 callback_endpoint=None,
+                 pipeline=None,
                  worker_name=''):
         self.task_id = task_id
         self.callback_endpoint = callback_endpoint
@@ -66,11 +70,11 @@ class WorkerRunner():
 
     @property
     def docker_flags(self):
-        flags = ['-t',
-                 '--cpu-shares={}'.format(worker_config.cpu_share),
-                 '-v', '{}:{}'.format(self.tempdir, self.DOCKER_MOUNT_DIR),
-                 '-w', self.DOCKER_MOUNT_DIR,
-                 '--net=none']
+        flags = [
+            '-t', '--cpu-shares={}'.format(worker_config.cpu_share), '-v',
+            '{}:{}'.format(self.tempdir, self.DOCKER_MOUNT_DIR), '-w',
+            self.DOCKER_MOUNT_DIR, '--net=none'
+        ]
 
         # We have to disable cleanup on CircleCI (permissions issues)
         if not os.environ.get('CI'):
@@ -86,15 +90,23 @@ class WorkerRunner():
         s = LXC_MESSAGE_PATTERN.sub('', s)
         return s.strip()
 
-    def run_with_docker(self, command, env=None):
+    def run_with_docker(self,
+                        command,
+                        env=None,
+                        timeout=worker_config.container_timeout):
         try:
-            output = subprocess.check_output(
-                self.docker_command(env) + command,
-                universal_newlines=True)
+            output = subprocess.check_output(self.docker_command(env) +
+                                             command,
+                                             timeout=timeout,
+                                             universal_newlines=True)
             return self.clean_stdout(output)
         except subprocess.CalledProcessError as ex:
             message = 'Error running {}:\n{}'.format(
                 ' '.join(command), self.clean_stdout(ex.output))
+            raise KleeRunFailure(message)
+        except subprocess.TimeoutExpired as ex:
+            message = 'Timeout error after {} for {}:\n{}'.format(
+                timeout, ' '.join(command), self.clean_stdout(ex.output or ''))
             raise KleeRunFailure(message)
 
     def send_notification(self, notification_type, data):
@@ -138,9 +150,5 @@ class WorkerRunner():
             print('KLEE Run Failed')
             print(str(ex))
 
-            result = {
-                'klee_run': {
-                    'output': str(ex)
-                }
-            }
+            result = {'klee_run': {'output': str(ex)}}
             self.send_notification('job_failed', result)

@@ -26,4 +26,8 @@
   become: yes
   roles:
     - worker
+
+- hosts: testing
+  become: yes
+  roles:
     - e2e-tests

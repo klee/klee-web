@@ -23,7 +23,7 @@ Vagrant.configure("2") do |config|
     ansible.groups = {
       "master" => ["master-vm"],
       "workers" => ["worker-vm"],
-      "testing" => ["testing-vm"],
+      "testing" => ["worker-vm"],
       "vagrant:children" => ["master", "workers", "testing"],
       "vagrant:vars" => {"master_ip" => MASTER_IP},
     }

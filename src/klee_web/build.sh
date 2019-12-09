@@ -5,7 +5,7 @@ set -e
 CUR_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
 echo "Running flake8"
-flake8 --ignore=E722 --max-complexity 12 --exclude=migrations "${CUR_DIR}"
+flake8 --extend-ignore=E722 --max-complexity 12 --exclude=migrations "${CUR_DIR}"
 
 echo "Downloading GeoIP"
 mkdir -p "${CUR_DIR}/geoip"

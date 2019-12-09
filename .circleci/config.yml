@@ -8,8 +8,7 @@ jobs:
       # ---- Provisioning ----
       - checkout
       - run: sudo apt-get update -qq
-      - run: sudo apt-get install software-properties-common
-      - run: sudo apt install python3-pip
+      - run: sudo apt-get install software-properties-common python3-pip
       - run: sudo pip3 install ansible
       - run: sudo ln -s /home/circleci/project/ /titb
       - run: sudo ansible-galaxy install --force --role-file=requirements.yml
