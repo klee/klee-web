@@ -18,6 +18,7 @@
     env:
       WEBPAGE: "{{ main_webpage }}"
       ADMIN_PASSWORD: "{{ admin_password }}"
+      ALERT_EMAILS: "{{ alert_emails }}"
     network_mode: "{{ container_network }}"
     detach: no
 

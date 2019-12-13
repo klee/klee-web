@@ -16,7 +16,7 @@ WEBPAGE = os.environ.get('MAIN_WEBPAGE')
 ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD')
 password = os.environ.get('GMAIL_PASSWORD')
 sender_email = "klee.tests@gmail.com"
-receivers_email = ["denis.gavrielov18@ic.ac.uk"]
+receivers_email = os.environ.get('ALERT_EMAILS').split(",")
 DEVELOPMENT = True if os.environ['DEVELOPMENT'] == "1" else False
 
 
