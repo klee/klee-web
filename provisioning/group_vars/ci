@@ -3,7 +3,8 @@ development: yes
 ci: yes
 
 main_webpage: "{{ nginx_container }}"
-redis_host: "{{ redis_container }}"
+server_redis_host: "{{ redis_container }}"
+worker_redis_host: "{{ redis_container }}"
 db_password: development
 admin_password: development
 

@@ -5,9 +5,9 @@
     image: "{{ kleeweb_worker_container }}"
     restart_policy: always
     env:
-      REDIS_HOST: "{{ redis_host }}"
+      REDIS_HOST: "{{ worker_redis_host }}"
       REDIS_PORT: "{{ redis_port | string }}"
-      CELERY_BROKER_URL: "{{ celery_broker_url }}"
+      CELERY_BROKER_URL: "redis://{{ worker_redis_host }}:{{ redis_port }}/{{ redis_db_number }}"
 
       MAILGUN_API_KEY: "{{ mailgun_api_key if (mailgun_api_key is defined) else '' }}"
       AWS_ACCESS_KEY: "{{ aws_access_key if (aws_access_key is defined) else '' }}"

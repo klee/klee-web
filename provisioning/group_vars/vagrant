@@ -3,6 +3,7 @@ development: yes
 ci: no
 
 main_webpage: "{{ master_ip }}"
-redis_host: "{{ master_ip }}"
+server_redis_host: "{{ redis_container }}"
+worker_redis_host: "{{ master_ip }}"
 db_password: development
 admin_password: development

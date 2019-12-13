@@ -4,7 +4,6 @@ ci: no
 
 redis_port: 6379
 redis_db_number: 0
-celery_broker_url: "redis://{{ redis_host }}:{{ redis_port }}/{{ redis_db_number }}"
 db_host: "{{ postgres_container }}"
 db_port: 5432
 db_name: klee_web
