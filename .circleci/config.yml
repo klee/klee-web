@@ -10,8 +10,8 @@ jobs:
       - run: sudo apt-get update -qq
       - run: sudo apt-get install software-properties-common python3-pip
       - run: sudo pip3 install ansible
-      - run: sudo ln -s /home/circleci/project/ /titb
+      - run: sudo ln -s /home/circleci/project/ /kleeweb_src
       - run: sudo ansible-galaxy install --force --role-file=requirements.yml
-      - run: cd /titb/
+      - run: cd /kleeweb_src/
       - run: sudo ansible-playbook -i ./provisioning/hosts-ci --syntax-check ./provisioning/vagrant.yml
       - run: sudo ansible-playbook -i ./provisioning/hosts-ci -vvv ./provisioning/vagrant.yml

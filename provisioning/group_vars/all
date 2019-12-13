@@ -16,7 +16,7 @@ db_name: klee_web
 db_user: klee_web
 
 # Paths
-src_dir: /titb
+src_dir: /kleeweb_src
 code_dir: "{{ src_dir }}/src"
 application_dir: "{{ code_dir }}/klee_web"
 worker_dir: "{{ application_dir }}/worker"
