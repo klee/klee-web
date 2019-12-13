@@ -12,8 +12,6 @@ from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 
 
-WEBPAGE = os.environ.get('MAIN_WEBPAGE')
-ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD')
 password = os.environ.get('GMAIL_PASSWORD')
 sender_email = "klee.tests@gmail.com"
 receivers_email = os.environ.get('ALERT_EMAILS').split(",")
@@ -38,15 +36,9 @@ def add_attachment(filename: str):
     return part
 
 
-e2e = "sudo docker run --rm -e WEBPAGE=" + WEBPAGE + \
-      " -e ADMIN_PASSWORD=" + ADMIN_PASSWORD + \
-      " --network $(sudo docker network ls | grep bridge | sed -n '2 p' " + \
-      "| awk '{print $2}') -v /titb/src/klee_web/tests/js_tests/" + \
-      "test_files/:/titb/src/klee_web/tests/js_tests/test_files/ " + \
-      "e2e_test_js 2> ~/e2e_report_stderr.txt > ~/e2e_report_stdout.txt"
-exit_code_e2e = os.system(e2e)
+rc = os.system("npm test > /tmp/e2e_report.txt 2>&1")
 
-if (exit_code_e2e):
+if (rc != 0):
     status = "FAILED! - "
     msg = "Some or all end-to-end tests failed!"
 else:
@@ -57,26 +49,22 @@ port = 465  # For SSL
 # Create a secure SSL context
 context = ssl.create_default_context()
 
-message = MIMEMultipart("alternative")
+message = MIMEMultipart()
 
-message["Subject"] = status + "KLEE testing report"
+message["Subject"] = status + "KLEE-Web daily testing report"
 message["From"] = sender_email
 message["To"] = ', '.join(receivers_email)
 
 body = "Hi,\n\n" + msg + \
-       " Please note that all the tests are running from a VM within the" + \
-       " same cloud network as the web server." + \
        "\n\nThe status return code of the end-to-end tests is: " + \
-       str(exit_code_e2e) + \
+       str(rc) + \
        "\n\nThe output of all tests are attached in this email." + \
-       "\n\nBest,\nKLEE Web"
+       "\n\nBest,\nKLEE Web\n"
 
-home = os.path.expanduser('~')
 message.attach(MIMEText(body, "plain"))
-message.attach(add_attachment(home + "/e2e_report_stdout.txt"))
-message.attach(add_attachment(home + "/e2e_report_stderr.txt"))
+message.attach(add_attachment("/tmp/e2e_report.txt"))
 
-if DEVELOPMENT:
+if not DEVELOPMENT:
     with smtplib.SMTP_SSL("smtp.gmail.com", port, context=context) as server:
         server.login(sender_email, password)
         server.sendmail(sender_email, receivers_email, message.as_string())
