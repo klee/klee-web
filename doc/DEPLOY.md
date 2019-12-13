@@ -30,17 +30,11 @@ Note: **This step is done to allow sudoers to become other users without asking 
 
 ## Deployment
 
-- First, ensure that the code is up-to-date on the master branch of the main fork of this repository.
-  - If you want to provision from another fork or another branch, open the `provisioning/group_vars/all` file and change the GitHub link on this line
-
-```bash
-git_repo: https://github.com/klee/klee-web
-```
+- First, ensure that your ssh keys are on the targeted servers with a passwordless login.
 
 - Open the file provisioning/hosts
 - Add the VM hostname to all the roles you wish to be deployed on the VM in this format
   `cloud-vm-XX-YY.doc.ic.ac.uk` \* There should be only one hostname for the `master` and `testing` group, and at least one for the `worker` group.
-- Add your imperial username as the Ansible ssh user
 
 ```bash
 [all:vars]
@@ -52,7 +46,7 @@ ansible_ssh_user=<your username>
 ```bash
 ansible-galaxy install -r ./requirements.yml -f
 
-ansible-playbook -i provisioning/hosts --vault-password-file=~/.klee_vault_password provisioning/production.yml -v
+ansible-playbook --user <Your username> -i provisioning/hosts-production --vault-password-file=~/.kleeweb_vault_pass.txt provisioning/deploy.yml -v
 ```
 
 A more detailed introduction to how Ansible works is described in the `Ansible.md` file.
