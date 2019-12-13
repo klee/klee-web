@@ -2,9 +2,6 @@
 development: no
 ci: no
 
-# Change this repo if need to provision for production from differen klee-web forks
-git_repo: https://github.com/Denis-Gavrielov/klee-web.git
-
 redis_port: 6379
 redis_db_number: 0
 celery_broker_url: "redis://{{ redis_host }}:{{ redis_port }}/{{ redis_db_number }}"
