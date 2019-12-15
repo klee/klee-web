@@ -1,2 +1,0 @@
----
-main_webpage: "{{ redis_host if (webpage is undefined) else webpage }}"

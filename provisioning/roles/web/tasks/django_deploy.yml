@@ -5,9 +5,9 @@
     image: "{{ kleeweb_container }}"
     restart_policy: always
     env:
-      REDIS_HOST: "{{ redis_host }}"
+      REDIS_HOST: "{{ server_redis_host }}"
       REDIS_PORT: "{{ redis_port | string }}"
-      CELERY_BROKER_URL: "{{ celery_broker_url }}"
+      CELERY_BROKER_URL: "redis://{{ server_redis_host }}:{{ redis_port }}/{{ redis_db_number }}"
 
       DB_USER: "{{ db_user }}"
       DB_PASSWORD: "{{ db_password }}"

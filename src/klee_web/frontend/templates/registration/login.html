@@ -20,33 +20,33 @@
                     <p>Welcome to Klee Web. If you have an account, login below
                         or <a href="{% url 'register' %}">sign
                             up here</a>.</p><br>
-                    <a class="btn btn-block btn-social btn-facebook" 
+                    <a class="btn btn-block btn-social btn-facebook"
                       href="{% url 'social:begin' 'facebook' %}?next={{ request.path }}">
                         <span class="fa fa-facebook"></span>
                             Login with Facebook
                     </a>
-                    <a class="btn btn-block btn-social btn-google" 
+                    <a class="btn btn-block btn-social btn-google"
                       href="{% url 'social:begin' 'google-oauth2' %}?next={{ request.path }}">
                         <span class="fa fa-google"></span>
                             Login with Google
                     </a>
-                    <a class="btn btn-block btn-social btn-github" 
+                    <a class="btn btn-block btn-social btn-github"
                       href="{% url 'social:begin' 'github' %}?next={{ request.path }}">
                         <span class="fa fa-github"></span>
                             Login with GitHub
                     </a>
                 </div>
-                
+
                 <div class="form-group">
                     <label>Username</label>
-                    <input type="text" name="{{ form.username.name }}"
+                    <input type="text" id="id_username" name="{{ form.username.name }}"
                            class="username form-control"
                            placeholder="Username"/>
                 </div>
 
                 <div class="form-group">
                     <label>Password</label>
-                    <input type="password" name="{{ form.password.name }}"
+                    <input type="password" id="id_password" name="{{ form.password.name }}"
                            class="password form-control"
                            placeholder="Password"/>
                 </div>

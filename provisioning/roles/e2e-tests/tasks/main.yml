@@ -11,26 +11,30 @@
     source: build
     force_source: yes
 
+- name: "Remove previous executions of {{ e2e_container }} container"
+  docker_container:
+    name: "{{ e2e_container }}"
+    state: absent
+
 - name: "Start {{ e2e_container }} container"
   docker_container:
     name: "{{ e2e_container }}"
     image: "{{ e2e_container }}"
     env:
       WEBPAGE: "{{ main_webpage }}"
+      ALERT_EMAILS: "{{ alert_emails }}"
+      GMAIL_PASSWORD: "{{ gmail_password }}"
       ADMIN_PASSWORD: "{{ admin_password }}"
+      DEVELOPMENT: "{{ '1' if (development) else '0' }}"
     network_mode: "{{ container_network }}"
+    command: "{{ 'python3 e2e_reporter.py' if (not development) else omit}}"
     detach: no
-    cleanup: yes
-
-- name: Create klee user for cronjob
-  user: name=klee shell=/bin/bash groups=sudo
-  when: not ci
+    cleanup: no
 
 - name: Add cronjob for automated tests daily at 2pm
   cron:
     name: "Test Klee Web"
     minute: "0"
     hour: "14"
-    job: "/src/python_runner.sh /usr/bin/python3 /titb/src/klee_web/tests/automated_e2e_tests.py"
-    user: klee
+    job: "docker restart {{ e2e_container }}"
   when: not ci
