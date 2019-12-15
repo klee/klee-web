@@ -8,14 +8,14 @@ if (ADMIN_PASSWORD == null) {
 }
 
 describe("Input", () => {
-  beforeAll(async () => {
+  it("tests that basic klee-web job submission works", async () => {
     await page.goto("http://" + WEBPAGE + "/user/logout");
+    await page.waitForSelector("#run-klee-btn")
     await page.waitForSelector('[ng-repeat="file in files"]');
     await page.click('[ng-repeat="file in files"]'); // select first file ... use page.select instead?
     await page.click("#run-klee-btn");
     await page.waitForSelector("#result-output");
-  });
-  it("tests that input files are processed correctly", async () => {
+
     const text = await page.evaluate(
       () => document.querySelector("#result-output").innerText
     );
@@ -32,8 +32,11 @@ describe("Input", () => {
 describe("Admin", () => {
   it("tests that the admin can login", async () => {
     await page.goto("http://" + WEBPAGE + "/user/logout");
+    await page.waitForSelector("#run-klee-btn")
     await page.goto("http://" + WEBPAGE + "/admin");
     await page.waitForSelector("#id_username");
+    await page.waitForSelector("#id_password");
+
     await page.type("#id_username", "admin");
     await page.type("#id_password", ADMIN_PASSWORD);
     await Promise.all([
@@ -48,7 +51,11 @@ describe("Admin", () => {
 describe("New Projects", () => {
   it("tests that logged users can add new projects", async () => {
     await page.goto("http://" + WEBPAGE + "/user/logout");
+    await page.waitForSelector("#run-klee-btn")
     await page.goto("http://" + WEBPAGE + "/user/login");
+    await page.waitForSelector("#id_username");
+    await page.waitForSelector("#id_password");
+
     await page.type("[type=text]", "admin");
     await page.type("[type=password]", ADMIN_PASSWORD);
     await Promise.all([
