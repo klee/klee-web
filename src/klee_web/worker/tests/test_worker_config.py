@@ -28,7 +28,7 @@ class TestWorkerConfig(unittest.TestCase):
         self.assertEqual(value, self.worker_config.get_config(key))
 
     def test_timeout_cpu_and_memory_defaults(self):
-        timeout_val_defualt = 30
+        timeout_val_defualt = 600
         cpu_share_default = 100
         memory_limit_default = 1024
 

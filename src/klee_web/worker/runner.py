@@ -93,7 +93,7 @@ class WorkerRunner():
     def run_with_docker(self,
                         command,
                         env=None,
-                        timeout=worker_config.container_timeout):
+                        timeout=worker_config.timeout):
         try:
             output = subprocess.check_output(self.docker_command(env) +
                                              command,
