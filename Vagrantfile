@@ -28,7 +28,7 @@ Vagrant.configure("2") do |config|
       "vagrant:vars" => {"master_ip" => MASTER_IP},
     }
 
-    ansible.playbook          = "provisioning/vagrant.yml"
+    ansible.playbook          = "provisioning/deploy.yml"
     ansible.galaxy_role_file  = "requirements.yml"
     # TODO(andronat): This path should been taken from ansible.cfg. This is a bug in Vagrant.
     ansible.galaxy_roles_path = "~/.ansible-galaxy"
