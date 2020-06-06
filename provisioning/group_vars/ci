@@ -9,5 +9,3 @@ db_password: development
 admin_password: development
 
 ansible_connection: local
-# The following is because CI is in ubuntu 16.04 yet
-ansible_python_interpreter: /usr/bin/python3
