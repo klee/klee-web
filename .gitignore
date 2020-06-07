@@ -14,8 +14,6 @@ src/components/
 .sass-cache/
 src/klee_web/frontend/static/frontend/dist
 src/sass/bootstrap/
-src/klee_web/geoip/
-src/geoip/
 ubuntu-*.log
 .vscode/
 note*.txt
