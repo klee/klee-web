@@ -55,7 +55,7 @@ To run the Worker service unit tests run:
 
 Circle CI is being used to run tests for commits before they get merged into the master branch on the main fork.
 
-It is important to understand that within the Circle CI testing VM there is only one VM overall where all processes run. This is different from the development and production environment where the application is distributed accross multiple VMs. Other than that it runs with the same Ansible Playbook as in the development stage.
+It is important to understand that within the Circle CI testing VM there is only one VM overall where all processes run. This is different from the development and production environment where the application is distributed across multiple VMs. Other than that it runs with the same Ansible Playbook as in the development stage.
 
 The provisioning of the Circle CI VM and the tests that are run can be found in the `.circleci/config.yml` file.
 
