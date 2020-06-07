@@ -1,4 +1,6 @@
 ---
+ansible_python_interpreter: /usr/bin/python3
+
 development: no
 ci: no
 
@@ -8,6 +10,7 @@ db_host: "{{ postgres_container }}"
 db_port: 5432
 db_name: klee_web
 db_user: klee_web
+klee_version: 2.0
 
 # Paths
 src_dir: /kleeweb_src
