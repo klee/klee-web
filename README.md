@@ -1,4 +1,4 @@
-# Klee Web
+# KLEE Web
 
 [Try it out here!](http://klee.doc.ic.ac.uk/#)
 
