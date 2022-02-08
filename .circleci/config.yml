@@ -3,11 +3,12 @@ version: 2
 jobs:
   build:
     machine:
-      image: ubuntu-1604:202004-01
+      image: ubuntu-2004:current
     steps:
       # ---- Provisioning ----
       - checkout
-      - run: sudo apt-get update -qq
+      - run: curl https://cli-assets.heroku.com/apt/release.key | sudo apt-key add -
+      - run: sudo apt-get update --allow-releaseinfo-change -qq
       - run: sudo apt-get install software-properties-common python3-pip
       - run: sudo pip3 install ansible
       - run: sudo ln -s /home/circleci/project/ /kleeweb_src
