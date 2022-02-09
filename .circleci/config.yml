@@ -16,12 +16,12 @@ jobs:
       - ansible-playbook/galaxy:
           galaxy-options: "--force --role-file=requirements.yml"
       - run: cd /kleeweb_src/
-      
+      - run: echo 'export INV="./provisioning/hosts-ci"' >> $BASH
       - ansible-playbook/playbook:
-          inventory: ./provisioning/hosts-ci
+          inventory: INV
           playbook: "./provisioning/deploy.yml"
           playbook-options: "--syntax-check"
       - ansible-playbook/playbook:
-          inventory: ./provisioning/hosts-ci
+          inventory: INV
           playbook: "./provisioning/deploy.yml"
           playbook-options: "-vvv"
