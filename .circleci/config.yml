@@ -2,7 +2,7 @@
 version: 2.1
 
 orbs: 
-  ansible-playbook: orbss/ansible-playbook@0.0.5
+  ansible: trustedshops-public/ansible@2.0.0
 
 jobs:
   build:
@@ -13,15 +13,13 @@ jobs:
       - checkout
       - run: sudo ln -s /home/circleci/project/ /kleeweb_src
       
-      - ansible-playbook/galaxy:
-          galaxy-options: "--force --role-file=requirements.yml"
+      - ansible/install-roles
+
       - run: cd /kleeweb_src/
-      - run: echo 'export INV="./provisioning/hosts-ci"' >> $BASH
-      - ansible-playbook/playbook:
-          inventory: INV
-          playbook: "./provisioning/deploy.yml"
-          playbook-options: "--syntax-check"
-      - ansible-playbook/playbook:
-          inventory: INV
-          playbook: "./provisioning/deploy.yml"
-          playbook-options: "-vvv"
+      
+      - ansible/run-playbook:
+          inventory: "./provisioning/hosts-ci"
+          playbook: "--syntax-check ./provisioning/deploy.yml"
+      - ansible/run-playbook:
+          inventory: "./provisioning/hosts-ci"
+          playbook: "-vvv ./provisioning/deploy.yml"
