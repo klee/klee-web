@@ -14,14 +14,14 @@ jobs:
       - run: sudo ln -s /home/circleci/project/ /kleeweb_src
       
       - ansible-playbook/galaxy:
-        galaxy-options: "--force --role-file=requirements.yml"
+          galaxy-options: "--force --role-file=requirements.yml"
       - run: cd /kleeweb_src/
       
       - ansible-playbook/playbook:
-          inventory: "./provisioning/hosts-ci"
+          inventory: ./provisioning/hosts-ci
           playbook: "./provisioning/deploy.yml"
           playbook-options: "--syntax-check"
       - ansible-playbook/playbook:
-          inventory: "./provisioning/hosts-ci"
+          inventory: ./provisioning/hosts-ci
           playbook: "./provisioning/deploy.yml"
           playbook-options: "-vvv"
