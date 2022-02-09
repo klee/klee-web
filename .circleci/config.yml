@@ -1,5 +1,9 @@
 ---
-version: 2
+version: 2.1
+
+orbs: 
+  ansible-playbook: orbss/ansible-playbook@0.0.5
+
 jobs:
   build:
     machine:
@@ -7,11 +11,17 @@ jobs:
     steps:
       # ---- Provisioning ----
       - checkout
-      - run: sudo apt-get update -qq
-      - run: sudo apt-get install software-properties-common python3-pip
-      - run: sudo pip3 install ansible
       - run: sudo ln -s /home/circleci/project/ /kleeweb_src
-      - run: sudo ansible-galaxy install --force --role-file=requirements.yml
+      
+      - ansible-playbook/galaxy:
+        galaxy-options: "--force --role-file=requirements.yml"
       - run: cd /kleeweb_src/
-      - run: sudo ansible-playbook -i ./provisioning/hosts-ci --syntax-check ./provisioning/deploy.yml
-      - run: sudo ansible-playbook -i ./provisioning/hosts-ci -vvv ./provisioning/deploy.yml
+      
+      - ansible-playbook/playbook:
+          inventory: "./provisioning/hosts-ci"
+          playbook: "./provisioning/deploy.yml"
+          playbook-options: "--syntax-check"
+      - ansible-playbook/playbook:
+          inventory: "./provisioning/hosts-ci"
+          playbook: "./provisioning/deploy.yml"
+          playbook-options: "-vvv"
