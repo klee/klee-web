@@ -6,17 +6,15 @@ orbs:
 
 jobs:
   build:
-    machine: true
+    machine:
+      image: ubuntu-2004:202201-01
     steps:
       # ---- Provisioning ----
       - checkout
       - run: sudo ln -s /home/circleci/project/ /kleeweb_src
-      
       - ansible/install-ansible
-      - ansible/install-roles
-
+      - ansible/install-role
       - run: cd /kleeweb_src/
-      
       - ansible/run-playbook:
           inventory: "./provisioning/hosts-ci"
           playbook: "--syntax-check ./provisioning/deploy.yml"
