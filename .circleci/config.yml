@@ -7,7 +7,7 @@ orbs:
 jobs:
   build:
     machine:
-      image: cimg/base
+      image: cimg/base:stable
     steps:
       # ---- Provisioning ----
       - checkout
