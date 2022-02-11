@@ -6,8 +6,8 @@ orbs:
 
 jobs:
   build:
-    machine:
-      image: ubuntu-2004:202201-01
+    docker:
+      - image: cimg/base:stable
     steps:
       # ---- Provisioning ----
       - checkout
