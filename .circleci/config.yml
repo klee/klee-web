@@ -6,8 +6,8 @@ orbs:
 
 jobs:
   build:
-    docker:
-      - image: cimg/python:3.10
+    machine:
+      image: ubuntu-2004:202201-01
     steps:
       # ---- Provisioning ----
       - checkout
