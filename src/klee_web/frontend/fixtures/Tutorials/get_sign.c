@@ -3,6 +3,7 @@
  * http://klee.github.io/tutorials/testing-function/
  */
 
+#include<klee/klee.h>
 
 int get_sign(int x) {
 	if (x == 0)

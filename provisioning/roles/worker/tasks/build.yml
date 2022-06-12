@@ -8,7 +8,7 @@
     source: build
     force_source: yes
 
-- name: Get KLEE image from Docker Hub (this may take a while...)
+- name: Get KLEE image from Docker Hub (this may take a while...) version {{ klee_version }}
   docker_image:
     name: klee/klee
     tag: "{{ klee_version }}"
