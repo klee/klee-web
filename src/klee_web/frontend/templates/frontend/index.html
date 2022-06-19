@@ -353,6 +353,11 @@
                                     <a href="#"
                                        ng-click="setTab('coverage')">Coverage</a>
                                 </li>
+                                <li ng-class="{active: tabs.testcases.active}"
+                                    id="klee-testcases-btn">
+                                    <a href="#"
+                                       ng-click="setTab('testcases')">Test Cases</a>
+                                </li>
                             </ul>
                         </nav>
                     </header>
@@ -413,6 +418,72 @@
                                      class="cml-codemirror-refresh"></div>
                             </div>
 
+                            <div class="tab-content-inner klee-testcases"
+                                 ng-show="tabs.testcases.active"
+                                 ng-controller="TestcasesPaginationCtrl">
+                                <div class="justify-content-center">
+                                    <pagination ng-model="currentPage"
+                                                total-items="result.test_cases.length"
+                                                max-size="maxSize"
+                                                boundary-links="true"
+                                                items-per-page="1"
+                                                class="pagination-sm"
+                                                previous-text="&lsaquo;"
+                                                next-text="&rsaquo;"
+                                                first-text="&laquo;"
+                                                last-text="&raquo;"
+                                                id="klee-testcases-pagination">
+                                    </pagination>
+                                </div>
+                                <div ng-repeat="desc in result.test_cases[currentPage - 1].desc">
+                                    <pre class="progress-step code">[[ desc ]]</pre>
+                                </div>
+                                <table class="table code">
+                                    <thead>
+                                    <tr>
+                                        <th style="width: 30px;"></th>
+                                        <th>Object #</th>
+                                        <th>Name</th>
+                                        <th>Size</th>
+                                    </tr>
+                                    </thead>
+                                    <tbody>
+                                    <tr ng-repeat-start="mem_obj in result.test_cases[currentPage - 1].mem_objs">
+                                        <td>
+{#                                            FIXME: fix button styling issue, for some reason can't use css class#}
+                                            <button style="background: #2f3133; color: #FFFFFF; border-radius: 3px; border-width: 1px"
+                                                    ng-if="mem_obj.expanded" ng-click="mem_obj.expanded = false">
+{#                                                <span class="glyphicon glyphicon-chevron-down"></span>#}
+                                                <i class="arrow_triangle-down"></i>
+                                                <span class="sr-only"></span>
+                                            </button>
+                                            <button style="background: #2f3133; color: #FFFFFF; border-radius: 3px; border-width: 1px"
+                                                    ng-if="!mem_obj.expanded" ng-click="mem_obj.expanded = true">
+{#                                                <span class="glyphicon glyphicon-chevron-right"></span>#}
+                                                <i class="arrow_triangle-right"></i>
+                                                <span class="sr-only"></span>
+                                            </button>
+                                        </td>
+                                        <td>[[ $index ]]</td>
+                                        <td>[[ mem_obj.name ]]</td>
+                                        <td>[[ mem_obj.size ]]</td>
+                                    </tr>
+                                    <tr ng-if="mem_obj.expanded" ng-repeat-end="">
+                                        <td></td>
+                                        <td colspan="3">
+                                            <table class="table code">
+                                                <tbody>
+                                                <tr ng-repeat="rep in mem_obj.representations">
+                                                    <td>[[ rep[0] ]]</td>
+                                                    <td>[[ rep[1] ]]</td>
+                                                </tr>
+                                                </tbody>
+                                            </table>
+                                        </td>
+                                    </tr>
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 </div>
