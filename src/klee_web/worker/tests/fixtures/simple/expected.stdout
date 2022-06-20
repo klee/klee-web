@@ -3,4 +3,5 @@
 
 KLEE: done: total instructions = [0-9]
 KLEE: done: completed paths = 1
+KLEE: done: partially completed paths = 0
 KLEE: done: generated tests = 1

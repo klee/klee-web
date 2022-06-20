@@ -53,21 +53,23 @@ class KleeRunProcessor(BaseProcessor):
     def run_llvm(self):
         code_file = self.runner.DOCKER_CODE_FILE
         object_file = self.runner.DOCKER_OBJECT_FILE
-        llvm_command = ['/usr/bin/clang-6.0',
+        llvm_command = ['/usr/bin/clang-11',
                         '-I', '/home/klee/klee_src/include',
                         '-emit-llvm', '-c', '-g',
+                        # FIXME: hack to remove host/target triple warning
+                        '--target=x86_64-unknown-linux-gnu',
                         code_file, '-o', object_file]
-        self.runner.run_with_docker(llvm_command)
+        return self.runner.run_with_docker(llvm_command)
 
     def run_klee(self, arg_list):
         # Compile code with LLVM-GCC
-        self.run_llvm()
+        llvm_output = self.run_llvm()
 
         # Analyse code with KLEE
         klee_command = self.create_klee_command(arg_list)
         klee_output = self.runner.run_with_docker(klee_command)
 
-        return klee_command, klee_output
+        return klee_command, llvm_output + klee_output
 
     def process(self):
         klee_command, klee_output = self.run_klee(self.generate_arguments())

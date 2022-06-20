@@ -1,5 +1,5 @@
 ---
-- include: python_e2e.yml
+- import_tasks: python_e2e.yml
   when: development
 
 - name: "Build the {{ e2e_container }} container"

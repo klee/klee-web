@@ -22,8 +22,9 @@ describe("Input", () => {
     await expect(text).toMatch(
       'KLEE: output directory is "/tmp/code/klee-out-0"\n' +
         "KLEE: Using STP solver backend\n\n" +
-        "KLEE: done: total instructions = 32\n" +
+        "KLEE: done: total instructions = 33\n" +
         "KLEE: done: completed paths = 3\n" +
+        "KLEE: done: partially completed paths = 0\n" +
         "KLEE: done: generated tests = 3"
     );
   });

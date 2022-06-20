@@ -1,5 +1,5 @@
 ---
-- include: build.yml
+- import_tasks: build.yml
   tags: ["build", "build_worker"]
-- include: deploy.yml
+- import_tasks: deploy.yml
   tags: deploy_container

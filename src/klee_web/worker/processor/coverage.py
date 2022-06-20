@@ -22,8 +22,8 @@ class CoverageProcessor(BaseProcessor):
         coverage_obj_file = os.path.join(mount_dir, 'code_cov.o')
         docker_result_path = os.path.join(mount_dir, 'klee-out-0')
 
-        clang_command = ['/usr/bin/clang-6.0', '-g', '--coverage', '-L',
-                         '/home/klee/klee_build/klee/Release+Asserts/lib/',
+        clang_command = ['/usr/bin/clang-11', '-v', '-g', '--coverage', '-L',
+                         '/home/klee/klee_build/lib/',
                          runner.DOCKER_CODE_FILE, '-lkleeRuntest',
                          '-o', coverage_obj_file]
         runner.run_with_docker(clang_command)
@@ -40,8 +40,8 @@ class CoverageProcessor(BaseProcessor):
             runner.run_with_docker(klee_replay_command,
                                    {'KTEST_FILE': ktest_file})
 
-        llvm_cov_command = ['llvm-cov-3.4', '-gcda=code.gcda',
-                            '-gcno=code.gcno', '-dump']
+        llvm_cov_command = ['llvm-cov-11', 'gcov', '-t',
+                            runner.DOCKER_CODE_FILE]
         gcov_data = runner.run_with_docker(llvm_cov_command)
 
         return gcovparse(gcov_data)
