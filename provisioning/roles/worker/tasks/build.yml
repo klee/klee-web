@@ -10,13 +10,13 @@
 
 - name: Get KLEE image from Docker Hub (this may take a while...) version {{ klee_version }}
   docker_image:
-    name: klee/klee
-    tag: "{{ klee_version }}"
+    name: "klee/klee{{ klee_version }}"
     source: pull
+  register: klee_image
 
 - name: Pin the above KLEE version as latest.
   docker_image:
-    name: "klee/klee:{{ klee_version }}"
+    name: "{{ klee_image.image.Id }}"
     repository: klee/klee:latest
     force_tag: yes
     source: local

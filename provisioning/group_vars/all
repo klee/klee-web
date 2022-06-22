@@ -10,7 +10,8 @@ db_host: "{{ postgres_container }}"
 db_port: 5432
 db_name: klee_web
 db_user: klee_web
-klee_version: latest
+# Expected format: ":tag" or "@sha256:..."
+klee_version: "@sha256:b38cc919a569319ad58bd9ab39e0e657b2b30bb1a2ea8e2df8cef7cde36ff5f6"
 
 # Paths
 src_dir: /kleeweb_src
