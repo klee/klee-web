@@ -25,7 +25,7 @@ class StatsProcessor(BaseProcessor):
         for row in stats_csv:
             if first:
                 combined = [(key, []) for key in row]
-                first = True
+                first = False
             [combined[ind][1].append(item[1]) for ind, item
              in enumerate(row.items())]
 
