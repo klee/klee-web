@@ -19,6 +19,7 @@ from worker.processor.coverage import CoverageProcessor
 from worker.processor.upload import UploadProcessor
 from worker.processor.klee_run import KleeRunProcessor
 from worker.processor.stats import StatsProcessor
+from worker.processor.klee_testcases import KleeTestCaseProcessor
 
 ANSI_ESCAPE_PATTERN = re.compile(r'\x1b[^m]*m')
 LXC_MESSAGE_PATTERN = re.compile(r'lxc-start: .*')
@@ -35,7 +36,7 @@ class WorkerRunner():
     DOCKER_OBJECT_FILE = os.path.join(DOCKER_MOUNT_DIR, OBJECT_FILE_NAME)
     DEFAULT_PROCESSOR_PIPELINE = [
         KleeRunProcessor, UploadProcessor, FailedTestProcessor, StatsProcessor,
-        CoverageProcessor
+        CoverageProcessor, KleeTestCaseProcessor
     ]
 
     def __init__(self,

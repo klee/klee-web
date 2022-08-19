@@ -1,0 +1,8 @@
+[{
+  "desc": [
+    "ktest file : '/tmp/code/klee-out-0/test000001.ktest'",
+    "args : ['/tmp/code/code.o']",
+    "num objects: 0"
+  ],
+  "mem_objs": []
+}]

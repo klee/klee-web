@@ -67,3 +67,30 @@ describe("New Projects", () => {
     await expect(content).toMatch("Add New Project");
   });
 });
+
+describe("Klee Testcases", () => {
+  it(
+      "tests that testcases window appears and is index-able",
+      async () => {
+          await page.goto("http://" + WEBPAGE + "/user/logout");
+          await page.waitForSelector("#run-klee-btn");
+          await page.waitForSelector('[ng-repeat="file in files"]');
+          await page.click('[ng-repeat="file in files"]'); // select first file ... use page.select instead?
+          await page.click("#run-klee-btn");
+          await page.waitForSelector("#result-output"); // need to wait for KLEE to finish output
+          await page.waitForSelector("#klee-testcases-btn");
+          await page.click('#klee-testcases-btn');
+          await page.waitForSelector("#klee-testcases-pagination");
+
+          // Tests that there are 3 testcases
+          const numTestcases =
+              (await page.$$("#klee-testcases-pagination li")).length;
+          const navButtons = 4;
+          await expect(numTestcases).toBe(navButtons + 3);
+
+          // Tests that there are 1 mem objs
+          const numMemObjs =
+              (await page.$$(".klee-testcases tbody tr")).length;
+          await expect(numMemObjs).toBe(1);
+      })
+})
