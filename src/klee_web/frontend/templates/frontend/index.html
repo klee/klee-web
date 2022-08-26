@@ -344,12 +344,14 @@
                                     <a href="#"
                                        ng-click="setTab('output')">Output</a>
                                 </li>
-                                <li ng-class="{active: tabs.stats.active}">
+                                <li ng-class="{active: tabs.stats.active}"
+                                    id="stats-btn">
                                     <a href="#"
                                        ng-click="setTab('stats')">Stats</a>
                                 </li>
                                 <li ng-class="{active: tabs.coverage.active}"
-                                    ng-if="result.coverage">
+                                    ng-if="result.coverage"
+                                    id="res-cov-btn">
                                     <a href="#"
                                        ng-click="setTab('coverage')">Coverage</a>
                                 </li>
