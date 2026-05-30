@@ -1,12 +1,12 @@
 import { useSettings } from "../context/SettingsContext"
 
 export function SettingsPopover() {
-  const { theme, setTheme, resultsPosition, setResultsPosition } = useSettings()
+  const { theme, setTheme, resultsPosition, setResultsPosition, fontSize, setFontSize, accentColor, setAccentColor } = useSettings()
 
   return (
     <div
       aria-label="Settings"
-      className="absolute top-full right-0 mt-2 z-20 w-56 p-3 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-lg text-slate-900 dark:text-slate-100"
+      className="absolute top-full right-0 mt-2 z-20 w-64 p-3 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-lg text-slate-900 dark:text-slate-100"
     >
       <div className="mb-3">
         <SectionLabel>Theme</SectionLabel>
@@ -20,7 +20,7 @@ export function SettingsPopover() {
           onChange={setTheme}
         />
       </div>
-      <div>
+      <div className="mb-3">
         <SectionLabel>Results position</SectionLabel>
         <Segmented
           value={resultsPosition}
@@ -31,9 +31,63 @@ export function SettingsPopover() {
           onChange={setResultsPosition}
         />
       </div>
+      <div className="mb-3">
+        <SectionLabel>Font size: {fontSize}px</SectionLabel>
+        <input
+          type="range"
+          min={10}
+          max={24}
+          step={1}
+          value={fontSize}
+          onChange={(e) => setFontSize(Number(e.target.value))}
+          className="w-full h-1.5 rounded appearance-none cursor-pointer bg-slate-200 dark:bg-slate-700 accent-[var(--klee-accent)]"
+          aria-label="Editor font size"
+        />
+      </div>
+      <div>
+        <SectionLabel>Accent color</SectionLabel>
+        <div className="flex items-center gap-2">
+          {ACCENT_PRESETS.map((c) => (
+            <button
+              key={c}
+              type="button"
+              onClick={() => setAccentColor(c)}
+              aria-label={`Accent ${c}`}
+              aria-pressed={accentColor === c}
+              className={`w-6 h-6 rounded-full border-2 ${
+                accentColor === c ? "border-slate-900 dark:border-white scale-110" : "border-transparent"
+              }`}
+              style={{ backgroundColor: c }}
+            />
+          ))}
+          <label className="relative ml-1">
+            <input
+              type="color"
+              value={accentColor}
+              onChange={(e) => setAccentColor(e.target.value)}
+              className="w-6 h-6 rounded cursor-pointer border-0 p-0"
+              aria-label="Custom accent color"
+            />
+          </label>
+        </div>
+      </div>
     </div>
   )
 }
+
+const ACCENT_PRESETS = [
+  "#475569", // slate (current default)
+  "#6b7280", // gray
+  "#ef4444", // red
+  "#f97316", // orange
+  "#eab308", // yellow
+  "#22c55e", // green
+  "#14b8a6", // teal
+  "#3b82f6", // blue
+  "#6366f1", // indigo
+  "#a855f7", // purple
+  "#ec4899", // pink
+]
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (

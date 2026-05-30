@@ -7,7 +7,7 @@ type EditorProps = {
 }
 
 export function Editor({ value, onChange }: EditorProps) {
-  const { resolvedTheme } = useSettings()
+  const { resolvedTheme, fontSize } = useSettings()
   const monacoTheme = resolvedTheme === "dark" ? "vs-dark" : "vs-light"
 
   return (
@@ -19,7 +19,7 @@ export function Editor({ value, onChange }: EditorProps) {
       onChange={(next) => onChange(next ?? "")}
       options={{
         minimap: { enabled: false },
-        fontSize: 14,
+        fontSize,
         automaticLayout: true,
       }}
     />
