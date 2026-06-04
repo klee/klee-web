@@ -1,7 +1,16 @@
 import { useSettings } from "../context/SettingsContext"
 
+const ACCENT_OPTIONS = [
+  { value: "slate", label: "Slate" },
+  { value: "blue", label: "Blue" },
+  { value: "green", label: "Green" },
+  { value: "amber", label: "Amber" },
+  { value: "red", label: "Red" },
+] as const
+
 export function SettingsPopover() {
-  const { theme, setTheme, resultsPosition, setResultsPosition } = useSettings()
+  const { theme, setTheme, resultsPosition, setResultsPosition, accent, setAccent, accents } =
+    useSettings()
 
   return (
     <div
@@ -19,6 +28,30 @@ export function SettingsPopover() {
           ]}
           onChange={setTheme}
         />
+      </div>
+      <div className="mb-3">
+        <SectionLabel>Accent</SectionLabel>
+        <div className="flex gap-1.5 flex-wrap">
+          {ACCENT_OPTIONS.map((opt) => {
+            const active = accent === opt.value
+            return (
+              <button
+                key={opt.value}
+                type="button"
+                aria-label={opt.label}
+                aria-pressed={active}
+                title={opt.label}
+                onClick={() => setAccent(opt.value)}
+                className={`w-6 h-6 rounded-full border-2 transition-shadow ${
+                  active
+                    ? "border-slate-900 dark:border-slate-100 shadow-md"
+                    : "border-transparent hover:shadow-sm"
+                }`}
+                style={{ backgroundColor: accents[opt.value] }}
+              />
+            )
+          })}
+        </div>
       </div>
       <div>
         <SectionLabel>Results position</SectionLabel>
