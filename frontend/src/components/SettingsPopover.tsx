@@ -9,8 +9,17 @@ const ACCENT_OPTIONS = [
 ] as const
 
 export function SettingsPopover() {
-  const { theme, setTheme, resultsPosition, setResultsPosition, accent, setAccent, accents } =
-    useSettings()
+  const {
+    theme,
+    setTheme,
+    resultsPosition,
+    setResultsPosition,
+    accent,
+    setAccent,
+    accents,
+    fontSize,
+    setFontSize,
+  } = useSettings()
 
   return (
     <div
@@ -52,6 +61,17 @@ export function SettingsPopover() {
             )
           })}
         </div>
+      </div>
+      <div className="mb-3">
+        <SectionLabel>Font size ({fontSize}px)</SectionLabel>
+        <input
+          type="range"
+          min={10}
+          max={24}
+          value={fontSize}
+          onChange={(e) => setFontSize(Number(e.target.value))}
+          className="w-full accent-[var(--klee-accent)]"
+        />
       </div>
       <div>
         <SectionLabel>Results position</SectionLabel>
