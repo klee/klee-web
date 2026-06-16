@@ -25,3 +25,11 @@ repos:
         language: system
         files: ^frontend/src/.*\.(ts|tsx)$
         pass_filenames: false
+      - id: e2e-playwright
+        name: Playwright e2e (real KLEE, local only)
+        entry: bash -c 'cd frontend && npm run test:e2e'
+        language: system
+        files: ^(frontend|backend|runner)/
+        pass_filenames: false
+        stages: [pre-push]
+        require_serial: true
