@@ -38,8 +38,9 @@ make install
 ```
 
 This runs `uv sync` for the backend and `npm install` for the frontend (the
-latter is what puts Vite in `frontend/node_modules`). Then start both dev
-servers:
+latter is what puts Vite in `frontend/node_modules`). It also installs the git
+hooks if `pre-commit` is on your PATH (see Pre-commit hooks below). Then start
+both dev servers:
 
 ```bash
 make up
@@ -86,14 +87,25 @@ time instead of silently.
 
 ## Pre-commit hooks
 
-One-time per clone:
+`pre-commit` is a global tool. Install it once on your machine:
 
 ```bash
 uv tool install pre-commit
-pre-commit install
 ```
 
-After that, `git commit` runs ruff (backend), eslint (frontend), and whitespace / end-of-file checks. The eslint hook needs `frontend/node_modules`, so run `npm install` in `frontend/` once before the first commit.
+`make install` then wires the git hooks for you, both the commit-stage and the
+pre-push hook. If you installed `pre-commit` after running `make install`, wire
+them yourself:
+
+```bash
+pre-commit install --hook-type pre-commit --hook-type pre-push
+```
+
+On `git commit`, the commit-stage hooks run ruff (backend), eslint (frontend), and whitespace / end-of-file checks. The eslint hook needs `frontend/node_modules`, so run `npm install` in `frontend/` once before the first commit. CI runs these same hooks (`pre-commit run --all-files`), so they are enforced on every pull request even if you never install the local hooks.
+
+On `git push`, the pre-push hook runs the Playwright e2e against the real KLEE container, but only when the push touches `frontend/`, `backend/`, or `runner/`. It needs Docker and the `klee-web-runner` image (`make runner` builds it). To skip it in a pinch, push with `--no-verify`.
+
+The pre-push hook is local and optional. Without it, or with `--no-verify`, the push still succeeds. The same test runs as a required CI check on the pull request, so a broken contract cannot be merged either way. The hook just gives faster, real-KLEE feedback before you push.
 
 ## Design
 

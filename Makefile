@@ -3,6 +3,7 @@
 install:
 	cd backend && uv sync
 	cd frontend && npm install
+	command -v pre-commit >/dev/null 2>&1 && pre-commit install --hook-type pre-commit --hook-type pre-push || echo "pre-commit not on PATH; see README 'Pre-commit hooks', then run: pre-commit install --hook-type pre-commit --hook-type pre-push"
 
 up: runner
 	@trap 'kill 0' EXIT INT TERM; \
