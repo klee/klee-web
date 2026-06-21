@@ -49,3 +49,4 @@ Don't write ADRs for:
 | 0011 | Frontend layered architecture (Types / API client / Hooks / Components) | Accepted |
 | 0012 | Add query_format to the flag schema | Accepted |
 | 0013 | Cancel as a user-triggered halt | Accepted |
+| 0014 | RedisJobStore on Redis hashes | Accepted |
