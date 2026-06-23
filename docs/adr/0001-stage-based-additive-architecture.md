@@ -6,7 +6,7 @@
 
 KLEE Web is delivered in three stages with a hard schedule:
 
-1. **Stage 1 (by end of May 2026):** synchronous monolith. React + FastAPI + Docker runner, runnable locally with `docker compose up`. No queue, no cache, no sandboxing beyond stock Docker.
+1. **Stage 1 (by end of May 2026):** synchronous monolith. React + FastAPI + Docker runner, runnable locally with `make up`. No queue, no cache, no sandboxing beyond stock Docker.
 2. **Stage 2 (summer):** Celery workers, Redis as broker and result cache, worker pool. The execution path becomes asynchronous; the API path stays the same.
 3. **Stage 3 (late summer):** nginx edge proxy, gVisor sandbox runtime, observability, admin UI.
 
