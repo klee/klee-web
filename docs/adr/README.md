@@ -50,3 +50,4 @@ Don't write ADRs for:
 | 0012 | Add query_format to the flag schema | Accepted |
 | 0013 | Cancel as a user-triggered halt | Accepted |
 | 0014 | RedisJobStore on Redis hashes | Accepted |
+| 0015 | Centralised configuration via a Settings object | Accepted |

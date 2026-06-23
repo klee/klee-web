@@ -1,10 +1,21 @@
 import asyncio
 from uuid import uuid4
 
+import fakeredis
 import pytest
 
-from klee_web.jobs.store import JobNotFound
+from klee_web.jobs.store import InMemoryJobStore, JobNotFound, RedisJobStore
 from klee_web.models import Job, JobStatus
+
+
+@pytest.fixture(params=["memory", "redis"])
+async def store(request):
+    if request.param == "memory":
+        yield InMemoryJobStore()
+        return
+    client = fakeredis.FakeAsyncRedis(server=fakeredis.FakeServer())
+    yield RedisJobStore(client)
+    await client.aclose()
 
 
 async def test_create_then_get_returns_same_job(store):
