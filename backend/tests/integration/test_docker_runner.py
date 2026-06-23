@@ -19,10 +19,13 @@ def _runner_environment_ready() -> bool:
     return result.returncode == 0
 
 
-pytestmark = pytest.mark.skipif(
-    not _runner_environment_ready(),
-    reason=f"docker CLI or {IMAGE_TAG} image not available",
-)
+pytestmark = [
+    pytest.mark.requires_docker,
+    pytest.mark.skipif(
+        not _runner_environment_ready(),
+        reason=f"docker CLI or {IMAGE_TAG} image not available",
+    ),
+]
 
 
 GET_SIGN_SOURCE = """\
