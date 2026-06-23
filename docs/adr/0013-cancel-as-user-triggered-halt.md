@@ -1,6 +1,6 @@
 # 0013. Cancel as a user-triggered halt
 
-**Status:** Accepted, 2026-06-15
+**Status:** Accepted, 2026-06-15 (amended 2026-06-23)
 
 ## Context
 
@@ -22,6 +22,14 @@ Expose it as `POST /jobs/{job_id}/cancel`, a command rather than a deletion, sin
 - The entrypoint signal-forwarding is written once and is unchanged across stages, the same property gVisor relies on: change the surroundings, not the unit of execution.
 - The SIGTERM-to-SIGINT translation in the entrypoint is non-obvious. A future reader will expect a passthrough. It exists because KLEE halts gracefully only on SIGINT, while SIGTERM is what orchestrators send by default.
 - Cancel is best-effort against the container-startup window. A cancel issued before the container is killable returns 409 and does nothing, and the user retries once it is up. This keeps a cancelled job from ever being mislabelled, at the cost of an occasional no-op click in the first second or two.
+
+## Amendment, 2026-06-23 (Stage 2 mechanism)
+
+The Decision anticipated Stage 2 swapping the cancel body for a Celery `revoke`. Building the worker showed that to be wrong. `revoke(terminate=True)` signals the worker process running the task, not the KLEE container, so it would bypass the entrypoint's SIGTERM-to-SIGINT forwarding and KLEE would never get its graceful dump. The partial test cases this ADR exists to preserve would be lost.
+
+Stage 2 keeps the Stage 1 kill unchanged (`docker kill --signal=TERM` against the named container) and only moves who triggers it. Once a job runs on a worker the API cannot reach the container, so the cancel endpoint sets `cancel_requested` and nothing else. The executor that owns the container, the in-process task or the worker, watches that flag and runs `cancel(job_id)` locally. The mechanism is the same in both run modes, and the container always gets the same graceful signal.
+
+This retires the startup-window 409. The flag persists, so a cancel on a pending or just-started job is honoured whenever the executor reaches it instead of returning a no-op to retry. The endpoint's 409 now means only that the job is already terminal.
 
 ## References
 

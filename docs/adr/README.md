@@ -51,3 +51,4 @@ Don't write ADRs for:
 | 0013 | Cancel as a user-triggered halt | Accepted |
 | 0014 | RedisJobStore on Redis hashes | Accepted |
 | 0015 | Centralised configuration via a Settings object | Accepted |
+| 0016 | Job dispatch behind a JobDispatcher seam | Accepted |
