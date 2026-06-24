@@ -35,4 +35,8 @@ def get_dispatcher(
     store: Annotated[JobStore, Depends(get_job_store)],
     runner: Annotated[KleeRunner, Depends(get_runner)],
 ) -> JobDispatcher:
+    if get_settings().celery_broker_url:
+        from klee_web.jobs.dispatch import CeleryDispatcher
+
+        return CeleryDispatcher()
     return InProcessDispatcher(store, runner)

@@ -9,6 +9,7 @@ authors = [
     { name = "Software Reliability Group, Imperial College London" },
 ]
 dependencies = [
+    "celery>=5.6.3",
     "fastapi>=0.110",
     "pydantic>=2.0",
     "pydantic-settings>=2.14.2",
@@ -46,6 +47,10 @@ mypy_path = "src"
 files = ["src", "tests"]
 explicit_package_bases = true
 namespace_packages = true
+
+[[tool.mypy.overrides]]
+module = "celery.*"
+ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

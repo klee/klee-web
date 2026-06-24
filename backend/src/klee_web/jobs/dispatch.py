@@ -29,6 +29,13 @@ class InProcessDispatcher:
         task.add_done_callback(_background_tasks.discard)
 
 
+class CeleryDispatcher:
+    async def dispatch(self, job_id: UUID, request: JobRequest) -> None:
+        from klee_web.celery_app import run_klee_job
+
+        run_klee_job.delay(str(job_id), request.model_dump(mode="json"))
+
+
 async def drain() -> None:
     """Await all in-flight in-process jobs (used by tests and graceful shutdown)."""
     await asyncio.gather(*list(_background_tasks), return_exceptions=True)
