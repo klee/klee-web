@@ -120,6 +120,14 @@ On `git push`, the pre-push hook runs the Playwright e2e against the real KLEE c
 
 The pre-push hook is local and optional. Without it, or with `--no-verify`, the push still succeeds. The same test runs as a required CI check on the pull request, so a broken contract cannot be merged either way. The hook just gives faster, real-KLEE feedback before you push.
 
+## Issue agent automation
+
+The repository includes a label-gated issue agent workflow. After configuring
+the repository variables and secrets described in `bot/README.md`, add
+`agent:ready` to a reviewed issue to let the workflow create an agent branch,
+run the configured coding agent, verify the result, and open a draft pull
+request. Use the `Agent task` issue template for issues intended for automation.
+
 ## Design
 
 [`docs/architecture.md`](docs/architecture.md) is the overview: how the frontend, backend, runner, broker, and store fit together. The ADRs in `docs/adr/` record why each decision was made, one per major choice.

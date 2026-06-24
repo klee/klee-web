@@ -1,0 +1,29 @@
+name: Agent task
+description: A scoped implementation issue that can be handed to the issue agent.
+title: "[Agent] "
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What should change, and why?
+      placeholder: Describe the bug, missing behavior, or small feature.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: What must be true before the draft PR is useful?
+      placeholder: |
+        - ...
+        - ...
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Implementation notes
+      description: Optional pointers, files, commands, or constraints.
+    validations:
+      required: false
