@@ -5,9 +5,10 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from klee_web.deps import get_job_store, get_runner
-from klee_web.jobs.runner import KleeRunner, KleeRunnerError
+from klee_web.jobs.run import run_job
+from klee_web.jobs.runner import KleeRunner
 from klee_web.jobs.store import JobStore
-from klee_web.models import HaltReason, Job, JobCreated, JobRequest, JobResult, JobStatus
+from klee_web.models import Job, JobCreated, JobRequest
 
 router = APIRouter()
 
@@ -25,40 +26,10 @@ async def create_job(
 ) -> JobCreated:
     job = Job()
     await store.create(job)
-    task = asyncio.create_task(_run_job_in_background(job.id, request, store, runner))
+    task = asyncio.create_task(run_job(job.id, request, store, runner))
     _background_tasks.add(task)
     task.add_done_callback(_background_tasks.discard)
     return JobCreated(job_id=job.id)
-
-
-async def _run_job_in_background(
-    job_id: UUID,
-    request: JobRequest,
-    store: JobStore,
-    runner: KleeRunner,
-) -> None:
-    await store.update_status(job_id, JobStatus.running)
-
-    async def on_progress(partial: JobResult) -> None:
-        await store.set_partial_result(job_id, partial)
-
-    async def on_parsing() -> None:
-        await store.update_status(job_id, JobStatus.parsing)
-
-    try:
-        result = await runner.execute(
-            request.source,
-            request.flags,
-            job_id,
-            on_progress=on_progress,
-            on_parsing=on_parsing,
-        )
-        job = await store.get(job_id)
-        if job is not None and job.cancel_requested:
-            result.halt_reason = HaltReason.cancelled
-        await store.set_result(job_id, result)
-    except KleeRunnerError:
-        await store.update_status(job_id, JobStatus.failed)
 
 
 @router.get("/jobs/{job_id}", response_model=Job)
