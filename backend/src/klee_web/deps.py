@@ -1,6 +1,10 @@
 from functools import lru_cache
+from typing import Annotated
+
+from fastapi import Depends
 
 from klee_web.config import get_settings
+from klee_web.jobs.dispatch import InProcessDispatcher, JobDispatcher
 from klee_web.jobs.runner import DockerKleeRunner, KleeRunner
 from klee_web.jobs.store import InMemoryJobStore, JobStore
 
@@ -25,3 +29,10 @@ def get_runner() -> KleeRunner:
 
         return FakeKleeRunner(canned_result=get_sign_result())
     return DockerKleeRunner()
+
+
+def get_dispatcher(
+    store: Annotated[JobStore, Depends(get_job_store)],
+    runner: Annotated[KleeRunner, Depends(get_runner)],
+) -> JobDispatcher:
+    return InProcessDispatcher(store, runner)
