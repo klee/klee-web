@@ -25,6 +25,12 @@ repos:
         language: system
         files: ^frontend/src/.*\.(ts|tsx)$
         pass_filenames: false
+      - id: mypy
+        name: mypy (backend)
+        entry: bash -c 'cd backend && uv run mypy'
+        language: system
+        files: ^backend/.*\.py$
+        pass_filenames: false
       - id: e2e-playwright
         name: Playwright e2e (real KLEE, local only)
         entry: bash -c 'cd frontend && npm run test:e2e'

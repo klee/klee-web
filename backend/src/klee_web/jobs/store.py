@@ -1,6 +1,6 @@
 import asyncio
 from datetime import datetime
-from typing import Protocol
+from typing import Protocol, cast
 from uuid import UUID
 
 from redis.asyncio import Redis
@@ -98,11 +98,12 @@ class RedisJobStore:
 
     async def create(self, job: Job) -> None:
         key = _key(job.id)
-        await self._client.hset(key, mapping=_to_hash(job))
+        # redis-py stub types the mapping key as an invariant union; str fields are valid.
+        await self._client.hset(key, mapping=_to_hash(job))  # type: ignore[arg-type]
         await self._client.expire(key, _JOB_TTL_SECONDS)
 
     async def get(self, job_id: UUID) -> Job | None:
-        data = await self._client.hgetall(_key(job_id))
+        data = cast(dict[bytes, bytes], await self._client.hgetall(_key(job_id)))
         return _from_hash(data) if data else None
 
     async def update_status(self, job_id: UUID, status: JobStatus) -> None:
@@ -124,5 +125,5 @@ class RedisJobStore:
         key = _key(job_id)
         if not await self._client.exists(key):
             raise JobNotFound(job_id)
-        await self._client.hset(key, mapping=fields)
+        await self._client.hset(key, mapping=fields)  # type: ignore[arg-type]
         await self._client.expire(key, _JOB_TTL_SECONDS)
