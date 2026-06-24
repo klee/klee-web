@@ -1,8 +1,23 @@
+import asyncio
+import contextlib
 from uuid import UUID
 
 from klee_web.jobs.runner import KleeRunner, KleeRunnerError
 from klee_web.jobs.store import JobStore
 from klee_web.models import HaltReason, JobRequest, JobResult, JobStatus
+
+_CANCEL_POLL_SECONDS = 1.0
+
+
+def _cancelled_result() -> JobResult:
+    """A job cancelled before KLEE ran: nothing produced, halted by the cancel."""
+    return JobResult(
+        test_cases=[],
+        messages="",
+        warnings="",
+        stats={},
+        halt_reason=HaltReason.cancelled,
+    )
 
 
 async def run_job(
@@ -11,6 +26,11 @@ async def run_job(
     store: JobStore,
     runner: KleeRunner,
 ) -> None:
+    job = await store.get(job_id)
+    if job is not None and job.cancel_requested:
+        await store.set_result(job_id, _cancelled_result())
+        return
+
     await store.update_status(job_id, JobStatus.running)
 
     async def on_progress(partial: JobResult) -> None:
@@ -19,6 +39,14 @@ async def run_job(
     async def on_parsing() -> None:
         await store.update_status(job_id, JobStatus.parsing)
 
+    async def watch_cancel() -> None:
+        while True:
+            await asyncio.sleep(_CANCEL_POLL_SECONDS)
+            current = await store.get(job_id)
+            if current is not None and current.cancel_requested:
+                await runner.cancel(job_id)
+
+    watcher = asyncio.create_task(watch_cancel())
     try:
         result = await runner.execute(
             request.source,
@@ -33,3 +61,7 @@ async def run_job(
         await store.set_result(job_id, result)
     except KleeRunnerError:
         await store.update_status(job_id, JobStatus.failed)
+    finally:
+        watcher.cancel()
+        with contextlib.suppress(asyncio.CancelledError):
+            await watcher

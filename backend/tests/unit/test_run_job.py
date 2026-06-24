@@ -1,8 +1,9 @@
 import asyncio
+from uuid import UUID
 
 from klee_web.jobs.run import run_job
 from klee_web.jobs.runner import FakeKleeRunner, KleeRunnerError
-from klee_web.models import Job, JobRequest, JobResult, JobStatus, KleeFlags, TestCase
+from klee_web.models import HaltReason, Job, JobRequest, JobResult, JobStatus, KleeFlags, TestCase
 
 SOURCE = "int main() { return 0; }"
 
@@ -116,3 +117,56 @@ async def test_run_job_flips_to_parsing_after_klee_exit(store, sample_result):
     final = await store.get(job.id)
     assert final is not None
     assert final.status == JobStatus.done
+
+
+async def test_run_job_short_circuits_when_cancelled_before_start(store, runner):
+    job = await _seed_job(store)
+    await store.request_cancel(job.id)
+
+    await run_job(job.id, JobRequest(source=SOURCE), store, runner)
+
+    assert runner.calls == []
+    stored = await store.get(job.id)
+    assert stored is not None
+    assert stored.status == JobStatus.done
+    assert stored.result is not None
+    assert stored.result.halt_reason == HaltReason.cancelled
+    assert stored.result.test_cases == []
+    assert stored.result.stats == {}
+
+
+async def test_run_job_cancel_watcher_signals_and_tags(store, sample_result, monkeypatch):
+    monkeypatch.setattr("klee_web.jobs.run._CANCEL_POLL_SECONDS", 0.01)
+    running = asyncio.Event()
+    finish = asyncio.Event()
+    cancel_calls: list[UUID] = []
+
+    class CancellableRunner:
+        async def execute(self, source, flags, job_id, on_progress=None, on_parsing=None):
+            running.set()
+            await finish.wait()
+            return sample_result
+
+        async def cancel(self, job_id):
+            cancel_calls.append(job_id)
+            return True
+
+    job = await _seed_job(store)
+    task = asyncio.create_task(
+        run_job(job.id, JobRequest(source=SOURCE), store, CancellableRunner())
+    )
+    await running.wait()
+
+    await store.request_cancel(job.id)
+    for _ in range(200):
+        if cancel_calls:
+            break
+        await asyncio.sleep(0.01)
+    assert job.id in cancel_calls
+
+    finish.set()
+    await task
+    stored = await store.get(job.id)
+    assert stored is not None
+    assert stored.result is not None
+    assert stored.result.halt_reason == HaltReason.cancelled

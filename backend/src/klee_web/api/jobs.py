@@ -3,11 +3,10 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from klee_web.deps import get_dispatcher, get_job_store, get_runner
+from klee_web.deps import get_dispatcher, get_job_store
 from klee_web.jobs.dispatch import JobDispatcher
-from klee_web.jobs.runner import KleeRunner
 from klee_web.jobs.store import JobStore
-from klee_web.models import Job, JobCreated, JobRequest
+from klee_web.models import Job, JobCreated, JobRequest, JobStatus
 
 router = APIRouter()
 
@@ -43,14 +42,12 @@ async def get_job(
 async def cancel_job(
     job_id: UUID,
     store: Annotated[JobStore, Depends(get_job_store)],
-    runner: Annotated[KleeRunner, Depends(get_runner)],
 ) -> Job:
     job = await store.get(job_id)
     if job is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Job not found")
-    landed = await runner.cancel(job_id)
-    if not landed:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Job is not running")
+    if job.status in (JobStatus.done, JobStatus.failed):
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Job is already finished")
     await store.request_cancel(job_id)
     updated = await store.get(job_id)
     assert updated is not None  # store never drops a job that get() just returned
