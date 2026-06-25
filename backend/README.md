@@ -19,3 +19,23 @@ FastAPI service. Receives job submissions, runs KLEE through the runner, returns
 ## Why `JobStore` and `KleeRunner` are protocols
 
 Stage 1 ships in-memory and direct-Docker implementations. Stage 2 swaps in `RedisJobStore` and a Celery-driven runner. The endpoints depend on the protocols via `Depends`, never on the concrete classes. One file (`deps.py`) changes at the stage boundary; everything else is untouched. See `../docs/adr/0001-stage-based-additive-architecture.md`.
+
+## Stage 2: running with Celery
+
+By default the backend runs each job in-process, with no Redis and no worker. That is the zero-config dev path (`make up`). To run the Stage 2 split locally, with a real Celery worker pulling jobs off Redis, from the repo root:
+
+```
+make up-celery
+```
+
+It brings up Redis through `docker compose`, then runs the API, a Celery worker (`-Q klee-jobs --concurrency=2`), and the frontend as host processes, with `REDIS_URL` (the store, db 0) and `CELERY_BROKER_URL` (the broker, db 1) set. With both set the API enqueues jobs instead of running them inline, and the worker runs KLEE and writes results to the shared `RedisJobStore`. Ctrl+C brings Redis back down.
+
+### Manual worker smoke
+
+`tests/integration/test_celery_worker.py` covers the enqueue-to-store path with an embedded worker and a fake runner. To smoke the real path end to end, with `make up-celery` running:
+
+1. Submit a job from the frontend (the pre-loaded program is enough).
+2. Watch the worker log pick up `run_klee_job` and spawn a container.
+3. Poll `GET /jobs/{id}` until the status is `done` and confirm the test cases.
+
+This stays manual on purpose. It overlaps the runner integration test and the Playwright e2e, and it needs real Docker, so it is not in the automated suite.
