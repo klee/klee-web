@@ -6,10 +6,10 @@ from klee_web.models import Job, JobRequest, JobStatus
 SOURCE = "int main() { return 0; }"
 
 
-async def test_in_process_dispatcher_runs_job_in_background(store, runner, sample_result):
+async def test_in_process_dispatcher_runs_job_in_background(store, runner, cache, sample_result):
     job = Job()
     await store.create(job)
-    dispatcher = InProcessDispatcher(store, runner)
+    dispatcher = InProcessDispatcher(store, runner, cache)
 
     await dispatcher.dispatch(job.id, JobRequest(source=SOURCE))
     await drain()
@@ -20,7 +20,7 @@ async def test_in_process_dispatcher_runs_job_in_background(store, runner, sampl
     assert stored.result == sample_result
 
 
-async def test_dispatch_does_not_block_on_the_job(store, sample_result):
+async def test_dispatch_does_not_block_on_the_job(store, cache, sample_result):
     entered = asyncio.Event()
     finish = asyncio.Event()
 
@@ -35,7 +35,7 @@ async def test_dispatch_does_not_block_on_the_job(store, sample_result):
 
     job = Job()
     await store.create(job)
-    dispatcher = InProcessDispatcher(store, BlockingRunner())
+    dispatcher = InProcessDispatcher(store, BlockingRunner(), cache)
 
     await dispatcher.dispatch(job.id, JobRequest(source=SOURCE))
     await entered.wait()

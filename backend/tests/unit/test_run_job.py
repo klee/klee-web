@@ -1,6 +1,7 @@
 import asyncio
 from uuid import UUID
 
+from klee_web.jobs.cache import InMemoryResultCache, cache_key
 from klee_web.jobs.run import run_job
 from klee_web.jobs.runner import FakeKleeRunner, KleeRunnerError
 from klee_web.models import HaltReason, Job, JobRequest, JobResult, JobStatus, KleeFlags, TestCase
@@ -170,3 +171,71 @@ async def test_run_job_cancel_watcher_signals_and_tags(store, sample_result, mon
     assert stored is not None
     assert stored.result is not None
     assert stored.result.halt_reason == HaltReason.cancelled
+
+
+async def test_run_job_caches_completed_result(store):
+    job = await _seed_job(store)
+    request = JobRequest(source=SOURCE)
+    result = JobResult(
+        test_cases=[TestCase(name="test1", inputs={"x": "0"})],
+        messages="ok",
+        warnings="",
+        stats={"paths": 1},
+        halt_reason=HaltReason.completed,
+    )
+    runner = FakeKleeRunner(canned_result=result)
+    cache = InMemoryResultCache()
+
+    await run_job(job.id, request, store, runner, cache)
+
+    assert await cache.get(cache_key(request)) == result
+
+
+async def test_run_job_does_not_cache_timed_out_result(store):
+    job = await _seed_job(store)
+    request = JobRequest(source=SOURCE)
+    timed_out = JobResult(
+        test_cases=[], messages="", warnings="", stats={}, halt_reason=HaltReason.max_time
+    )
+    runner = FakeKleeRunner(canned_result=timed_out)
+    cache = InMemoryResultCache()
+
+    await run_job(job.id, request, store, runner, cache)
+
+    assert await cache.get(cache_key(request)) is None
+
+
+async def test_run_job_does_not_cache_failed_job(store):
+    job = await _seed_job(store)
+    request = JobRequest(source=SOURCE)
+    runner = FakeKleeRunner(raise_exc=KleeRunnerError("KLEE crashed"))
+    cache = InMemoryResultCache()
+
+    await run_job(job.id, request, store, runner, cache)
+
+    assert await cache.get(cache_key(request)) is None
+
+
+async def test_run_job_does_not_cache_compile_error(store):
+    job = await _seed_job(store)
+    request = JobRequest(source=SOURCE)
+    compile_err = JobResult(
+        test_cases=[], messages="", warnings="", stats={}, compile_error="input.c:1: error"
+    )
+    runner = FakeKleeRunner(canned_result=compile_err)
+    cache = InMemoryResultCache()
+
+    await run_job(job.id, request, store, runner, cache)
+
+    assert await cache.get(cache_key(request)) is None
+
+
+async def test_run_job_does_not_cache_cancelled_job(store, runner):
+    job = await _seed_job(store)
+    await store.request_cancel(job.id)
+    request = JobRequest(source=SOURCE)
+    cache = InMemoryResultCache()
+
+    await run_job(job.id, request, store, runner, cache)
+
+    assert await cache.get(cache_key(request)) is None

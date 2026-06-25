@@ -2,6 +2,7 @@ import asyncio
 from typing import Protocol
 from uuid import UUID
 
+from klee_web.jobs.cache import ResultCache
 from klee_web.jobs.run import run_job
 from klee_web.jobs.runner import KleeRunner
 from klee_web.jobs.store import JobStore
@@ -19,12 +20,13 @@ _background_tasks: set[asyncio.Task[None]] = set()
 
 
 class InProcessDispatcher:
-    def __init__(self, store: JobStore, runner: KleeRunner) -> None:
+    def __init__(self, store: JobStore, runner: KleeRunner, cache: ResultCache) -> None:
         self._store = store
         self._runner = runner
+        self._cache = cache
 
     async def dispatch(self, job_id: UUID, request: JobRequest) -> None:
-        task = asyncio.create_task(run_job(job_id, request, self._store, self._runner))
+        task = asyncio.create_task(run_job(job_id, request, self._store, self._runner, self._cache))
         _background_tasks.add(task)
         task.add_done_callback(_background_tasks.discard)
 

@@ -2,8 +2,9 @@ import asyncio
 from uuid import UUID, uuid4
 
 from klee_web.deps import get_runner
+from klee_web.jobs.cache import cache_key
 from klee_web.jobs.runner import FakeKleeRunner, KleeRunnerError
-from klee_web.models import HaltReason, JobResult, JobStatus, TestCase
+from klee_web.models import HaltReason, JobRequest, JobResult, JobStatus, TestCase
 
 
 async def test_post_jobs_returns_202_with_job_id(client):
@@ -233,3 +234,48 @@ async def test_cancel_finished_job_returns_409(client, store, wait_for_jobs):
     job = await store.get(job_id)
     assert job is not None
     assert job.cancel_requested is False
+
+
+async def test_post_jobs_serves_cache_hit_without_dispatching(client, runner, cache, wait_for_jobs):
+    payload = {"source": "int main(){}"}
+    cached = JobResult(
+        test_cases=[TestCase(name="cached", inputs={"x": "0"})],
+        messages="from cache",
+        warnings="",
+        stats={"paths": 1},
+        halt_reason=HaltReason.completed,
+    )
+    await cache.set(cache_key(JobRequest(source=payload["source"])), cached)
+
+    response = await client.post("/jobs", json=payload)
+    assert response.status_code == 202
+    job_id = response.json()["job_id"]
+
+    await wait_for_jobs()
+    assert runner.calls == []  # cache hit: KLEE never ran
+
+    get = await client.get(f"/jobs/{job_id}")
+    body = get.json()
+    assert body["status"] == "done"
+    assert body["result"]["messages"] == "from cache"
+
+
+async def test_post_jobs_second_identical_submission_hits_cache(client, app, wait_for_jobs):
+    completed = JobResult(
+        test_cases=[TestCase(name="t", inputs={"x": "0"})],
+        messages="",
+        warnings="",
+        stats={"paths": 1},
+        halt_reason=HaltReason.completed,
+    )
+    runner = FakeKleeRunner(canned_result=completed)
+    app.dependency_overrides[get_runner] = lambda: runner
+
+    payload = {"source": "int main(){}"}
+    await client.post("/jobs", json=payload)
+    await wait_for_jobs()
+    assert len(runner.calls) == 1
+
+    await client.post("/jobs", json=payload)
+    await wait_for_jobs()
+    assert len(runner.calls) == 1  # second identical submission served from cache, no re-run

@@ -4,6 +4,7 @@ from uuid import UUID
 from celery import Celery
 
 from klee_web.config import Settings, get_settings
+from klee_web.jobs.cache import ResultCache
 from klee_web.jobs.run import run_job
 from klee_web.jobs.runner import DockerKleeRunner, KleeRunner
 from klee_web.jobs.store import JobStore
@@ -37,6 +38,15 @@ def _build_runner(settings: Settings) -> KleeRunner:
     return DockerKleeRunner()
 
 
+def _build_cache(settings: Settings) -> ResultCache:
+    from redis.asyncio import Redis
+
+    from klee_web.jobs.cache import RedisResultCache
+
+    assert settings.redis_url is not None  # the broker validator guarantees this in Celery mode
+    return RedisResultCache(Redis.from_url(settings.redis_url))
+
+
 @app.task(name="run_klee_job")
 def run_klee_job(job_id: str, request_data: dict[str, object]) -> None:
     settings = get_settings()
@@ -44,6 +54,7 @@ def run_klee_job(job_id: str, request_data: dict[str, object]) -> None:
     async def _run() -> None:
         store = _build_store(settings)
         runner = _build_runner(settings)
-        await run_job(UUID(job_id), JobRequest.model_validate(request_data), store, runner)
+        cache = _build_cache(settings)
+        await run_job(UUID(job_id), JobRequest.model_validate(request_data), store, runner, cache)
 
     asyncio.run(_run())

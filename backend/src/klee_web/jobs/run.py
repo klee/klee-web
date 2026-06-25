@@ -2,6 +2,7 @@ import asyncio
 import contextlib
 from uuid import UUID
 
+from klee_web.jobs.cache import ResultCache, cache_key
 from klee_web.jobs.runner import KleeRunner, KleeRunnerError
 from klee_web.jobs.store import JobStore
 from klee_web.models import HaltReason, JobRequest, JobResult, JobStatus
@@ -25,6 +26,7 @@ async def run_job(
     request: JobRequest,
     store: JobStore,
     runner: KleeRunner,
+    cache: ResultCache | None = None,
 ) -> None:
     job = await store.get(job_id)
     if job is not None and job.cancel_requested:
@@ -59,6 +61,8 @@ async def run_job(
         if job is not None and job.cancel_requested:
             result.halt_reason = HaltReason.cancelled
         await store.set_result(job_id, result)
+        if cache is not None and result.halt_reason == HaltReason.completed:
+            await cache.set(cache_key(request), result)
     except KleeRunnerError:
         await store.update_status(job_id, JobStatus.failed)
     finally:

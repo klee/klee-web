@@ -3,7 +3,8 @@ from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
 
 from klee_web.api.jobs import router as jobs_router
-from klee_web.deps import get_job_store, get_runner
+from klee_web.deps import get_cache, get_job_store, get_runner
+from klee_web.jobs.cache import InMemoryResultCache
 from klee_web.jobs.dispatch import drain
 from klee_web.jobs.runner import FakeKleeRunner
 from klee_web.jobs.store import InMemoryJobStore
@@ -31,11 +32,17 @@ def runner(sample_result) -> FakeKleeRunner:
 
 
 @pytest.fixture
-def app(store, runner) -> FastAPI:
+def cache() -> InMemoryResultCache:
+    return InMemoryResultCache()
+
+
+@pytest.fixture
+def app(store, runner, cache) -> FastAPI:
     app = FastAPI()
     app.include_router(jobs_router)
     app.dependency_overrides[get_job_store] = lambda: store
     app.dependency_overrides[get_runner] = lambda: runner
+    app.dependency_overrides[get_cache] = lambda: cache
     return app
 
 
