@@ -163,6 +163,22 @@ async def test_run_job_short_circuits_a_failed_job(store, runner):
     assert stored.status == JobStatus.failed
 
 
+async def test_run_job_redelivery_after_completion_is_a_noop(store, runner, sample_result):
+    # A redelivery is just the task running again with the same job_id. Once the first
+    # delivery has finished the job, a second must short-circuit and leave it untouched.
+    job = await _seed_job(store)
+    request = JobRequest(source=SOURCE)
+
+    await run_job(job.id, request, store, runner)
+    await run_job(job.id, request, store, runner)
+
+    assert len(runner.calls) == 1  # KLEE ran exactly once across both deliveries
+    stored = await store.get(job.id)
+    assert stored is not None
+    assert stored.status == JobStatus.done
+    assert stored.result == sample_result
+
+
 async def test_run_job_counts_the_attempt(store, runner):
     job = await _seed_job(store)
 
