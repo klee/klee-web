@@ -39,3 +39,15 @@ It brings up Redis through `docker compose`, then runs the API, a Celery worker 
 3. Poll `GET /jobs/{id}` until the status is `done` and confirm the test cases.
 
 This stays manual on purpose. It overlaps the runner integration test and the Playwright e2e, and it needs real Docker, so it is not in the automated suite.
+
+### Manual worker-death smoke
+
+`acks_late` and the visibility timeout redeliver a job whose worker dies mid-run (ADR-0018). The deterministic pieces (terminal short-circuit, attempts cap, container reclaim) are unit-tested; the actual kill stays manual, because making a genuine worker death reproducible in CI is brittle. With `make up-celery` running:
+
+1. Submit a job with a longer `max_time` (say 60) so it is still running when you kill the worker.
+2. Watch the worker log pick up `run_klee_job` and spawn `klee-job-{id}`. Confirm `GET /jobs/{id}` is `running`.
+3. `kill -9` the worker process mid-run. The job stays `running` (the worker never acked), and its container keeps running orphaned under `klee-job-{id}` (it runs under dockerd, not as the worker's child).
+4. Start a fresh worker (the same `celery ... worker` line `make up-celery` uses).
+5. After the visibility timeout the broker redelivers the task. The redelivered run force-removes the orphaned container, re-runs KLEE, and the job lands `done`.
+
+The wait in step 5 is the Redis visibility timeout (`MAX_TIME_CEILING * 2` = 600s). To smoke it faster, lower `broker_transport_options["visibility_timeout"]` in `celery_app.py` temporarily.
