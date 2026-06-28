@@ -25,8 +25,14 @@ class QueryFormat(StrEnum):
     kquery = "kquery"
 
 
+# The hard upper bound on a job's wall-clock. The Celery visibility timeout is sized
+# at twice this (ADR-0018), so the two move together: raising it without raising the
+# timeout brings back the concurrent-double-run hazard after a worker death.
+MAX_TIME_CEILING = 300
+
+
 class KleeFlags(BaseModel):
-    max_time: Annotated[int, Field(ge=1, le=300)] = 60
+    max_time: Annotated[int, Field(ge=1, le=MAX_TIME_CEILING)] = 60
     max_memory: Annotated[int, Field(ge=64, le=2048)] = 512
     query_format: QueryFormat = QueryFormat.none
 
