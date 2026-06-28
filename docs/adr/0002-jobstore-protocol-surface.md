@@ -4,6 +4,8 @@
 
 **Amended 2026-06-21:** The protocol has since grown from four methods to six, both additions made within Stage 1 as features landed rather than at a stage boundary. `set_partial_result` was added for progress streaming, when `POST /jobs` became non-blocking and a running job emits partial results. `request_cancel` was added for user cancel (ADR-0013), along with the `Job.cancel_requested` flag. The decision and reasoning below stand. The load-bearing invariant is the stability of the protocol shape across the Stage 1 to Stage 2 swap, not the literal count, and `RedisJobStore` implements all six (ADR-0014).
 
+**Amended 2026-06-28:** Two more methods take the protocol to eight, both added within Stage 2 for delivery hardening (ADR-0018). `increment_attempts` drives the poison cap that stops a worker-killing job from looping through the whole fleet. `set_failed` marks a job failed with a user-facing reason when that cap fires. `RedisJobStore` implements all eight.
+
 ## Context
 
 Stage 1 of klee-web (per ADR-0001) needs an in-memory store for tracking job state across the lifetime of an HTTP request. Stage 2 will need the same operations against Redis, with the endpoints unchanged. The endpoints must depend on something the type checker can verify, without knowing which implementation is wired at runtime.
