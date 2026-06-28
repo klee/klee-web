@@ -17,6 +17,29 @@ def _container_name(job_id: UUID) -> str:
     return f"klee-job-{job_id}"
 
 
+async def reclaim_container(job_id: UUID) -> None:
+    """Force-remove any container orphaned under this job's deterministic name.
+
+    A dead worker leaves its container under klee-job-{id} (it runs under dockerd, not
+    as the worker's child), which would collide with a redelivered run's --name. Run
+    before every docker run, best-effort: a missing container (the common case, a
+    non-zero exit) and a missing docker binary (OSError) are both swallowed, because
+    reclaim must never abort the job it exists to save. Safe only because the visibility
+    timeout means redelivery happens after the original worker is dead (ADR-0018)."""
+    try:
+        proc = await asyncio.create_subprocess_exec(
+            "docker",
+            "rm",
+            "-f",
+            _container_name(job_id),
+            stdout=asyncio.subprocess.DEVNULL,
+            stderr=asyncio.subprocess.DEVNULL,
+        )
+        await proc.communicate()
+    except OSError:
+        pass
+
+
 OnProgress = Callable[[JobResult], Awaitable[None]]
 OnParsing = Callable[[], Awaitable[None]]
 
@@ -94,6 +117,8 @@ class DockerKleeRunner:
             tmpdir = Path(tmpdir_str)
             (tmpdir / "input.c").write_text(source)
             output_dir = tmpdir / "output"
+
+            await reclaim_container(job_id)
 
             try:
                 proc = await asyncio.create_subprocess_exec(

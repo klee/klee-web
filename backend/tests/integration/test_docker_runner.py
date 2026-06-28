@@ -162,6 +162,24 @@ async def test_docker_runner_cancel_halts_with_partial_results():
     assert not await _container_running(name)
 
 
+async def test_docker_runner_reclaims_orphaned_container_name():
+    job_id = uuid4()
+    name = f"klee-job-{job_id}"
+    # A dead worker's leftover: a container still holding the deterministic name.
+    # docker create reserves the name without running anything.
+    subprocess.run(["docker", "create", "--name", name, IMAGE_TAG], capture_output=True, check=True)
+    try:
+        runner = DockerKleeRunner()
+        result = await asyncio.wait_for(
+            runner.execute(GET_SIGN_SOURCE, KleeFlags(max_time=10, max_memory=256), job_id),
+            timeout=30,
+        )
+        # Without the reclaim, docker run --name would collide and fail the job.
+        assert len(result.test_cases) == 3
+    finally:
+        subprocess.run(["docker", "rm", "-f", name], capture_output=True)
+
+
 async def test_docker_runner_pairs_div_err_with_failing_test_case():
     runner = DockerKleeRunner()
     result = await asyncio.wait_for(
