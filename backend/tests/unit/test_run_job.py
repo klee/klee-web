@@ -1,6 +1,8 @@
 import asyncio
 from uuid import UUID
 
+import pytest
+
 from klee_web.jobs.cache import InMemoryResultCache, cache_key
 from klee_web.jobs.run import run_job
 from klee_web.jobs.runner import FakeKleeRunner, KleeRunnerError
@@ -134,6 +136,77 @@ async def test_run_job_short_circuits_when_cancelled_before_start(store, runner)
     assert stored.result.halt_reason == HaltReason.cancelled
     assert stored.result.test_cases == []
     assert stored.result.stats == {}
+
+
+async def test_run_job_short_circuits_a_finished_job(store, runner, sample_result):
+    job = Job(status=JobStatus.done, result=sample_result)
+    await store.create(job)
+
+    await run_job(job.id, JobRequest(source=SOURCE), store, runner)
+
+    assert runner.calls == []  # a redelivery of a done job must not re-run KLEE
+    stored = await store.get(job.id)
+    assert stored is not None
+    assert stored.status == JobStatus.done
+    assert stored.result == sample_result
+
+
+async def test_run_job_short_circuits_a_failed_job(store, runner):
+    job = Job(status=JobStatus.failed, failure_reason="gave up")
+    await store.create(job)
+
+    await run_job(job.id, JobRequest(source=SOURCE), store, runner)
+
+    assert runner.calls == []
+    stored = await store.get(job.id)
+    assert stored is not None
+    assert stored.status == JobStatus.failed
+
+
+async def test_run_job_counts_the_attempt(store, runner):
+    job = await _seed_job(store)
+
+    await run_job(job.id, JobRequest(source=SOURCE), store, runner)
+
+    stored = await store.get(job.id)
+    assert stored is not None
+    assert stored.attempts == 1
+
+
+async def test_run_job_caps_poison_job_after_three_runs(store):
+    job = await _seed_job(store)
+    request = JobRequest(source=SOURCE)
+
+    class DyingRunner:
+        def __init__(self) -> None:
+            self.calls = 0
+
+        async def execute(self, source, flags, job_id, on_progress=None, on_parsing=None):
+            self.calls += 1
+            raise RuntimeError("worker died")  # a vanished worker, not a clean KleeRunnerError
+
+        async def cancel(self, job_id):
+            return True
+
+    runner = DyingRunner()
+
+    # Each delivery increments attempts, sets running, then the death propagates
+    # (run_job only catches KleeRunnerError), leaving the job re-runnable.
+    for _ in range(3):
+        with pytest.raises(RuntimeError):
+            await run_job(job.id, request, store, runner)
+
+    # Fourth delivery: the cap fires, the job is failed with a reason, KLEE is not re-run.
+    await run_job(job.id, request, store, runner)
+    assert runner.calls == 3
+    failed = await store.get(job.id)
+    assert failed is not None
+    assert failed.status == JobStatus.failed
+    assert failed.failure_reason is not None
+
+    # A later redelivery short-circuits on the terminal status, still no fourth run.
+    await run_job(job.id, request, store, runner)
+    assert runner.calls == 3
 
 
 async def test_run_job_cancel_watcher_signals_and_tags(store, sample_result, monkeypatch):

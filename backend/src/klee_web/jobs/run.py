@@ -8,6 +8,12 @@ from klee_web.jobs.store import JobStore
 from klee_web.models import HaltReason, JobRequest, JobResult, JobStatus
 
 _CANCEL_POLL_SECONDS = 1.0
+_TERMINAL_STATUSES = frozenset({JobStatus.done, JobStatus.failed})
+_MAX_ATTEMPTS = 3
+_POISON_REASON = (
+    "Gave up after 3 attempts: a worker repeatedly stopped before finishing this job. "
+    "Resubmit to try again."
+)
 
 
 def _cancelled_result() -> JobResult:
@@ -29,8 +35,16 @@ async def run_job(
     cache: ResultCache | None = None,
 ) -> None:
     job = await store.get(job_id)
+    if job is not None and job.status in _TERMINAL_STATUSES:
+        return  # a redelivery of an already-finished job must not re-run KLEE
+
     if job is not None and job.cancel_requested:
         await store.set_result(job_id, _cancelled_result())
+        return
+
+    attempts = await store.increment_attempts(job_id)
+    if attempts > _MAX_ATTEMPTS:
+        await store.set_failed(job_id, _POISON_REASON)
         return
 
     await store.update_status(job_id, JobStatus.running)
