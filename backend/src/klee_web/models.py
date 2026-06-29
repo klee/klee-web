@@ -66,7 +66,7 @@ class Job(BaseModel):
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     result: JobResult | None = None
     cancel_requested: bool = Field(default=False, exclude=True)
-    attempts: int = Field(default=0, exclude=True)
+    attempts: int = 0
     failure_reason: str | None = None
 
 

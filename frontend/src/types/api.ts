@@ -84,6 +84,13 @@ export interface components {
              */
             created_at?: string;
             result?: components["schemas"]["JobResult"] | null;
+            /**
+             * Attempts
+             * @default 0
+             */
+            attempts: number;
+            /** Failure Reason */
+            failure_reason?: string | null;
         };
         /** JobCreated */
         JobCreated: {

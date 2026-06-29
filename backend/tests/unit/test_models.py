@@ -108,10 +108,10 @@ def test_job_attempts_defaults_zero():
     assert Job().attempts == 0
 
 
-def test_job_attempts_is_excluded_from_serialisation():
+def test_job_attempts_is_exposed_in_serialisation():
     job = Job()
     job.attempts = 2
-    assert "attempts" not in job.model_dump(mode="json")
+    assert job.model_dump(mode="json")["attempts"] == 2
 
 
 def test_job_failure_reason_defaults_none():
