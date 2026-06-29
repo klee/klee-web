@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from "react"
-import type { HaltReason, JobResult, TestCase } from "../api/jobs"
+import type { HaltReason, Job, JobResult, TestCase } from "../api/jobs"
 import { useJob } from "../hooks/useJob"
 
 type ResultsProps = {
@@ -9,6 +9,10 @@ type ResultsProps = {
   onErrorsFirstChange: (value: boolean) => void
 }
 
+// Mirrors the backend poison cap (_MAX_ATTEMPTS in run.py): a job retried this many
+// times without finishing is failed rather than redelivered again.
+const MAX_ATTEMPTS = 3
+
 export function Results({ jobId, submitError, errorsFirst, onErrorsFirstChange }: ResultsProps) {
   const { data: job, isError: queryError } = useJob(jobId)
 
@@ -16,6 +20,25 @@ export function Results({ jobId, submitError, errorsFirst, onErrorsFirstChange }
   if (jobId === null) return <EmptyState />
   if (job === undefined) return <LoadingState />
 
+  return (
+    <div className="h-full flex flex-col">
+      {job.attempts > 1 && job.status !== "failed" && <AttemptBadge attempt={job.attempts} />}
+      <div className="flex-1 min-h-0">
+        <ResultsBody job={job} errorsFirst={errorsFirst} onErrorsFirstChange={onErrorsFirstChange} />
+      </div>
+    </div>
+  )
+}
+
+function ResultsBody({
+  job,
+  errorsFirst,
+  onErrorsFirstChange,
+}: {
+  job: Job
+  errorsFirst: boolean
+  onErrorsFirstChange: (value: boolean) => void
+}) {
   switch (job.status) {
     case "pending":
       return <PendingState />
@@ -35,8 +58,16 @@ export function Results({ jobId, submitError, errorsFirst, onErrorsFirstChange }
         />
       )
     case "failed":
-      return <FailedState result={job.result ?? null} />
+      return <FailedState result={job.result ?? null} failureReason={job.failure_reason ?? null} />
   }
+}
+
+function AttemptBadge({ attempt }: { attempt: number }) {
+  return (
+    <div className="shrink-0 px-4 py-1.5 text-xs border-b border-amber-200 dark:border-amber-900 bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-300">
+      Attempt {attempt} of {MAX_ATTEMPTS}. A worker stopped before finishing, so this job was retried.
+    </div>
+  )
 }
 
 function CenterBlock({ children }: { children: ReactNode }) {
@@ -67,12 +98,21 @@ function PendingState() {
   return <CenterBlock>Job queued, waiting for runner...</CenterBlock>
 }
 
-function FailedState({ result }: { result: JobResult | null }) {
+function FailedState({
+  result,
+  failureReason,
+}: {
+  result: JobResult | null
+  failureReason: string | null
+}) {
   return (
     <div className="h-full overflow-auto p-6">
       <h2 className="text-lg font-semibold text-rose-600 dark:text-rose-400 mb-3">
         Job failed
       </h2>
+      {failureReason && (
+        <p className="text-sm text-slate-700 dark:text-slate-300 mb-3">{failureReason}</p>
+      )}
       {result?.messages && (
         <pre className="text-xs font-mono whitespace-pre-wrap p-3 rounded border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-200">
           {result.messages}
