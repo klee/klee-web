@@ -51,3 +51,17 @@ This stays manual on purpose. It overlaps the runner integration test and the Pl
 5. After the visibility timeout the broker redelivers the task. The redelivered run force-removes the orphaned container, re-runs KLEE, and the job lands `done`.
 
 The wait in step 5 is the Redis visibility timeout (`MAX_TIME_CEILING * 2` = 600s). To smoke it faster, lower `broker_transport_options["visibility_timeout"]` in `celery_app.py` temporarily.
+
+### Worker pool
+
+`make up-celery` runs one worker. To run several against the one queue:
+
+```
+make up-pool
+```
+
+Same stack as `make up-celery`, with the single worker replaced by `WORKERS` host processes (default 2), each at `--concurrency=1` and a distinct Celery node name so they are tellable apart in the logs. Override the count with `make up-pool WORKERS=4`. The broker spreads jobs across the pool: submit several at once and each worker claims a distinct task.
+
+The pool is the topology that makes worker death survivable with no restart. Kill one worker mid-run and a live peer picks up the redelivered job once the visibility timeout expires (the same wait as the worker-death smoke above, a peer does not shorten it). Redelivery and cancel both route through the shared store, so they reach the right job whichever worker holds it.
+
+Each worker runs as a host process, not a container. Containerising it would mean mounting the host docker socket so the worker could spawn sibling KLEE containers, i.e. handing a container root on the host. That is a deployment and security decision Stage 3 owns, not Stage 2.

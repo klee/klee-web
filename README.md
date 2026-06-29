@@ -66,6 +66,19 @@ current source byte count, and the pinned KLEE version. Theme (system / light /
 dark) and results-position (right / below) settings persist across reloads via
 the settings popover.
 
+### Stage 2: the Celery split
+
+Stage 2 is in progress. To run the split locally, where the API enqueues jobs
+to a separate Celery worker over Redis instead of running them in-process:
+
+```bash
+make up-celery     # API + one worker + Redis + frontend
+make up-pool       # same, but a pool of workers (WORKERS=2 by default)
+```
+
+See [`backend/README.md`](backend/README.md) for what each target brings up, the
+worker-pool topology, and the manual smokes.
+
 ## Regenerating the API contract
 
 The backend emits its OpenAPI spec from the Pydantic models. The frontend's
