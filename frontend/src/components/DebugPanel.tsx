@@ -7,7 +7,11 @@ export function DebugPanel({ jobId }: { jobId: string | null }) {
   const { data: job, dataUpdatedAt, isFetching, isError } = useJob(jobId)
 
   return (
-    <div className="fixed bottom-3 right-3 z-50 w-72 max-h-[60vh] overflow-auto rounded border border-amber-400 dark:border-amber-600 bg-white/95 dark:bg-slate-900/95 shadow-lg text-xs font-mono text-slate-800 dark:text-slate-200">
+    <div
+      role="region"
+      aria-label="Debug panel"
+      className="fixed bottom-3 right-3 z-50 w-72 max-h-[60vh] overflow-auto rounded border border-amber-400 dark:border-amber-600 bg-white/95 dark:bg-slate-900/95 shadow-lg text-xs font-mono text-slate-800 dark:text-slate-200"
+    >
       <div className="px-3 py-1.5 border-b border-amber-300 dark:border-amber-700 bg-amber-100 dark:bg-amber-950 font-semibold flex items-center justify-between">
         <span>debug</span>
         <span className={isFetching ? "text-amber-600 dark:text-amber-400" : "text-slate-400"}>
