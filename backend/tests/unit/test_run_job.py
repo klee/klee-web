@@ -189,6 +189,41 @@ async def test_run_job_counts_the_attempt(store, runner):
     assert stored.attempts == 1
 
 
+async def test_run_job_resets_partial_result_on_redelivery(store):
+    # A run that died left a partial result and attempts=1 behind. The redelivery
+    # (attempt 2) must clear that stale partial before re-running, so the UI shows a
+    # fresh attempt rather than the dead run's progress.
+    stale = JobResult(
+        test_cases=[TestCase(name="stale", inputs={"x": "1"})],
+        messages="from the dead run",
+        warnings="",
+        stats={"Instructions": 999},
+    )
+    job = Job(status=JobStatus.running, result=stale, attempts=1)
+    await store.create(job)
+
+    seen_at_execute: list[JobResult | None] = []
+
+    class CapturingRunner:
+        async def execute(self, source, flags, job_id, on_progress=None, on_parsing=None):
+            current = await store.get(job_id)
+            seen_at_execute.append(current.result if current is not None else None)
+            return JobResult(
+                test_cases=[], messages="", warnings="", stats={}, halt_reason=HaltReason.completed
+            )
+
+        async def cancel(self, job_id):
+            return True
+
+    await run_job(job.id, JobRequest(source=SOURCE), store, CapturingRunner())
+
+    assert len(seen_at_execute) == 1
+    reset = seen_at_execute[0]
+    assert reset is not None
+    assert reset.stats == {}
+    assert reset.test_cases == []
+
+
 async def test_run_job_caps_poison_job_after_three_runs(store):
     job = await _seed_job(store)
     request = JobRequest(source=SOURCE)

@@ -27,6 +27,11 @@ def _cancelled_result() -> JobResult:
     )
 
 
+def _empty_result() -> JobResult:
+    """A fresh attempt with no progress yet: replaces a dead run's stale partial."""
+    return JobResult(test_cases=[], messages="", warnings="", stats={})
+
+
 async def run_job(
     job_id: UUID,
     request: JobRequest,
@@ -46,6 +51,11 @@ async def run_job(
     if attempts > _MAX_ATTEMPTS:
         await store.set_failed(job_id, _POISON_REASON)
         return
+
+    if attempts > 1:
+        # A redelivered run starts KLEE over. Drop the dead run's partial result so the
+        # UI shows a fresh attempt, not stale progress from the delivery that was lost.
+        await store.set_partial_result(job_id, _empty_result())
 
     await store.update_status(job_id, JobStatus.running)
 
