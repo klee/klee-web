@@ -1,5 +1,6 @@
 import { useState } from "react"
 import type { KleeFlags } from "../api/jobs"
+import { DebugPanel } from "../components/DebugPanel"
 import { Editor } from "../components/Editor"
 import { Results } from "../components/Results"
 import { StatusBar } from "../components/StatusBar"
@@ -40,6 +41,7 @@ export function HomePage() {
 
   const status = job.data?.status ?? null
   const jobActive = status === "pending" || status === "running" || status === "parsing"
+  const debugEnabled = new URLSearchParams(window.location.search).has("debug")
 
   const handleRun = () => {
     setCancelling(false)
@@ -59,27 +61,30 @@ export function HomePage() {
   }
 
   return (
-    <Workspace
-      topBar={
-        <TopBar
-          flags={flags}
-          onFlagsChange={setFlags}
-          onRun={handleRun}
-          jobActive={jobActive}
-          cancelling={cancelling}
-          onCancel={handleCancel}
-        />
-      }
-      main={<Editor value={source} onChange={setSource} />}
-      results={
-        <Results
-          jobId={jobId}
-          submitError={submitMutation.isError}
-          errorsFirst={errorsFirst}
-          onErrorsFirstChange={setErrorsFirst}
-        />
-      }
-      statusBar={<StatusBar source={source} />}
-    />
+    <>
+      <Workspace
+        topBar={
+          <TopBar
+            flags={flags}
+            onFlagsChange={setFlags}
+            onRun={handleRun}
+            jobActive={jobActive}
+            cancelling={cancelling}
+            onCancel={handleCancel}
+          />
+        }
+        main={<Editor value={source} onChange={setSource} />}
+        results={
+          <Results
+            jobId={jobId}
+            submitError={submitMutation.isError}
+            errorsFirst={errorsFirst}
+            onErrorsFirstChange={setErrorsFirst}
+          />
+        }
+        statusBar={<StatusBar source={source} />}
+      />
+      {debugEnabled && <DebugPanel jobId={jobId} />}
+    </>
   )
 }
