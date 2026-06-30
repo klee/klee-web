@@ -22,7 +22,7 @@ The worker is the backend package run with a Celery entrypoint, not a separate c
 - Two execution paths exist, but they are two thin adapters over one `run_job`, not duplicated logic. The in-process path stays the zero-config default for dev and CI, Celery is opt-in.
 - `run_job` leaving the API layer is what lets the worker avoid importing FastAPI. The cost is one more module in `jobs`.
 - Celery without the Redis store is a silent split-brain, so the dependency is enforced at startup rather than discovered in production.
-- A worker that dies mid-job loses it until `acks_late` and redelivery are added (ADR-0018). This is parity with the in-process path today, where an API restart loses the background job.
+- A worker that dies mid-job loses it, recovered by user cancel rather than redelivery (ADR-0018). This is parity with the in-process path today, where an API restart loses the background job.
 
 ## References
 
@@ -30,4 +30,4 @@ The worker is the backend package run with a Celery entrypoint, not a separate c
 - ADR-0002: JobStore protocol surface, the same Protocol-plus-provider shape.
 - ADR-0013: cancel as a user-triggered halt, whose Stage 2 amendment depends on this seam.
 - ADR-0014: RedisJobStore, why the Celery result backend stays off.
-- ADR-0018: at-least-once delivery, which closes the worker-death gap above.
+- ADR-0018: at-most-once delivery with cancel recovery, which closes the worker-death gap above.

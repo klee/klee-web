@@ -53,4 +53,4 @@ Don't write ADRs for:
 | 0015 | Centralised configuration via a Settings object | Accepted |
 | 0016 | Job dispatch behind a JobDispatcher seam | Accepted |
 | 0017 | Result cache keyed on the submission | Accepted |
-| 0018 | At-least-once job delivery and worker-death recovery | Accepted |
+| 0018 | Minimal failsafes: at-most-once delivery with cancel recovery | Accepted |

@@ -1,6 +1,6 @@
 # 0013. Cancel as a user-triggered halt
 
-**Status:** Accepted, 2026-06-15 (amended 2026-06-23)
+**Status:** Accepted, 2026-06-15 (amended 2026-06-23, 2026-06-29)
 
 ## Context
 
@@ -30,6 +30,14 @@ The Decision anticipated Stage 2 swapping the cancel body for a Celery `revoke`.
 Stage 2 keeps the Stage 1 kill unchanged (`docker kill --signal=TERM` against the named container) and only moves who triggers it. Once a job runs on a worker the API cannot reach the container, so the cancel endpoint sets `cancel_requested` and nothing else. The executor that owns the container, the in-process task or the worker, watches that flag and runs `cancel(job_id)` locally. The mechanism is the same in both run modes, and the container always gets the same graceful signal.
 
 This retires the startup-window 409. The flag persists, so a cancel on a pending or just-started job is honoured whenever the executor reaches it instead of returning a no-op to retry. The endpoint's 409 now means only that the job is already terminal.
+
+## Amendment, 2026-06-29 (eager terminal flip)
+
+The observed-flag model assumes an executor is alive to watch the flag. A dead or frozen Worker never reads it, so the Job stays `running`, the UI never resolves, and the user cannot resubmit while a Job shows active. Cancel did nothing for the case a user most wants it for.
+
+So the cancel endpoint now also flips the Job to terminal (`done` with the cancelled halt reason) eagerly in the store, not only setting the flag. The flip is a Redis write from the API, so it lands whatever the Worker's state. The flag stays for the live case: a responsive executor still runs the graceful `docker kill --signal=TERM`, KLEE flushes, and its write enriches the Job with partial test cases. The flip is sticky: a late Worker write may add partials but cannot un-cancel, so a cancel always wins over a concurrent finish.
+
+The flip resolves the UI at once and frees the user to resubmit, dead Worker or alive. It does not force-kill a frozen Worker's container. That is left to the bounded reapers (ADR-0018), which cap the runaway container and free a frozen Worker's slot on their own schedule. So cancel gains no `revoke` escalation, and the 2026-06-23 reasoning against `revoke` stands.
 
 ## References
 
