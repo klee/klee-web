@@ -107,3 +107,15 @@ def test_parse_path_constraint_reads_kquery_per_test_case():
         assert tc.path_constraint is not None
         assert "query" in tc.path_constraint
     assert "ReadLSB w32 0 x" in result.test_cases[0].path_constraint
+
+
+def test_parse_host_timeout_sentinel_is_max_time(tmp_path):
+    # The entrypoint drops this file when it force-stops a KLEE that overran its own
+    # --max-time, so a wedged job reads as a time-limit stop, not a clean empty run.
+    output = tmp_path / "output"
+    output.mkdir()
+    (output / "host_timeout").touch()
+
+    result = parse_output_dir(output)
+
+    assert result.halt_reason == HaltReason.max_time

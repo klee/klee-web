@@ -7,7 +7,7 @@ from klee_web.deps import get_cache, get_dispatcher, get_job_store
 from klee_web.jobs.cache import ResultCache, cache_key
 from klee_web.jobs.dispatch import JobDispatcher
 from klee_web.jobs.store import JobStore
-from klee_web.models import Job, JobCreated, JobRequest, JobStatus
+from klee_web.models import HaltReason, Job, JobCreated, JobRequest, JobResult, JobStatus
 
 router = APIRouter()
 
@@ -28,6 +28,15 @@ async def create_job(
     await store.create(job)
     await dispatcher.dispatch(job.id, request)
     return JobCreated(job_id=job.id)
+
+
+def _cancelled_result(job: Job) -> JobResult:
+    """Terminal result for a cancel: keep the partials found so far, tag the halt cancelled."""
+    if job.result is not None:
+        return job.result.model_copy(update={"halt_reason": HaltReason.cancelled})
+    return JobResult(
+        test_cases=[], messages="", warnings="", stats={}, halt_reason=HaltReason.cancelled
+    )
 
 
 @router.get("/jobs/{job_id}", response_model=Job)
@@ -56,6 +65,7 @@ async def cancel_job(
     if job.status in (JobStatus.done, JobStatus.failed):
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Job is already finished")
     await store.request_cancel(job_id)
+    await store.set_result(job_id, _cancelled_result(job))
     updated = await store.get(job_id)
     assert updated is not None  # store never drops a job that get() just returned
     return updated

@@ -25,9 +25,7 @@ class QueryFormat(StrEnum):
     kquery = "kquery"
 
 
-# The hard upper bound on a job's wall-clock. The Celery visibility timeout is sized
-# at twice this (ADR-0018), so the two move together: raising it without raising the
-# timeout brings back the concurrent-double-run hazard after a worker death.
+# The hard upper bound on a job's wall-clock, the ceiling the max_time flag is capped at.
 MAX_TIME_CEILING = 300
 
 
@@ -66,8 +64,6 @@ class Job(BaseModel):
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
     result: JobResult | None = None
     cancel_requested: bool = Field(default=False, exclude=True)
-    attempts: int = 0
-    failure_reason: str | None = None
 
 
 class JobCreated(BaseModel):

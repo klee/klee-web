@@ -97,36 +97,6 @@ async def test_request_cancel_on_unknown_id_raises_job_not_found(store):
         await store.request_cancel(uuid4())
 
 
-async def test_increment_attempts_returns_incrementing_counts(store):
-    job = Job()
-    await store.create(job)
-    assert await store.increment_attempts(job.id) == 1
-    assert await store.increment_attempts(job.id) == 2
-    retrieved = await store.get(job.id)
-    assert retrieved is not None
-    assert retrieved.attempts == 2
-
-
-async def test_increment_attempts_on_unknown_id_raises_job_not_found(store):
-    with pytest.raises(JobNotFound):
-        await store.increment_attempts(uuid4())
-
-
-async def test_set_failed_marks_status_and_reason(store):
-    job = Job()
-    await store.create(job)
-    await store.set_failed(job.id, "gave up after 3 attempts")
-    retrieved = await store.get(job.id)
-    assert retrieved is not None
-    assert retrieved.status == JobStatus.failed
-    assert retrieved.failure_reason == "gave up after 3 attempts"
-
-
-async def test_set_failed_on_unknown_id_raises_job_not_found(store):
-    with pytest.raises(JobNotFound):
-        await store.set_failed(uuid4(), "reason")
-
-
 async def test_concurrent_creates_dont_lose_jobs(store):
     jobs = [Job() for _ in range(50)]
     await asyncio.gather(*(store.create(j) for j in jobs))

@@ -6,7 +6,7 @@ from uuid import uuid4
 import pytest
 
 from klee_web.jobs.runner import IMAGE_TAG, DockerKleeRunner
-from klee_web.models import KleeFlags
+from klee_web.models import HaltReason, KleeFlags
 
 
 def _runner_environment_ready() -> bool:
@@ -162,24 +162,6 @@ async def test_docker_runner_cancel_halts_with_partial_results():
     assert not await _container_running(name)
 
 
-async def test_docker_runner_reclaims_orphaned_container_name():
-    job_id = uuid4()
-    name = f"klee-job-{job_id}"
-    # A dead worker's leftover: a container still holding the deterministic name.
-    # docker create reserves the name without running anything.
-    subprocess.run(["docker", "create", "--name", name, IMAGE_TAG], capture_output=True, check=True)
-    try:
-        runner = DockerKleeRunner()
-        result = await asyncio.wait_for(
-            runner.execute(GET_SIGN_SOURCE, KleeFlags(max_time=10, max_memory=256), job_id),
-            timeout=30,
-        )
-        # Without the reclaim, docker run --name would collide and fail the job.
-        assert len(result.test_cases) == 3
-    finally:
-        subprocess.run(["docker", "rm", "-f", name], capture_output=True)
-
-
 async def test_docker_runner_pairs_div_err_with_failing_test_case():
     runner = DockerKleeRunner()
     result = await asyncio.wait_for(
@@ -193,3 +175,37 @@ async def test_docker_runner_pairs_div_err_with_failing_test_case():
     assert failing.inputs == {"x": "0"}
     assert "divide by zero" in failing.error
     assert result.compile_error is None
+
+
+WEDGING_SOURCE = """\
+#include <klee/klee.h>
+
+int main() {
+    unsigned int a, b;
+    klee_make_symbolic(&a, sizeof(a), "a");
+    klee_make_symbolic(&b, sizeof(b), "b");
+    klee_assume(a > 1);
+    klee_assume(b > 1);
+    // A 62-bit semiprime: a*b == C with a,b > 1 is a factoring query KLEE wedges on,
+    // ignoring its own --max-time. The entrypoint's bound is what must stop it.
+    if ((unsigned long)a * (unsigned long)b == 4611768348991799089UL) return 1;
+    return 0;
+}
+"""
+
+
+async def test_docker_runner_bounds_a_klee_that_overruns_its_own_max_time():
+    runner = DockerKleeRunner()
+    job_id = uuid4()
+    name = f"klee-job-{job_id}"
+    try:
+        # KLEE should self-halt at max_time=5, but it wedges in the solver and ignores
+        # its own timer. The entrypoint bound (max_time + 15) plus the grace must stop
+        # it well under this wait_for; without the bound the run never returns.
+        result = await asyncio.wait_for(
+            runner.execute(WEDGING_SOURCE, KleeFlags(max_time=5, max_memory=512), job_id),
+            timeout=45,
+        )
+        assert result.halt_reason == HaltReason.max_time
+    finally:
+        subprocess.run(["docker", "rm", "-f", name], capture_output=True)

@@ -104,25 +104,6 @@ def test_job_cancel_requested_is_excluded_from_serialisation():
     assert "cancel_requested" not in job.model_dump(mode="json")
 
 
-def test_job_attempts_defaults_zero():
-    assert Job().attempts == 0
-
-
-def test_job_attempts_is_exposed_in_serialisation():
-    job = Job()
-    job.attempts = 2
-    assert job.model_dump(mode="json")["attempts"] == 2
-
-
-def test_job_failure_reason_defaults_none():
-    assert Job().failure_reason is None
-
-
-def test_job_failure_reason_is_exposed_in_serialisation():
-    job = Job(failure_reason="gave up after 3 attempts")
-    assert job.model_dump(mode="json")["failure_reason"] == "gave up after 3 attempts"
-
-
 def test_halt_reason_cancelled_serialises_as_plain_string():
     result = JobResult(
         test_cases=[], messages="", warnings="", stats={}, halt_reason=HaltReason.cancelled

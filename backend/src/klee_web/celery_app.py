@@ -8,7 +8,7 @@ from klee_web.jobs.cache import ResultCache
 from klee_web.jobs.run import run_job
 from klee_web.jobs.runner import DockerKleeRunner, KleeRunner
 from klee_web.jobs.store import JobStore
-from klee_web.models import MAX_TIME_CEILING, JobRequest
+from klee_web.models import JobRequest
 
 app = Celery("klee_web", broker=get_settings().celery_broker_url)
 app.conf.update(
@@ -17,9 +17,6 @@ app.conf.update(
     task_serializer="json",
     accept_content=["json"],
     worker_prefetch_multiplier=1,
-    task_acks_late=True,
-    task_reject_on_worker_lost=True,
-    broker_transport_options={"visibility_timeout": MAX_TIME_CEILING * 2},
 )
 
 

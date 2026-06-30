@@ -37,21 +37,24 @@ def parse_output_dir(output_dir: Path, *, include_test_cases: bool = True) -> Jo
 
     messages = _read_or_empty(output_dir / "messages.txt")
     info = _read_or_empty(output_dir / "info")
+    host_timed_out = (output_dir / "host_timeout").exists()
     return JobResult(
         test_cases=test_cases,
         messages=messages,
         warnings=_read_or_empty(output_dir / "warnings.txt"),
         stats=_read_stats(output_dir / "run.stats"),
         program_output=_read_or_empty(output_dir / "program_output.txt"),
-        halt_reason=_detect_halt_reason(messages, info),
+        halt_reason=_detect_halt_reason(messages, info, host_timed_out),
     )
 
 
-def _detect_halt_reason(messages: str, info: str) -> HaltReason | None:
-    # KLEE writes the HaltTimer marker to messages.txt when --max-time fires,
-    # and its "KLEE: done:" summary lines to info only at termination. Absence of
-    # both means KLEE is still running, so we report None rather than guessing.
-    if "HaltTimer invoked" in messages:
+def _detect_halt_reason(messages: str, info: str, host_timed_out: bool) -> HaltReason | None:
+    # KLEE writes the HaltTimer marker to messages.txt when its own --max-time fires.
+    # The entrypoint drops a host_timeout sentinel when it force-stops a KLEE that
+    # ignored that limit (wedged in a solver query); both mean a time-limit stop.
+    # "KLEE: done:" in info marks a clean termination. Absence of all three means
+    # KLEE is still running, so we report None rather than guessing.
+    if host_timed_out or "HaltTimer invoked" in messages:
         return HaltReason.max_time
     if "KLEE: done:" in info:
         return HaltReason.completed

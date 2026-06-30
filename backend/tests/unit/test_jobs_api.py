@@ -4,7 +4,7 @@ from uuid import UUID, uuid4
 from klee_web.deps import get_runner
 from klee_web.jobs.cache import cache_key
 from klee_web.jobs.runner import FakeKleeRunner, KleeRunnerError
-from klee_web.models import HaltReason, JobRequest, JobResult, JobStatus, TestCase
+from klee_web.models import HaltReason, Job, JobRequest, JobResult, JobStatus, TestCase
 
 
 async def test_post_jobs_returns_202_with_job_id(client):
@@ -222,6 +222,36 @@ async def test_cancel_running_job_returns_202_and_tags_result_cancelled(
     assert job.status == JobStatus.done
     assert job.result is not None
     assert job.result.halt_reason == HaltReason.cancelled
+
+
+async def test_cancel_eagerly_flips_a_running_job_to_cancelled(client, store):
+    """Cancel resolves the job to terminal at once, without a worker writing the result,
+    so a dead or frozen job's UI unblocks and the user can resubmit."""
+    job = Job(status=JobStatus.running)
+    await store.create(job)
+
+    response = await client.post(f"/jobs/{job.id}/cancel")
+
+    assert response.status_code == 202
+    stored = await store.get(job.id)
+    assert stored is not None
+    assert stored.status == JobStatus.done
+    assert stored.result is not None
+    assert stored.result.halt_reason == HaltReason.cancelled
+
+
+async def test_cancel_preserves_partials_in_the_eager_flip(client, store, sample_result):
+    job = Job(status=JobStatus.running, result=sample_result)
+    await store.create(job)
+
+    await client.post(f"/jobs/{job.id}/cancel")
+
+    stored = await store.get(job.id)
+    assert stored is not None
+    assert stored.status == JobStatus.done
+    assert stored.result is not None
+    assert stored.result.test_cases == sample_result.test_cases
+    assert stored.result.halt_reason == HaltReason.cancelled
 
 
 async def test_cancel_finished_job_returns_409(client, store, wait_for_jobs):

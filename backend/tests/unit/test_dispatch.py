@@ -1,7 +1,8 @@
 import asyncio
+from uuid import uuid4
 
 from klee_web.jobs.dispatch import InProcessDispatcher, drain
-from klee_web.models import Job, JobRequest, JobStatus
+from klee_web.models import Job, JobRequest, JobStatus, KleeFlags
 
 SOURCE = "int main() { return 0; }"
 
@@ -48,3 +49,23 @@ async def test_dispatch_does_not_block_on_the_job(store, cache, sample_result):
     final = await store.get(job.id)
     assert final is not None
     assert final.status == JobStatus.done
+
+
+async def test_celery_dispatcher_sets_a_per_task_hard_time_limit(monkeypatch):
+    from klee_web import celery_app
+    from klee_web.jobs.dispatch import CeleryDispatcher
+
+    captured: dict[str, object] = {}
+
+    def fake_apply_async(args=None, kwargs=None, **options):
+        captured.update(options)
+
+    monkeypatch.setattr(celery_app.run_klee_job, "apply_async", fake_apply_async)
+
+    await CeleryDispatcher().dispatch(
+        uuid4(), JobRequest(source=SOURCE, flags=KleeFlags(max_time=60))
+    )
+
+    # A hard time limit above the job's own budget, so the Celery supervisor SIGKILLs a
+    # frozen worker (its own timers cannot fire) and respawns it.
+    assert captured.get("time_limit", 0) > 60
