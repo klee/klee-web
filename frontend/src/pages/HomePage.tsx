@@ -5,6 +5,7 @@ import { Results } from "../components/Results"
 import { StatusBar } from "../components/StatusBar"
 import { TopBar } from "../components/TopBar"
 import { Workspace } from "../components/Workspace"
+import { SymbolicTypeProvider } from "../context/SymbolicTypeContext"
 import { useCancelJob } from "../hooks/useCancelJob"
 import { useJob } from "../hooks/useJob"
 import { useSubmitJob } from "../hooks/useSubmitJob"
@@ -72,12 +73,14 @@ export function HomePage() {
       }
       main={<Editor value={source} onChange={setSource} />}
       results={
-        <Results
-          jobId={jobId}
-          submitError={submitMutation.isError}
-          errorsFirst={errorsFirst}
-          onErrorsFirstChange={setErrorsFirst}
-        />
+        <SymbolicTypeProvider>
+          <Results
+            jobId={jobId}
+            submitError={submitMutation.isError}
+            errorsFirst={errorsFirst}
+            onErrorsFirstChange={setErrorsFirst}
+          />
+        </SymbolicTypeProvider>
       }
       statusBar={<StatusBar source={source} />}
     />

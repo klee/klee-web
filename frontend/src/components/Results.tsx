@@ -1,5 +1,7 @@
 import { useState, type ReactNode } from "react"
 import type { HaltReason, Job, JobResult, TestCase } from "../api/jobs"
+import { useSymbolicTypes } from "../context/SymbolicTypeContext"
+import { availableTypes, decode, type SymbolicType } from "../lib/decodeSymbolic"
 import { useJob } from "../hooks/useJob"
 
 type ResultsProps = {
@@ -455,19 +457,38 @@ function TestCasesPanel({ testCases }: { testCases: TestCase[] }) {
 }
 
 function TestCaseCard({ testCase }: { testCase: TestCase }) {
+  const { typeFor, setType } = useSymbolicTypes()
   return (
     <div className="rounded border border-slate-200 dark:border-slate-700 overflow-hidden">
       <div className="px-3 py-1.5 bg-slate-100 dark:bg-slate-900 text-sm font-mono text-slate-700 dark:text-slate-300">
         {testCase.name}
       </div>
-      <div className="px-3 py-2 bg-white dark:bg-slate-950 space-y-0.5">
-        {testCase.inputs.map((input) => (
-          <div key={input.name} className="font-mono text-xs flex gap-2">
-            <span className="text-slate-500">{input.name}</span>
-            <span className="text-slate-400">=</span>
-            <span className="text-slate-900 dark:text-slate-100">{input.value}</span>
-          </div>
-        ))}
+      <div className="px-3 py-2 bg-white dark:bg-slate-950 space-y-1">
+        {testCase.inputs.map((input) => {
+          const width = input.bytes_hex.length / 2
+          const type = typeFor(input.name, width)
+          return (
+            <div key={input.name} className="font-mono text-xs flex items-center gap-2">
+              <span className="text-slate-500">{input.name}</span>
+              <span className="text-slate-400">=</span>
+              <span className="flex-1 text-slate-900 dark:text-slate-100">
+                {decode(input.bytes_hex, type)}
+              </span>
+              <select
+                aria-label={`type for ${input.name}`}
+                value={type}
+                onChange={(e) => setType(input.name, e.target.value as SymbolicType)}
+                className="rounded border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-1 py-0.5 text-slate-600 dark:text-slate-300"
+              >
+                {availableTypes(width).map((opt) => (
+                  <option key={opt} value={opt}>
+                    {opt}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )
+        })}
       </div>
       {testCase.error && (
         <div className="px-3 py-2 text-xs font-mono whitespace-pre-wrap bg-rose-50 dark:bg-rose-950 text-rose-700 dark:text-rose-300 border-t border-rose-200 dark:border-rose-900">
