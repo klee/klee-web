@@ -1,4 +1,4 @@
-from klee_web.models import HaltReason, JobResult, TestCase
+from klee_web.models import HaltReason, JobResult, SymbolicInput, TestCase
 
 
 def get_sign_result() -> JobResult:
@@ -9,9 +9,17 @@ def get_sign_result() -> JobResult:
     """
     return JobResult(
         test_cases=[
-            TestCase(name="test000001", inputs={"a": "0"}),
-            TestCase(name="test000002", inputs={"a": "16843009"}),
-            TestCase(name="test000003", inputs={"a": "-2147483648"}),
+            TestCase(
+                name="test000001", inputs=[SymbolicInput(name="a", value="0", bytes_hex="00000000")]
+            ),
+            TestCase(
+                name="test000002",
+                inputs=[SymbolicInput(name="a", value="16843009", bytes_hex="01010101")],
+            ),
+            TestCase(
+                name="test000003",
+                inputs=[SymbolicInput(name="a", value="-2147483648", bytes_hex="00000080")],
+            ),
         ],
         messages="KLEE: done: completed paths = 3\nKLEE: done: generated tests = 3",
         warnings="",

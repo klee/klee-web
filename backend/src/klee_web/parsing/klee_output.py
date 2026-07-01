@@ -3,7 +3,7 @@ import sqlite3
 import struct
 from pathlib import Path
 
-from klee_web.models import HaltReason, JobResult, TestCase
+from klee_web.models import HaltReason, JobResult, SymbolicInput, TestCase
 from klee_web.parsing.ktest import KTest
 
 logger = logging.getLogger(__name__)
@@ -120,7 +120,10 @@ def _err_files_by_stem(output_dir: Path) -> dict[str, list[Path]]:
 
 def _test_case_from_ktest(path: Path, err_files: list[Path]) -> TestCase:
     ktest = KTest.fromfile(str(path))
-    inputs = {name: _decode_object_value(data) for name, data in ktest.objects}
+    inputs = [
+        SymbolicInput(name=name, value=_decode_object_value(data), bytes_hex=data.hex())
+        for name, data in ktest.objects
+    ]
     error = "\n".join(p.read_text() for p in err_files) if err_files else None
     kquery_path = path.with_suffix(".kquery")
     path_constraint = kquery_path.read_text() if kquery_path.exists() else None

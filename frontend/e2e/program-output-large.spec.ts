@@ -14,8 +14,18 @@ function makeJob(programOutput: string) {
     created_at: "2026-07-01T00:00:00Z",
     result: {
       test_cases: [
-        { name: "test000001", inputs: { a: "0" }, error: null, path_constraint: null },
-        { name: "test000002", inputs: { a: "16843009" }, error: null, path_constraint: null },
+        {
+          name: "test000001",
+          inputs: [{ name: "a", value: "0", bytes_hex: "00000000" }],
+          error: null,
+          path_constraint: null,
+        },
+        {
+          name: "test000002",
+          inputs: [{ name: "a", value: "16843009", bytes_hex: "01010101" }],
+          error: null,
+          path_constraint: null,
+        },
       ],
       messages: "KLEE: done\n",
       warnings: "",

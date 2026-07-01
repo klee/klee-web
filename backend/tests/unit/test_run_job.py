@@ -4,7 +4,16 @@ from uuid import UUID
 from klee_web.jobs.cache import InMemoryResultCache, cache_key
 from klee_web.jobs.run import run_job
 from klee_web.jobs.runner import FakeKleeRunner, KleeRunnerError
-from klee_web.models import HaltReason, Job, JobRequest, JobResult, JobStatus, KleeFlags, TestCase
+from klee_web.models import (
+    HaltReason,
+    Job,
+    JobRequest,
+    JobResult,
+    JobStatus,
+    KleeFlags,
+    SymbolicInput,
+    TestCase,
+)
 
 SOURCE = "int main() { return 0; }"
 
@@ -54,7 +63,11 @@ async def test_run_job_runner_failure_marks_job_failed(store):
 
 async def test_run_job_streams_partial_result_while_running(store, sample_result):
     partial = JobResult(
-        test_cases=[TestCase(name="partial", inputs={"x": "1"})],
+        test_cases=[
+            TestCase(
+                name="partial", inputs=[SymbolicInput(name="x", value="1", bytes_hex="01000000")]
+            )
+        ],
         messages="",
         warnings="",
         stats={},
@@ -177,7 +190,11 @@ async def test_run_job_caches_completed_result(store):
     job = await _seed_job(store)
     request = JobRequest(source=SOURCE)
     result = JobResult(
-        test_cases=[TestCase(name="test1", inputs={"x": "0"})],
+        test_cases=[
+            TestCase(
+                name="test1", inputs=[SymbolicInput(name="x", value="0", bytes_hex="00000000")]
+            )
+        ],
         messages="ok",
         warnings="",
         stats={"paths": 1},

@@ -145,14 +145,21 @@ export interface components {
          * @enum {string}
          */
         QueryFormat: "none" | "kquery";
+        /** SymbolicInput */
+        SymbolicInput: {
+            /** Name */
+            name: string;
+            /** Value */
+            value: string;
+            /** Bytes Hex */
+            bytes_hex: string;
+        };
         /** TestCase */
         TestCase: {
             /** Name */
             name: string;
             /** Inputs */
-            inputs: {
-                [key: string]: string;
-            };
+            inputs: components["schemas"]["SymbolicInput"][];
             /** Error */
             error?: string | null;
             /** Path Constraint */

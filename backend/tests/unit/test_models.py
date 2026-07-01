@@ -11,6 +11,7 @@ from klee_web.models import (
     JobResult,
     JobStatus,
     KleeFlags,
+    SymbolicInput,
     TestCase,
 )
 
@@ -129,10 +130,16 @@ def test_job_result_with_compile_error_set():
 
 
 def test_test_case_error_defaults_to_none():
-    tc = TestCase(name="test000001", inputs={"a": "0"})
+    tc = TestCase(
+        name="test000001", inputs=[SymbolicInput(name="a", value="0", bytes_hex="00000000")]
+    )
     assert tc.error is None
 
 
 def test_test_case_with_error_set():
-    tc = TestCase(name="test000001", inputs={"a": "0"}, error="divide by zero at input.c:11")
+    tc = TestCase(
+        name="test000001",
+        inputs=[SymbolicInput(name="a", value="0", bytes_hex="00000000")],
+        error="divide by zero at input.c:11",
+    )
     assert tc.error == "divide by zero at input.c:11"

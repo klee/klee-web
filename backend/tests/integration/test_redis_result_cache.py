@@ -4,7 +4,7 @@ import pytest
 from redis.asyncio import Redis
 
 from klee_web.jobs.cache import RedisResultCache
-from klee_web.models import JobResult, TestCase
+from klee_web.models import JobResult, SymbolicInput, TestCase
 
 _REDIS_URL = os.environ.get("REDIS_URL", "redis://localhost:6379/0")
 _CACHE_TTL_SECONDS = 24 * 60 * 60
@@ -42,7 +42,11 @@ async def cache():
 @pytest.fixture
 def sample_result() -> JobResult:
     return JobResult(
-        test_cases=[TestCase(name="test1", inputs={"x": "0"})],
+        test_cases=[
+            TestCase(
+                name="test1", inputs=[SymbolicInput(name="x", value="0", bytes_hex="00000000")]
+            )
+        ],
         messages="ok",
         warnings="",
         stats={"paths": 1, "instructions": 100},

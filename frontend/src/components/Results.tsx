@@ -461,11 +461,11 @@ function TestCaseCard({ testCase }: { testCase: TestCase }) {
         {testCase.name}
       </div>
       <div className="px-3 py-2 bg-white dark:bg-slate-950 space-y-0.5">
-        {Object.entries(testCase.inputs).map(([name, value]) => (
-          <div key={name} className="font-mono text-xs flex gap-2">
-            <span className="text-slate-500">{name}</span>
+        {testCase.inputs.map((input) => (
+          <div key={input.name} className="font-mono text-xs flex gap-2">
+            <span className="text-slate-500">{input.name}</span>
             <span className="text-slate-400">=</span>
-            <span className="text-slate-900 dark:text-slate-100">{value}</span>
+            <span className="text-slate-900 dark:text-slate-100">{input.value}</span>
           </div>
         ))}
       </div>

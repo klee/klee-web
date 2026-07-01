@@ -40,10 +40,16 @@ class JobRequest(BaseModel):
     flags: KleeFlags = Field(default_factory=KleeFlags)
 
 
+class SymbolicInput(BaseModel):
+    name: str
+    value: str  # default heuristic decode (little-endian int by size, else hex)
+    bytes_hex: str  # raw ktest bytes, lowercase hex, so the frontend can re-decode to any type
+
+
 class TestCase(BaseModel):
     __test__ = False  # opt out of pytest collection; this is a domain model, not a test class
     name: str
-    inputs: dict[str, str]
+    inputs: list[SymbolicInput]
     error: str | None = None
     path_constraint: str | None = None
 

@@ -8,13 +8,17 @@ from klee_web.jobs.cache import InMemoryResultCache
 from klee_web.jobs.dispatch import drain
 from klee_web.jobs.runner import FakeKleeRunner
 from klee_web.jobs.store import InMemoryJobStore
-from klee_web.models import JobResult, TestCase
+from klee_web.models import JobResult, SymbolicInput, TestCase
 
 
 @pytest.fixture
 def sample_result() -> JobResult:
     return JobResult(
-        test_cases=[TestCase(name="test1", inputs={"x": "0"})],
+        test_cases=[
+            TestCase(
+                name="test1", inputs=[SymbolicInput(name="x", value="0", bytes_hex="00000000")]
+            )
+        ],
         messages="ok",
         warnings="",
         stats={"paths": 1, "instructions": 100},

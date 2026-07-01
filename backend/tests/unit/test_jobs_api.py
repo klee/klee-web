@@ -4,7 +4,15 @@ from uuid import UUID, uuid4
 from klee_web.deps import get_runner
 from klee_web.jobs.cache import cache_key
 from klee_web.jobs.runner import FakeKleeRunner, KleeRunnerError
-from klee_web.models import HaltReason, Job, JobRequest, JobResult, JobStatus, TestCase
+from klee_web.models import (
+    HaltReason,
+    Job,
+    JobRequest,
+    JobResult,
+    JobStatus,
+    SymbolicInput,
+    TestCase,
+)
 
 
 async def test_post_jobs_returns_202_with_job_id(client):
@@ -95,7 +103,12 @@ async def test_post_runs_in_background_and_streams_partial_results(
     partial_emitted = asyncio.Event()
     finish_when = asyncio.Event()
     partial = JobResult(
-        test_cases=[TestCase(name="test_partial", inputs={"x": "1"})],
+        test_cases=[
+            TestCase(
+                name="test_partial",
+                inputs=[SymbolicInput(name="x", value="1", bytes_hex="01000000")],
+            )
+        ],
         messages="",
         warnings="",
         stats={},
@@ -269,7 +282,11 @@ async def test_cancel_finished_job_returns_409(client, store, wait_for_jobs):
 async def test_post_jobs_serves_cache_hit_without_dispatching(client, runner, cache, wait_for_jobs):
     payload = {"source": "int main(){}"}
     cached = JobResult(
-        test_cases=[TestCase(name="cached", inputs={"x": "0"})],
+        test_cases=[
+            TestCase(
+                name="cached", inputs=[SymbolicInput(name="x", value="0", bytes_hex="00000000")]
+            )
+        ],
         messages="from cache",
         warnings="",
         stats={"paths": 1},
@@ -292,7 +309,9 @@ async def test_post_jobs_serves_cache_hit_without_dispatching(client, runner, ca
 
 async def test_post_jobs_second_identical_submission_hits_cache(client, app, wait_for_jobs):
     completed = JobResult(
-        test_cases=[TestCase(name="t", inputs={"x": "0"})],
+        test_cases=[
+            TestCase(name="t", inputs=[SymbolicInput(name="x", value="0", bytes_hex="00000000")])
+        ],
         messages="",
         warnings="",
         stats={"paths": 1},

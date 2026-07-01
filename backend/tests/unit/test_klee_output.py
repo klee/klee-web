@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from klee_web.models import HaltReason
+from klee_web.models import HaltReason, SymbolicInput
 from klee_web.parsing.klee_output import (
     PROGRAM_OUTPUT_MAX_BYTES,
     clamp_program_output,
@@ -28,9 +28,13 @@ def test_parse_happy_path_returns_three_test_cases_with_decoded_inputs():
         "test000002",
         "test000003",
     ]
-    assert result.test_cases[0].inputs == {"a": "0"}
-    assert result.test_cases[1].inputs == {"a": "16843009"}
-    assert result.test_cases[2].inputs == {"a": "-2147483648"}
+    assert result.test_cases[0].inputs == [SymbolicInput(name="a", value="0", bytes_hex="00000000")]
+    assert result.test_cases[1].inputs == [
+        SymbolicInput(name="a", value="16843009", bytes_hex="01010101")
+    ]
+    assert result.test_cases[2].inputs == [
+        SymbolicInput(name="a", value="-2147483648", bytes_hex="00000080")
+    ]
     assert result.compile_error is None
 
 
@@ -63,8 +67,10 @@ def test_parse_progress_skips_test_cases_but_keeps_stats_and_messages():
 def test_parse_runtime_error_attaches_err_to_matching_test_case():
     result = parse_output_dir(FIXTURES / "runtime_error" / "output")
     assert [tc.name for tc in result.test_cases] == ["test000001", "test000002"]
-    assert result.test_cases[0].inputs == {"x": "0"}
-    assert result.test_cases[1].inputs == {"x": "16843009"}
+    assert result.test_cases[0].inputs == [SymbolicInput(name="x", value="0", bytes_hex="00000000")]
+    assert result.test_cases[1].inputs == [
+        SymbolicInput(name="x", value="16843009", bytes_hex="01010101")
+    ]
     assert result.test_cases[0].error is not None
     assert "divide by zero" in result.test_cases[0].error
     assert "input.c" in result.test_cases[0].error
