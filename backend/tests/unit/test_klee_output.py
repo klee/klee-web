@@ -1,7 +1,11 @@
 from pathlib import Path
 
 from klee_web.models import HaltReason
-from klee_web.parsing.klee_output import parse_output_dir
+from klee_web.parsing.klee_output import (
+    PROGRAM_OUTPUT_MAX_BYTES,
+    clamp_program_output,
+    parse_output_dir,
+)
 
 FIXTURES = Path(__file__).parent.parent / "fixtures" / "klee_output_sample"
 
@@ -107,6 +111,57 @@ def test_parse_path_constraint_reads_kquery_per_test_case():
         assert tc.path_constraint is not None
         assert "query" in tc.path_constraint
     assert "ReadLSB w32 0 x" in result.test_cases[0].path_constraint
+
+
+def test_clamp_default_cap_is_100kb():
+    assert PROGRAM_OUTPUT_MAX_BYTES == 100_000
+
+
+def test_clamp_empty_returns_empty():
+    assert clamp_program_output(b"") == ""
+
+
+def test_clamp_under_cap_returns_text_unchanged():
+    assert clamp_program_output(b"hi\nthere\n", max_bytes=100) == "hi\nthere\n"
+
+
+def test_clamp_at_cap_is_not_truncated():
+    assert clamp_program_output(b"x" * 10, max_bytes=10) == "x" * 10
+
+
+def test_clamp_over_cap_keeps_head_and_appends_marker():
+    out = clamp_program_output(b"x" * 100, max_bytes=10)
+    assert out.startswith("x" * 10)
+    assert "truncated" in out
+    assert "first 10 of 100 bytes" in out
+
+
+def test_clamp_invalid_utf8_does_not_raise():
+    # Program output is arbitrary program bytes; a non-UTF-8 byte must not crash the parse.
+    assert clamp_program_output(b"\xff\xfe", max_bytes=100) == "��"
+
+
+def test_parse_program_output_small_is_not_truncated(tmp_path):
+    output = tmp_path / "output"
+    output.mkdir()
+    (output / "program_output.txt").write_text("hi\n" * 3)
+
+    result = parse_output_dir(output)
+
+    assert result.program_output == "hi\n" * 3
+    assert "truncated" not in result.program_output
+
+
+def test_parse_program_output_is_truncated_when_over_cap(tmp_path):
+    output = tmp_path / "output"
+    output.mkdir()
+    big = "hi\n" * PROGRAM_OUTPUT_MAX_BYTES  # 300 KB, well past the cap
+    (output / "program_output.txt").write_text(big)
+
+    result = parse_output_dir(output)
+
+    assert len(result.program_output.encode()) < len(big.encode())
+    assert "truncated" in result.program_output
 
 
 def test_parse_host_timeout_sentinel_is_max_time(tmp_path):

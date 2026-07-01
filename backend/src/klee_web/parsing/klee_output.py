@@ -8,6 +8,19 @@ from klee_web.parsing.ktest import KTest
 
 logger = logging.getLogger(__name__)
 
+# Cap on captured program output: ample to read in the panel, small to ship and store.
+PROGRAM_OUTPUT_MAX_BYTES = 100_000
+
+
+def clamp_program_output(raw: bytes, max_bytes: int = PROGRAM_OUTPUT_MAX_BYTES) -> str:
+    # Program output is arbitrary program bytes, so decode leniently: a non-UTF-8 byte,
+    # or a multibyte char split by the cap, becomes U+FFFD rather than crashing the parse.
+    if len(raw) <= max_bytes:
+        return raw.decode("utf-8", errors="replace")
+    head = raw[:max_bytes].decode("utf-8", errors="replace")
+    marker = f"\n\n[program output truncated: showing first {max_bytes:,} of {len(raw):,} bytes]"
+    return head + marker
+
 
 def parse_output_dir(output_dir: Path, *, include_test_cases: bool = True) -> JobResult:
     compile_error_path = output_dir / "compile_error.txt"
@@ -43,7 +56,7 @@ def parse_output_dir(output_dir: Path, *, include_test_cases: bool = True) -> Jo
         messages=messages,
         warnings=_read_or_empty(output_dir / "warnings.txt"),
         stats=_read_stats(output_dir / "run.stats"),
-        program_output=_read_or_empty(output_dir / "program_output.txt"),
+        program_output=_read_program_output(output_dir / "program_output.txt"),
         halt_reason=_detect_halt_reason(messages, info, host_timed_out),
     )
 
@@ -63,6 +76,10 @@ def _detect_halt_reason(messages: str, info: str, host_timed_out: bool) -> HaltR
 
 def _read_or_empty(path: Path) -> str:
     return path.read_text() if path.exists() else ""
+
+
+def _read_program_output(path: Path) -> str:
+    return clamp_program_output(path.read_bytes()) if path.exists() else ""
 
 
 def _read_stats(path: Path) -> dict[str, int]:
