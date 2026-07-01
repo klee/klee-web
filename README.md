@@ -122,4 +122,4 @@ The pre-push hook is local and optional. Without it, or with `--no-verify`, the 
 
 ## Design
 
-Architecture is documented in `docs/adr/`, one ADR per major decision.
+[`docs/architecture.md`](docs/architecture.md) is the overview: how the frontend, backend, runner, broker, and store fit together. The ADRs in `docs/adr/` record why each decision was made, one per major choice.
