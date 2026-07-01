@@ -18,9 +18,9 @@ export function Workspace({ topBar, sidebar, main, results, statusBar }: Workspa
       <div className="shrink-0">{topBar}</div>
       <div className="flex-1 min-h-0 flex flex-row">
         {sidebar && <div className="shrink-0">{sidebar}</div>}
-        <div className={`flex-1 min-h-0 flex ${mainResultsDirection}`}>
-          <div className="flex-1 min-h-0 overflow-auto">{main}</div>
-          <div className="flex-1 min-h-0 overflow-auto">{results}</div>
+        <div className={`flex-1 min-h-0 min-w-0 flex ${mainResultsDirection}`}>
+          <div className="flex-1 min-h-0 min-w-0 overflow-auto">{main}</div>
+          <div className="flex-1 min-h-0 min-w-0 overflow-auto">{results}</div>
         </div>
       </div>
       <div className="shrink-0">{statusBar}</div>

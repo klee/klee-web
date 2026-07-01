@@ -511,12 +511,14 @@ function StatsPanel({ stats }: { stats: Record<string, number> }) {
 }
 
 function Collapsible({ title, content }: { title: string; content: string }) {
+  const lineCount = content.replace(/\n$/, "").split("\n").length
   return (
     <details className="rounded border border-slate-200 dark:border-slate-700">
       <summary className="px-3 py-1.5 cursor-pointer text-sm bg-slate-50 dark:bg-slate-900 select-none text-slate-700 dark:text-slate-300">
         {title}
+        <span className="text-slate-400 dark:text-slate-500">{` · ${lineCount.toLocaleString()} ${lineCount === 1 ? "line" : "lines"}`}</span>
       </summary>
-      <pre className="px-3 py-2 text-xs font-mono whitespace-pre-wrap overflow-auto bg-white dark:bg-slate-950 max-h-64 text-slate-800 dark:text-slate-200">
+      <pre className="px-3 py-2 text-xs font-mono whitespace-pre-wrap wrap-anywhere overflow-auto bg-white dark:bg-slate-950 max-h-64 text-slate-800 dark:text-slate-200">
         {content}
       </pre>
     </details>
