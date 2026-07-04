@@ -1,5 +1,10 @@
 import { Editor as MonacoEditor } from "@monaco-editor/react"
 import { useSettings } from "../context/SettingsContext"
+import {
+  defineKleeThemes,
+  KLEE_THEME_DARK,
+  KLEE_THEME_LIGHT,
+} from "../lib/monacoThemes"
 
 type EditorProps = {
   value: string
@@ -8,7 +13,7 @@ type EditorProps = {
 
 export function Editor({ value, onChange }: EditorProps) {
   const { resolvedTheme, fontSize } = useSettings()
-  const monacoTheme = resolvedTheme === "dark" ? "vs-dark" : "vs-light"
+  const monacoTheme = resolvedTheme === "dark" ? KLEE_THEME_DARK : KLEE_THEME_LIGHT
 
   return (
     <MonacoEditor
@@ -16,6 +21,7 @@ export function Editor({ value, onChange }: EditorProps) {
       language="c"
       theme={monacoTheme}
       value={value}
+      beforeMount={defineKleeThemes}
       onChange={(next) => onChange(next ?? "")}
       options={{
         minimap: { enabled: false },
