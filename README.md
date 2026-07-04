@@ -10,9 +10,9 @@ KLEE today requires users to build LLVM, STP, and a chain of other dependencies 
 
 ## Current stage
 
-**Stage 1: synchronous monolith.** React frontend, FastAPI backend, Docker runner. No queue, no cache. Runs locally via the steps below. Target: end of May 2026.
+**Stage 3: hardening and portability.** Stages 1 and 2 are done: the synchronous monolith (React frontend, FastAPI backend, Docker runner), then the split (Celery workers, a Redis broker and result cache, a worker pool). Stage 3 adds the production edge (nginx, TLS, rate limiting), stronger sandboxing (gVisor), observability, and an admin UI. It also answers the thesis portability question: redeploy the stack across providers and count what has to change.
 
-Stages 2 (Celery + Redis + cache) and 3 (nginx + gVisor + admin UI) follow over the summer.
+The whole stack still runs locally. `make up` starts the in-process monolith with no Redis. `make up-celery` and `make up-pool` start the Celery split, described below.
 
 ## Layout
 
@@ -21,8 +21,9 @@ klee-web/
 ├── backend/        FastAPI + Pydantic. Job submission, status, result API.
 ├── frontend/       React + TypeScript + Vite. Editor and results UI.
 ├── runner/         Docker image and entrypoint that actually runs KLEE.
-├── docs/adr/       Architecture Decision Records.
-└── Makefile        `make up` builds the runner image and runs backend + frontend dev servers.
+├── bot/            Label-gated issue agent automation (see below).
+├── docs/           architecture.md overview, and the ADRs in docs/adr/.
+└── Makefile        make up runs backend + frontend, up-celery / up-pool add the split.
 ```
 
 ## Running locally
@@ -54,17 +55,20 @@ Ctrl+C stops both.
 OpenAPI surface at <http://localhost:8000/docs>. App at <http://localhost:5173>.
 
 The frontend is functional end-to-end. The page loads with a demo C program in
-a Monaco editor; the top bar carries the KLEE wordmark, inline flag inputs for
-`max_time` and `max_memory`, a Run button, and a settings cog. Run posts to the
-backend and the results panel polls and renders pending, running (with a
-curated live-stats grid: instructions, active states, full branches, wall
-time), done (test cases plus a KLEE messages and warnings collapsible), and
-compile-error states. A timeout reads as an amber `Stopped at max time` badge
-under the tab bar; a clean run reads `Explored all paths`. The bottom status
-bar shows a backend-connected indicator (5 s poll of `/openapi.json`), the
-current source byte count, and the pinned KLEE version. Theme (system / light /
-dark) and results-position (right / below) settings persist across reloads via
-the settings popover.
+a Monaco editor. The top bar carries the KLEE wordmark, inline flag inputs for
+time and memory, a path-constraint selector (off or KQuery), a settings cog,
+and a Run button that becomes a Cancel button while a job is in flight. Run
+posts to the backend and the results panel polls and renders pending, running
+(with a curated live-stats grid: instructions, active states, full branches,
+wall time), parsing, done (test cases plus program-output, messages, and
+warnings collapsibles), and compile-error states. Each test case's symbolic
+inputs can be re-decoded per variable through a type dropdown. A timeout reads
+as an amber `Stopped at max time` badge under the tab bar, a user cancel reads
+`Cancelled by user`, and a clean run reads `Explored all paths`. The bottom
+status bar shows a backend-connected indicator (5 s poll of `/openapi.json`),
+the current source byte count, and the pinned KLEE version. Theme (system /
+light / dark) and results-position (right / below) settings persist across
+reloads via the settings popover.
 
 ### Stage 2: the Celery split
 
