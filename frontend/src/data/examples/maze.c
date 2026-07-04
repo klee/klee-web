@@ -1,3 +1,4 @@
+// title: Symbolic maze
 /*
  * It's a maze!
  * Use a,s,d,w to move "through" it.
@@ -9,6 +10,7 @@
 #include<string.h>
 #include<stdio.h>
 #include<stdlib.h>
+#include<unistd.h>
 #include<klee/klee.h>
 
 // Maze hardcoded dimensions

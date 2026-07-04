@@ -1,3 +1,4 @@
+// title: Sign of an integer
 /*
  * First KLEE tutorial: testing a small function
  * http://klee.github.io/tutorials/testing-function/

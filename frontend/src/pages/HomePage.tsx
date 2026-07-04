@@ -1,40 +1,37 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import type { KleeFlags } from "../api/jobs"
 import { Editor } from "../components/Editor"
 import { Results } from "../components/Results"
+import { Sidebar } from "../components/Sidebar"
 import { StatusBar } from "../components/StatusBar"
 import { TopBar } from "../components/TopBar"
 import { Workspace } from "../components/Workspace"
 import { SymbolicTypeProvider } from "../context/SymbolicTypeContext"
+import { DEFAULT_EXAMPLE } from "../data/examples"
 import { useCancelJob } from "../hooks/useCancelJob"
+import { useHistory } from "../hooks/useHistory"
 import { useJob } from "../hooks/useJob"
 import { useSubmitJob } from "../hooks/useSubmitJob"
+import type { HistoryEntry } from "../lib/history"
+import { deriveHistoryStatus } from "../lib/historyView"
 
-const GET_SIGN_C = `#include <klee/klee.h>
+const DEFAULT_FLAGS: KleeFlags = { max_time: 60, max_memory: 512, query_format: "none" }
 
-int get_sign(int x) {
-  if (x == 0) return 0;
-  if (x < 0) return -1;
-  return 1;
+function initialState(entries: HistoryEntry[]) {
+  const newest = entries[0]
+  if (newest) return { source: newest.code, flags: newest.flags, jobId: newest.jobId }
+  return { source: DEFAULT_EXAMPLE.code, flags: DEFAULT_FLAGS, jobId: null as string | null }
 }
-
-int main() {
-  int a;
-  klee_make_symbolic(&a, sizeof(a), "a");
-  return get_sign(a);
-}
-`
 
 export function HomePage() {
-  const [source, setSource] = useState<string>(GET_SIGN_C)
-  const [flags, setFlags] = useState<KleeFlags>({
-    max_time: 60,
-    max_memory: 512,
-    query_format: "none",
-  })
-  const [jobId, setJobId] = useState<string | null>(null)
+  const { entries, addRun, setStatus, removeEntry, clear } = useHistory()
+  const [init] = useState(() => initialState(entries))
+  const [source, setSource] = useState(init.source)
+  const [flags, setFlags] = useState<KleeFlags>(init.flags)
+  const [jobId, setJobId] = useState<string | null>(init.jobId)
   const [errorsFirst, setErrorsFirst] = useState(false)
   const [cancelling, setCancelling] = useState(false)
+  const [sidebarOpen, setSidebarOpen] = useState(true)
   const submitMutation = useSubmitJob()
   const cancelMutation = useCancelJob()
   const job = useJob(jobId)
@@ -42,11 +39,25 @@ export function HomePage() {
   const status = job.data?.status ?? null
   const jobActive = status === "pending" || status === "running" || status === "parsing"
 
+  // Write the terminal outcome back onto the history entry so the list can show a
+  // glyph. Derived during render so the effect depends on the derived value and
+  // fires once when the job reaches a terminal state, not every render (which would
+  // loop under StrictMode).
+  const terminalStatus = job.data ? deriveHistoryStatus(job.data) : null
+  useEffect(() => {
+    if (jobId && terminalStatus) setStatus(jobId, terminalStatus)
+  }, [jobId, terminalStatus, setStatus])
+
   const handleRun = () => {
     setCancelling(false)
     submitMutation.mutate(
       { source, flags },
-      { onSuccess: (data) => setJobId(data.job_id) },
+      {
+        onSuccess: (data) => {
+          setJobId(data.job_id)
+          addRun({ jobId: data.job_id, code: source, flags, createdAt: Date.now() })
+        },
+      },
     )
   }
 
@@ -59,6 +70,19 @@ export function HomePage() {
     })
   }
 
+  const loadExample = (code: string) => {
+    setCancelling(false)
+    setJobId(null)
+    setSource(code)
+  }
+
+  const restoreRun = (entry: HistoryEntry) => {
+    setCancelling(false)
+    setSource(entry.code)
+    setFlags(entry.flags)
+    setJobId(entry.jobId)
+  }
+
   return (
     <Workspace
       topBar={
@@ -69,6 +93,17 @@ export function HomePage() {
           jobActive={jobActive}
           cancelling={cancelling}
           onCancel={handleCancel}
+        />
+      }
+      sidebar={
+        <Sidebar
+          entries={entries}
+          onLoadExample={loadExample}
+          onRestore={restoreRun}
+          onDelete={removeEntry}
+          onClear={clear}
+          collapsed={!sidebarOpen}
+          onToggleCollapsed={() => setSidebarOpen((v) => !v)}
         />
       }
       main={<Editor value={source} onChange={setSource} />}
