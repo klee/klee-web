@@ -20,10 +20,14 @@ type SettingsValue = {
   accent: Accent
   accents: Record<Accent, string>
   fontSize: number
+  splitRight: number
+  splitBelow: number
   setTheme: (t: Theme) => void
   setResultsPosition: (p: ResultsPosition) => void
   setAccent: (a: Accent) => void
   setFontSize: (n: number) => void
+  setSplitRight: (n: number) => void
+  setSplitBelow: (n: number) => void
 }
 
 const SettingsContext = createContext<SettingsValue | null>(null)
@@ -32,7 +36,10 @@ const THEME_KEY = "klee.theme"
 const RESULTS_POSITION_KEY = "klee.resultsPosition"
 const ACCENT_KEY = "klee.accent"
 const FONT_SIZE_KEY = "klee.fontSize"
+const SPLIT_RIGHT_KEY = "klee.splitRight"
+const SPLIT_BELOW_KEY = "klee.splitBelow"
 const DEFAULT_FONT_SIZE = 14
+const DEFAULT_SPLIT_RATIO = 50
 
 function readTheme(): Theme {
   const stored = localStorage.getItem(THEME_KEY)
@@ -61,11 +68,22 @@ function readFontSize(): number {
   return DEFAULT_FONT_SIZE
 }
 
+function readSplitRatio(key: string): number {
+  const stored = localStorage.getItem(key)
+  if (stored) {
+    const n = Number(stored)
+    if (Number.isFinite(n) && n >= 15 && n <= 85) return n
+  }
+  return DEFAULT_SPLIT_RATIO
+}
+
 export function SettingsProvider({ children }: { children: ReactNode }) {
   const [theme, setTheme] = useState<Theme>(readTheme)
   const [resultsPosition, setResultsPosition] = useState<ResultsPosition>(readResultsPosition)
   const [accent, setAccent] = useState<Accent>(readAccent)
   const [fontSize, setFontSize] = useState<number>(readFontSize)
+  const [splitRight, setSplitRight] = useState<number>(() => readSplitRatio(SPLIT_RIGHT_KEY))
+  const [splitBelow, setSplitBelow] = useState<number>(() => readSplitRatio(SPLIT_BELOW_KEY))
   const [systemPrefersDark, setSystemPrefersDark] = useState<boolean>(
     () => window.matchMedia("(prefers-color-scheme: dark)").matches,
   )
@@ -103,9 +121,17 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     localStorage.setItem(FONT_SIZE_KEY, String(fontSize))
   }, [fontSize])
 
+  useEffect(() => {
+    localStorage.setItem(SPLIT_RIGHT_KEY, String(splitRight))
+  }, [splitRight])
+
+  useEffect(() => {
+    localStorage.setItem(SPLIT_BELOW_KEY, String(splitBelow))
+  }, [splitBelow])
+
   return (
     <SettingsContext.Provider
-      value={{ theme, resolvedTheme, resultsPosition, accent, accents: ACCENTS, fontSize, setTheme, setResultsPosition, setAccent, setFontSize }}
+      value={{ theme, resolvedTheme, resultsPosition, accent, accents: ACCENTS, fontSize, splitRight, splitBelow, setTheme, setResultsPosition, setAccent, setFontSize, setSplitRight, setSplitBelow }}
     >
       {children}
     </SettingsContext.Provider>
