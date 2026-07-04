@@ -64,6 +64,13 @@ describe("history store", () => {
     expect(after[0].createdAt).toBe(2)
   })
 
+  test("addRun dedups an identical run even with another run in between", () => {
+    addRun(entry("a", "same", 1))
+    addRun(entry("b", "other", 2))
+    const after = addRun(entry("c", "same", 3))
+    expect(after.map((e) => e.jobId)).toEqual(["c", "b"])
+  })
+
   test("addRun keeps distinct code as separate entries", () => {
     addRun(entry("a", "one", 1))
     const after = addRun(entry("b", "two", 2))

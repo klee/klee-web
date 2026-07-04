@@ -57,13 +57,13 @@ function sameFlags(a: KleeFlags, b: KleeFlags): boolean {
 }
 
 export function addRun(entry: HistoryEntry): HistoryEntry[] {
-  const current = readHistory()
-  const newest = current[0]
-  const deduped =
-    newest && newest.code === entry.code && sameFlags(newest.flags, entry.flags)
-      ? [entry, ...current.slice(1)]
-      : [entry, ...current]
-  return write(deduped.slice(0, MAX_ENTRIES))
+  // Move-to-front with global uniqueness: an identical run (same code and flags)
+  // anywhere in the list is dropped, so the fresh run replaces it at the top
+  // rather than leaving a stale duplicate deeper down.
+  const rest = readHistory().filter(
+    (e) => !(e.code === entry.code && sameFlags(e.flags, entry.flags)),
+  )
+  return write([entry, ...rest].slice(0, MAX_ENTRIES))
 }
 
 export function setStatus(jobId: string, status: HistoryStatus): HistoryEntry[] {
