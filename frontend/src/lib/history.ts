@@ -1,0 +1,79 @@
+  import type { KleeFlags } from "../api/jobs"
+
+export type HistoryStatus =
+  | "completed"
+  | "max_time"
+  | "cancelled"
+  | "failed"
+  | "compile_error"
+
+export type HistoryEntry = {
+  jobId: string
+  code: string
+  flags: KleeFlags
+  createdAt: number
+  status?: HistoryStatus
+}
+
+export const MAX_ENTRIES = 50
+const KEY = "klee.history"
+
+function isEntry(x: unknown): x is HistoryEntry {
+  const e = x as HistoryEntry
+  return (
+    typeof e === "object" &&
+    e !== null &&
+    typeof e.jobId === "string" &&
+    typeof e.code === "string" &&
+    typeof e.createdAt === "number" &&
+    typeof e.flags === "object" &&
+    e.flags !== null
+  )
+}
+
+export function readHistory(): HistoryEntry[] {
+  try {
+    const raw = localStorage.getItem(KEY)
+    if (!raw) return []
+    const parsed: unknown = JSON.parse(raw)
+    if (!Array.isArray(parsed)) return []
+    return parsed.filter(isEntry)
+  } catch {
+    return []
+  }
+}
+
+function write(entries: HistoryEntry[]): HistoryEntry[] {
+  localStorage.setItem(KEY, JSON.stringify(entries))
+  return entries
+}
+
+function sameFlags(a: KleeFlags, b: KleeFlags): boolean {
+  return (
+    a.max_time === b.max_time &&
+    a.max_memory === b.max_memory &&
+    a.query_format === b.query_format
+  )
+}
+
+export function addRun(entry: HistoryEntry): HistoryEntry[] {
+  const current = readHistory()
+  const newest = current[0]
+  const deduped =
+    newest && newest.code === entry.code && sameFlags(newest.flags, entry.flags)
+      ? [entry, ...current.slice(1)]
+      : [entry, ...current]
+  return write(deduped.slice(0, MAX_ENTRIES))
+}
+
+export function setStatus(jobId: string, status: HistoryStatus): HistoryEntry[] {
+  return write(readHistory().map((e) => (e.jobId === jobId ? { ...e, status } : e)))
+}
+
+export function removeEntry(jobId: string): HistoryEntry[] {
+  return write(readHistory().filter((e) => e.jobId !== jobId))
+}
+
+export function clearHistory(): HistoryEntry[] {
+  return write([])
+}
