@@ -1,5 +1,7 @@
 import { useState, type ReactNode } from "react"
+import { useQuery } from "@tanstack/react-query"
 import type { HaltReason, Job, JobResult, TestCase } from "../api/jobs"
+import { getTestCases } from "../api/jobs"
 import { useSymbolicTypes } from "../context/SymbolicTypeContext"
 import { availableTypes, decode, type SymbolicType } from "../lib/decodeSymbolic"
 import { useJob } from "../hooks/useJob"
@@ -34,9 +36,25 @@ function ResultsBody({
     case "pending":
       return <PendingState />
     case "running":
-      return <RunningState result={job.result ?? null} />
-    case "parsing":
-      return <ParsingState result={job.result ?? null} />
+    case "parsing": {
+      const count = job.result?.test_case_count ?? 0
+      if (count > 0) {
+        return (
+          <RunningWithTests
+            status={job.status}
+            result={job.result!}
+            jobId={job.id!}
+            errorsFirst={errorsFirst}
+            onErrorsFirstChange={onErrorsFirstChange}
+          />
+        )
+      }
+      return job.status === "running" ? (
+        <RunningState result={job.result ?? null} />
+      ) : (
+        <ParsingState result={job.result ?? null} />
+      )
+    }
     case "done":
       if (job.result?.compile_error) {
         return <CompileErrorView error={job.result.compile_error} />
@@ -98,12 +116,18 @@ function FailedState({ result }: { result: JobResult | null }) {
 
 function RunningState({ result }: { result: JobResult | null }) {
   const hasStats = !!result?.stats && Object.keys(result.stats).length > 0
+  const count = result?.test_case_count ?? 0
   return (
     <div className="h-full p-6 flex flex-col items-center justify-center gap-6 text-slate-700 dark:text-slate-300">
       <div className="flex items-center gap-2">
         <Spinner />
         <span>KLEE is exploring paths...</span>
       </div>
+      {count > 0 && (
+        <div className="text-sm text-slate-600 dark:text-slate-400">
+          {count.toLocaleString()} test case{count !== 1 ? "s" : ""} discovered so far
+        </div>
+      )}
       {hasStats && (
         <div className="grid grid-cols-2 gap-3 w-full max-w-sm">
           <StatTile label="Instructions" value={formatCount(result!.stats.Instructions)} />
@@ -112,9 +136,6 @@ function RunningState({ result }: { result: JobResult | null }) {
           <StatTile label="Wall time" value={formatWallTime(result!.stats.WallTime)} />
         </div>
       )}
-      <div className="text-xs text-slate-500 dark:text-slate-500">
-        Test cases will appear when KLEE finishes.
-      </div>
     </div>
   )
 }
@@ -140,6 +161,108 @@ function ParsingState({ result }: { result: JobResult | null }) {
           <StatTile label="Wall time" value={formatWallTime(result!.stats.WallTime)} />
         </div>
       )}
+    </div>
+  )
+}
+
+function RunningWithTests({
+  status,
+  result,
+  jobId,
+  errorsFirst,
+  onErrorsFirstChange,
+}: {
+  status: string
+  result: JobResult
+  jobId: string
+  errorsFirst: boolean
+  onErrorsFirstChange: (value: boolean) => void
+}) {
+  const [tab, setTab] = useState<"tests" | "stats">("tests")
+  const [pageSize, setPageSize] = useState<number>(PAGE_SIZES[0])
+  const [page, setPage] = useState(0)
+
+  const isRunning = status === "running"
+  const liveCount = result.test_case_count ?? 0
+
+  const { data: slice } = useQuery({
+    queryKey: ["job-test-cases", jobId, pageSize, page],
+    queryFn: () => getTestCases(jobId, page * pageSize, pageSize),
+    enabled: liveCount > 0,
+    refetchInterval: isRunning ? 3000 : false,
+  })
+
+  const testCases = slice?.test_cases ?? []
+  const total = slice?.total ?? liveCount
+
+  const errorCount = testCases.filter((tc) => tc.error != null).length
+  const sortedCases = errorsFirst
+    ? [...testCases].sort(
+        (a, b) => (b.error != null ? 1 : 0) - (a.error != null ? 1 : 0),
+      )
+    : testCases
+
+  const pageCount = Math.max(1, Math.ceil(total / pageSize))
+  const currentPage = Math.min(page, pageCount - 1)
+
+  const handleErrorsFirstToggle = () => {
+    onErrorsFirstChange(!errorsFirst)
+    setPage(0)
+  }
+
+  return (
+    <div className="h-full flex flex-col">
+      <TabBar tab={tab} onTabChange={setTab} testCaseCount={total} />
+      <div className="shrink-0 px-4 py-2 flex items-center gap-2 text-sm border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900">
+        {isRunning ? (
+          <>
+            <Spinner />
+            <span className="text-slate-600 dark:text-slate-400">
+              KLEE is exploring paths...
+            </span>
+          </>
+        ) : (
+          <>
+            <CheckIcon />
+            <span className="text-slate-600 dark:text-slate-400">
+              KLEE finished. Loading results...
+            </span>
+          </>
+        )}
+        <span className="text-slate-500 dark:text-slate-500 tabular-nums">
+          {total.toLocaleString()} test case{total !== 1 ? "s" : ""} so far
+        </span>
+      </div>
+      <MessagesWarnings
+        programOutput={result.program_output}
+        messages={result.messages}
+        warnings={result.warnings}
+      />
+      {tab === "tests" && total > 0 && (
+        <PaginationControls
+          page={currentPage}
+          pageCount={pageCount}
+          pageSize={pageSize}
+          start={currentPage * pageSize}
+          shown={testCases.length}
+          total={total}
+          onPageChange={setPage}
+          onPageSizeChange={(size) => {
+            setPageSize(size)
+            setPage(0)
+          }}
+          errorsFirst={errorsFirst}
+          errorCount={errorCount}
+          onToggleErrorsFirst={handleErrorsFirstToggle}
+        />
+      )}
+      <div className="flex-1 overflow-auto p-4">
+        {tab === "tests" ? (
+          <TestCasesPanel testCases={sortedCases} />
+        ) : (
+          <StatsPanel stats={result.stats} />
+        )}
+      </div>
     </div>
   )
 }

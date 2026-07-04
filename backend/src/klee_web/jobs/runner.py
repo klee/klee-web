@@ -6,8 +6,8 @@ from pathlib import Path
 from typing import Protocol
 from uuid import UUID
 
-from klee_web.models import JobResult, KleeFlags
-from klee_web.parsing.klee_output import parse_output_dir
+from klee_web.models import JobResult, KleeFlags, TestCase
+from klee_web.parsing.klee_output import parse_output_dir, read_test_cases
 
 IMAGE_TAG = "klee-web-runner"
 _WATCH_INTERVAL_SECONDS = 1.0
@@ -38,6 +38,9 @@ class KleeRunner(Protocol):
         on_parsing: OnParsing | None = None,
     ) -> JobResult: ...
     async def cancel(self, job_id: UUID) -> bool: ...
+    async def get_test_cases(
+        self, job_id: UUID, offset: int, limit: int
+    ) -> tuple[int, list[TestCase]]: ...
 
 
 class FakeKleeRunner:
@@ -78,9 +81,20 @@ class FakeKleeRunner:
         self.cancel_calls.append(job_id)
         return self._cancel_returns
 
+    async def get_test_cases(
+        self, job_id: UUID, offset: int, limit: int
+    ) -> tuple[int, list[TestCase]]:
+        if self._canned_result is None:
+            return 0, []
+        test_cases = self._canned_result.test_cases
+        return len(test_cases), test_cases[offset : offset + limit]
+
 
 class DockerKleeRunner:
     """Runs the klee-web-runner container per job and parses /work/output back into a JobResult."""
+
+    def __init__(self) -> None:
+        self._output_dirs: dict[UUID, Path] = {}
 
     async def execute(
         self,
@@ -95,52 +109,56 @@ class DockerKleeRunner:
             (tmpdir / "input.c").write_text(source)
             output_dir = tmpdir / "output"
 
+            self._output_dirs[job_id] = output_dir
             try:
-                proc = await asyncio.create_subprocess_exec(
-                    "docker",
-                    "run",
-                    "--rm",
-                    "--name",
-                    _container_name(job_id),
-                    "-v",
-                    f"{tmpdir}:/work",
-                    "-e",
-                    f"KLEE_MAX_TIME={flags.max_time}",
-                    "-e",
-                    f"KLEE_MAX_MEMORY={flags.max_memory}",
-                    "-e",
-                    f"KLEE_QUERY_FORMAT={flags.query_format.value}",
-                    IMAGE_TAG,
-                    stdout=asyncio.subprocess.PIPE,
-                    stderr=asyncio.subprocess.PIPE,
-                )
-            except FileNotFoundError as e:
-                raise KleeRunnerError("docker CLI not found on PATH") from e
+                try:
+                    proc = await asyncio.create_subprocess_exec(
+                        "docker",
+                        "run",
+                        "--rm",
+                        "--name",
+                        _container_name(job_id),
+                        "-v",
+                        f"{tmpdir}:/work",
+                        "-e",
+                        f"KLEE_MAX_TIME={flags.max_time}",
+                        "-e",
+                        f"KLEE_MAX_MEMORY={flags.max_memory}",
+                        "-e",
+                        f"KLEE_QUERY_FORMAT={flags.query_format.value}",
+                        IMAGE_TAG,
+                        stdout=asyncio.subprocess.PIPE,
+                        stderr=asyncio.subprocess.PIPE,
+                    )
+                except FileNotFoundError as e:
+                    raise KleeRunnerError("docker CLI not found on PATH") from e
 
-            watcher: asyncio.Task[None] | None = None
-            if on_progress is not None:
-                watcher = asyncio.create_task(_watch_output_dir(output_dir, on_progress))
+                watcher: asyncio.Task[None] | None = None
+                if on_progress is not None:
+                    watcher = asyncio.create_task(_watch_output_dir(output_dir, on_progress))
 
-            try:
-                _, stderr = await proc.communicate()
+                try:
+                    _, stderr = await proc.communicate()
+                finally:
+                    if watcher is not None:
+                        watcher.cancel()
+                        with suppress(asyncio.CancelledError):
+                            await watcher
+
+                if proc.returncode != 0:
+                    raise KleeRunnerError(
+                        f"docker run exited with {proc.returncode}: "
+                        f"{stderr.decode(errors='replace').strip()}"
+                    )
+
+                if not output_dir.exists():
+                    raise KleeRunnerError("runner produced no output directory")
+
+                if on_parsing is not None:
+                    await on_parsing()
+                return await asyncio.to_thread(parse_output_dir, output_dir)
             finally:
-                if watcher is not None:
-                    watcher.cancel()
-                    with suppress(asyncio.CancelledError):
-                        await watcher
-
-            if proc.returncode != 0:
-                raise KleeRunnerError(
-                    f"docker run exited with {proc.returncode}: "
-                    f"{stderr.decode(errors='replace').strip()}"
-                )
-
-            if not output_dir.exists():
-                raise KleeRunnerError("runner produced no output directory")
-
-            if on_parsing is not None:
-                await on_parsing()
-            return await asyncio.to_thread(parse_output_dir, output_dir)
+                self._output_dirs.pop(job_id, None)
 
     async def cancel(self, job_id: UUID) -> bool:
         """Signal the job's container to halt. Returns True only if a live container
@@ -156,6 +174,14 @@ class DockerKleeRunner:
         )
         await proc.communicate()
         return proc.returncode == 0
+
+    async def get_test_cases(
+        self, job_id: UUID, offset: int, limit: int
+    ) -> tuple[int, list[TestCase]]:
+        directory = self._output_dirs.get(job_id)
+        if directory is None or not directory.exists():
+            return 0, []
+        return await asyncio.to_thread(read_test_cases, directory, offset, limit)
 
 
 async def _watch_output_dir(output_dir: Path, on_progress: OnProgress) -> None:

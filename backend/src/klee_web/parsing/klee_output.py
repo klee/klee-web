@@ -33,18 +33,21 @@ def parse_output_dir(output_dir: Path, *, include_test_cases: bool = True) -> Jo
             compile_error=compile_error_path.read_text(),
         )
 
+    ktest_paths = sorted(output_dir.glob("*.ktest"))
+    test_case_count = len(ktest_paths)
+
     # Progress polls pass include_test_cases=False: KLEE writes a ktest per
     # terminated path (thousands during a single run), so opening them all on
     # every watcher tick is the work that blocks the event loop. The running UI
-    # shows only stats, so partials skip the ktests; the final parse reads them.
+    # shows only stats plus the live count, so partials skip the ktests; the
+    # final parse reads them.
     test_cases: list[TestCase] = []
     if include_test_cases:
         err_files_by_stem = _err_files_by_stem(output_dir)
-        for p in sorted(output_dir.glob("*.ktest")):
+        for p in ktest_paths:
             try:
                 test_cases.append(_test_case_from_ktest(p, err_files_by_stem.get(p.stem, [])))
             except (OSError, ValueError, EOFError, struct.error) as exc:
-                # Corrupt/truncated ktest; no later parse fixes it. Drop it, keep the run.
                 logger.warning("skipping unreadable ktest %s: %r", p, exc)
                 continue
 
@@ -53,12 +56,33 @@ def parse_output_dir(output_dir: Path, *, include_test_cases: bool = True) -> Jo
     host_timed_out = (output_dir / "host_timeout").exists()
     return JobResult(
         test_cases=test_cases,
+        test_case_count=test_case_count,
         messages=messages,
         warnings=_read_or_empty(output_dir / "warnings.txt"),
         stats=_read_stats(output_dir / "run.stats"),
         program_output=_read_program_output(output_dir / "program_output.txt"),
         halt_reason=_detect_halt_reason(messages, info, host_timed_out),
     )
+
+
+def read_test_cases(
+    output_dir: Path,
+    offset: int = 0,
+    limit: int = 25,
+) -> tuple[int, list[TestCase]]:
+    ktest_paths = sorted(output_dir.glob("*.ktest"))
+    total = len(ktest_paths)
+    err_files_by_stem = _err_files_by_stem(output_dir)
+    test_cases: list[TestCase] = []
+    for p in ktest_paths[offset : offset + limit]:
+        try:
+            test_cases.append(
+                _test_case_from_ktest(p, err_files_by_stem.get(p.stem, []))
+            )
+        except (OSError, ValueError, EOFError, struct.error) as exc:
+            logger.warning("skipping unreadable ktest %s: %r", p, exc)
+            continue
+    return total, test_cases
 
 
 def _detect_halt_reason(messages: str, info: str, host_timed_out: bool) -> HaltReason | None:

@@ -56,12 +56,18 @@ class TestCase(BaseModel):
 
 class JobResult(BaseModel):
     test_cases: list[TestCase]
+    test_case_count: int = 0
     messages: str
     warnings: str
     stats: dict[str, int]
     program_output: str = ""
     compile_error: str | None = None
     halt_reason: HaltReason | None = None
+
+
+class TestCasesSlice(BaseModel):
+    test_cases: list[TestCase]
+    total: int
 
 
 class Job(BaseModel):

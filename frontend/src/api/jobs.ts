@@ -37,3 +37,23 @@ export async function cancelJob(jobId: string): Promise<boolean> {
   });
   return response.status === 202;
 }
+
+export async function getTestCases(
+  jobId: string,
+  offset: number = 0,
+  limit: number = 25,
+): Promise<{ test_cases: components["schemas"]["TestCase"][]; total: number }> {
+  const { data, error } = await apiClient.GET(
+    "/jobs/{job_id}/test-cases",
+    {
+      params: {
+        path: { job_id: jobId },
+        query: { offset, limit },
+      },
+    },
+  );
+  if (error) {
+    throw new Error(`getTestCases(${jobId}) failed: ${JSON.stringify(error)}`);
+  }
+  return data;
+}

@@ -3,11 +3,20 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from klee_web.deps import get_cache, get_dispatcher, get_job_store
+from klee_web.deps import get_cache, get_dispatcher, get_job_store, get_runner
 from klee_web.jobs.cache import ResultCache, cache_key
 from klee_web.jobs.dispatch import JobDispatcher
+from klee_web.jobs.runner import KleeRunner
 from klee_web.jobs.store import JobStore
-from klee_web.models import HaltReason, Job, JobCreated, JobRequest, JobResult, JobStatus
+from klee_web.models import (
+    HaltReason,
+    Job,
+    JobCreated,
+    JobRequest,
+    JobResult,
+    JobStatus,
+    TestCasesSlice,
+)
 
 router = APIRouter()
 
@@ -69,3 +78,30 @@ async def cancel_job(
     updated = await store.get(job_id)
     assert updated is not None  # store never drops a job that get() just returned
     return updated
+
+
+@router.get(
+    "/jobs/{job_id}/test-cases",
+    response_model=TestCasesSlice,
+)
+async def get_job_test_cases(
+    job_id: UUID,
+    store: Annotated[JobStore, Depends(get_job_store)],
+    runner: Annotated[KleeRunner, Depends(get_runner)],
+    offset: int = 0,
+    limit: int = 25,
+) -> TestCasesSlice:
+    job = await store.get(job_id)
+    if job is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Job not found")
+
+    if job.status in (JobStatus.done, JobStatus.failed):
+        test_cases = job.result.test_cases if job.result else []
+        total = len(test_cases)
+        return TestCasesSlice(
+            test_cases=test_cases[offset : offset + limit],
+            total=total,
+        )
+
+    total, test_cases = await runner.get_test_cases(job_id, offset, limit)
+    return TestCasesSlice(test_cases=test_cases, total=total)

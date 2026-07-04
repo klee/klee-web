@@ -55,6 +55,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/jobs/{job_id}/test-cases": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Job Test Cases */
+        get: operations["get_job_test_cases_jobs__job_id__test_cases_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -103,6 +120,11 @@ export interface components {
         JobResult: {
             /** Test Cases */
             test_cases: components["schemas"]["TestCase"][];
+            /**
+             * Test Case Count
+             * @default 0
+             */
+            test_case_count: number;
             /** Messages */
             messages: string;
             /** Warnings */
@@ -164,6 +186,13 @@ export interface components {
             error?: string | null;
             /** Path Constraint */
             path_constraint?: string | null;
+        };
+        /** TestCasesSlice */
+        TestCasesSlice: {
+            /** Test Cases */
+            test_cases: components["schemas"]["TestCase"][];
+            /** Total */
+            total: number;
         };
         /** ValidationError */
         ValidationError: {
@@ -269,6 +298,40 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Job"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_job_test_cases_jobs__job_id__test_cases_get: {
+        parameters: {
+            query?: {
+                offset?: number;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                job_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TestCasesSlice"];
                 };
             };
             /** @description Validation Error */
