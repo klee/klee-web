@@ -33,7 +33,7 @@ class InProcessDispatcher:
 
 # Hard per-task ceiling above the job's own budget. The Celery supervisor enforces it, so
 # it SIGKILLs and respawns a frozen worker whose own timers cannot fire. Sits above the
-# entrypoint bound and below the resolver deadline (the ADR-0019 ordering).
+# entrypoint bound (ADR-0018, minimal failsafes).
 _TASK_TIME_LIMIT_MARGIN = 60
 
 

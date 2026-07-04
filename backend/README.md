@@ -2,19 +2,23 @@
 
 FastAPI service. Receives job submissions, runs KLEE through the runner, returns results.
 
-## Stage 1 contents
+## Contents
 
 - `pyproject.toml`: dependencies and tooling config
 - `src/klee_web/main.py`: FastAPI app
-- `src/klee_web/api/jobs.py`: `POST /jobs`, `GET /jobs/{id}`. POST returns immediately and schedules the runner on `asyncio.create_task`; GET polls the store
-- `src/klee_web/models.py`: Pydantic schemas (`JobRequest`, `Job`, `JobResult`, `JobStatus`, `KleeFlags`, `TestCase`, `HaltReason`)
-- `src/klee_web/jobs/store.py`: `JobStore` protocol + `InMemoryJobStore`. `set_partial_result` for mid-flight progress writes; `set_result` flips status to `done`
-- `src/klee_web/jobs/runner.py`: `KleeRunner` protocol + `DockerKleeRunner`. Spawns a watcher coroutine that polls the output dir every second and emits partials via an `on_progress` callback
+- `src/klee_web/api/jobs.py`: `POST /jobs`, `GET /jobs/{id}`, `POST /jobs/{id}/cancel`. POST returns `202` with a `job_id`, serving a cached result on a matching submission or else creating the job and handing it to the dispatcher. GET polls the store. Cancel flips the job terminal (ADR-0013)
+- `src/klee_web/models.py`: Pydantic schemas (`JobRequest`, `Job`, `JobCreated`, `JobResult`, `JobStatus`, `HaltReason`, `KleeFlags`, `QueryFormat`, `TestCase`, `SymbolicInput`)
+- `src/klee_web/jobs/dispatch.py`: `JobDispatcher` protocol + `InProcessDispatcher` (Stage 1, `asyncio.create_task`) and `CeleryDispatcher` (Stage 2, enqueue). `deps.py` picks one on `CELERY_BROKER_URL` (ADR-0016)
+- `src/klee_web/jobs/run.py`: `run_job`, the shared job body both dispatchers reach: mark running, run KLEE, write the result, cache a completed run, and watch for a cancel
+- `src/klee_web/jobs/store.py`: `JobStore` protocol + `InMemoryJobStore` and `RedisJobStore`. `set_partial_result` writes mid-flight progress, `set_result` flips status to `done`, `request_cancel` sets the cancel flag
+- `src/klee_web/jobs/runner.py`: `KleeRunner` protocol + `DockerKleeRunner` and `FakeKleeRunner`. Spawns a watcher coroutine that polls the output dir every second and emits partials via an `on_progress` callback
+- `src/klee_web/jobs/cache.py`: `ResultCache` protocol + `InMemoryResultCache` and `RedisResultCache`, keyed on the submission (ADR-0017)
+- `src/klee_web/celery_app.py`: the Celery app and the `run_klee_job` task the worker runs (Stage 2)
 - `src/klee_web/parsing/klee_output.py`: parse KLEE output dir into a `JobResult`. Detects halt reason from `HaltTimer invoked` in `messages.txt` (`max_time`) or `KLEE: done:` in `info` (`completed`)
 - `src/klee_web/parsing/ktest.py`: vendored KLEE ktest reader (NCSA, trimmed to `KTest.fromfile`)
-- `src/klee_web/deps.py`: dependency providers (`get_job_store`, `get_runner`)
-- `tests/unit/`: handler tests, parser tests with golden fixtures (`happy_path`, `compile_error`, `runtime_error`, `max_time`)
-- `tests/integration/`: end-to-end with real Docker
+- `src/klee_web/deps.py`: dependency providers (`get_job_store`, `get_runner`, `get_cache`, `get_dispatcher`), each selecting the Stage 1 or Stage 2 implementation from config
+- `tests/unit/`: handler, dispatch, run-job, store, cache, model, config, and parser tests (parser golden fixtures: `happy_path`, `compile_error`, `runtime_error`, `max_time`)
+- `tests/integration/`: real-Docker runner, Redis store and cache, and the Celery worker end to end
 
 ## Why `JobStore` and `KleeRunner` are protocols
 
@@ -42,15 +46,13 @@ This stays manual on purpose. It overlaps the runner integration test and the Pl
 
 ### Manual worker-death smoke
 
-`acks_late` and the visibility timeout redeliver a job whose worker dies mid-run (ADR-0018). The deterministic pieces (terminal short-circuit, attempts cap, container reclaim) are unit-tested; the actual kill stays manual, because making a genuine worker death reproducible in CI is brittle. With `make up-celery` running:
+A dead worker's job is lost, not redelivered (ADR-0018, at-most-once). Celery acks a task on receipt (`task_acks_late` stays off), so a worker that dies mid-run has already acked and the broker never re-sends the job. That is safe only because cancel resolves the stuck job API-side (ADR-0013, the eager flip), alive worker or not. A genuine worker death is brittle to reproduce in CI, so this stays manual. With `make up-celery` running:
 
 1. Submit a job with a longer `max_time` (say 60) so it is still running when you kill the worker.
 2. Watch the worker log pick up `run_klee_job` and spawn `klee-job-{id}`. Confirm `GET /jobs/{id}` is `running`.
-3. `kill -9` the worker process mid-run. The job stays `running` (the worker never acked), and its container keeps running orphaned under `klee-job-{id}` (it runs under dockerd, not as the worker's child).
-4. Start a fresh worker (the same `celery ... worker` line `make up-celery` uses).
-5. After the visibility timeout the broker redelivers the task. The redelivered run force-removes the orphaned container, re-runs KLEE, and the job lands `done`.
-
-The wait in step 5 is the Redis visibility timeout (`MAX_TIME_CEILING * 2` = 600s). To smoke it faster, lower `broker_transport_options["visibility_timeout"]` in `celery_app.py` temporarily.
+3. `kill -9` the worker process mid-run. The job stays `running` (the worker already acked, and nothing redelivers it), and its container keeps running orphaned under `klee-job-{id}` (it runs under dockerd, not as the worker's child).
+4. `POST /jobs/{id}/cancel` (or click Cancel in the UI). The API writes the terminal state straight to the store, so the job resolves at once with no worker alive and the UI unblocks.
+5. The orphaned container keeps running until its own entrypoint bound stops it (up to `max_time`), then `--rm` removes it. That bounded waste is the accepted cost of not reclaiming (ADR-0018). Resubmit if you still want the result.
 
 ### Worker pool
 
@@ -62,6 +64,6 @@ make up-pool
 
 Same stack as `make up-celery`, with the single worker replaced by `WORKERS` host processes (default 2), each at `--concurrency=1` and a distinct Celery node name so they are tellable apart in the logs. Override the count with `make up-pool WORKERS=4`. The broker spreads jobs across the pool: submit several at once and each worker claims a distinct task.
 
-The pool is the topology that makes worker death survivable with no restart. Kill one worker mid-run and a live peer picks up the redelivered job once the visibility timeout expires (the same wait as the worker-death smoke above, a peer does not shorten it). Redelivery and cancel both route through the shared store, so they reach the right job whichever worker holds it.
+The pool is about throughput, not failover. It does not make an in-flight job survive its worker's death: a dying worker loses only the one job it had acked, while the jobs still queued in the broker are untouched and the live peers keep draining them. That one lost job is recovered by cancel (above), not by a peer. Cancel routes through the shared store, so it reaches the right job whichever worker held it.
 
 Each worker runs as a host process, not a container. Containerising it would mean mounting the host docker socket so the worker could spawn sibling KLEE containers, i.e. handing a container root on the host. That is a deployment and security decision Stage 3 owns, not Stage 2.
