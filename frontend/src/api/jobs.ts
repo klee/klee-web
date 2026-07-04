@@ -18,10 +18,22 @@ export async function submitJob(req: JobRequest): Promise<JobCreated> {
   return data;
 }
 
+export class JobNotFoundError extends Error {
+  constructor(jobId: string) {
+    super(`job ${jobId} not found`);
+    this.name = "JobNotFoundError";
+  }
+}
+
 export async function getJob(jobId: string): Promise<Job> {
-  const { data, error } = await apiClient.GET("/jobs/{job_id}", {
+  const { data, error, response } = await apiClient.GET("/jobs/{job_id}", {
     params: { path: { job_id: jobId } },
   });
+  // A restored history entry can point at a job the backend has dropped once its store TTL lapses.
+  // Surface it distinctly so the UI shows "expired", not "backend not connected".
+  if (response.status === 404) {
+    throw new JobNotFoundError(jobId);
+  }
   if (error) {
     throw new Error(`getJob(${jobId}) failed: ${JSON.stringify(error)}`);
   }

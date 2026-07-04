@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from "react"
-import type { HaltReason, Job, JobResult, TestCase } from "../api/jobs"
+import { JobNotFoundError, type HaltReason, type Job, type JobResult, type TestCase } from "../api/jobs"
 import { useSymbolicTypes } from "../context/SymbolicTypeContext"
 import { availableTypes, decode, type SymbolicType } from "../lib/decodeSymbolic"
 import { useJob } from "../hooks/useJob"
@@ -12,8 +12,9 @@ type ResultsProps = {
 }
 
 export function Results({ jobId, submitError, errorsFirst, onErrorsFirstChange }: ResultsProps) {
-  const { data: job, isError: queryError } = useJob(jobId)
+  const { data: job, isError: queryError, error } = useJob(jobId)
 
+  if (queryError && error instanceof JobNotFoundError) return <ExpiredState />
   if (submitError || queryError) return <ConnectionErrorState />
   if (jobId === null) return <EmptyState />
   if (job === undefined) return <LoadingState />
@@ -63,6 +64,12 @@ function CenterBlock({ children }: { children: ReactNode }) {
 
 function EmptyState() {
   return <CenterBlock>Click Run to execute KLEE on your code.</CenterBlock>
+}
+
+function ExpiredState() {
+  return (
+    <CenterBlock>Results for this run are no longer kept. Re-run to regenerate.</CenterBlock>
+  )
 }
 
 function LoadingState() {
