@@ -78,7 +78,7 @@ async def test_docker_runner_runs_get_sign_end_to_end():
         timeout=30,
     )
     assert len(result.test_cases) == 3
-    assert {tc.inputs["a"] for tc in result.test_cases} == {
+    assert {tc.inputs[0].value for tc in result.test_cases} == {
         "0",
         "16843009",
         "-2147483648",
@@ -186,7 +186,7 @@ async def test_docker_runner_pairs_div_err_with_failing_test_case():
     assert sum(tc.error is not None for tc in result.test_cases) == 1
     failing = next(tc for tc in result.test_cases if tc.error is not None)
     assert failing.error is not None
-    assert failing.inputs == {"x": "0"}
+    assert {i.name: i.value for i in failing.inputs} == {"x": "0"}
     assert "divide by zero" in failing.error
     assert result.compile_error is None
 
