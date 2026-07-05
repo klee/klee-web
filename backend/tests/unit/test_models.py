@@ -50,6 +50,25 @@ def test_klee_flags_max_memory_above_max_rejected():
         KleeFlags(max_memory=4096)
 
 
+def test_klee_flags_extra_flags_defaults_empty():
+    assert KleeFlags().extra_flags == ""
+
+
+def test_klee_flags_accepts_allowed_extra_flags():
+    flags = KleeFlags(extra_flags="--optimize --search=dfs")
+    assert flags.extra_flags == "--optimize --search=dfs"
+
+
+def test_klee_flags_rejects_disallowed_extra_flag():
+    with pytest.raises(ValidationError):
+        KleeFlags(extra_flags="--output-dir=/etc")
+
+
+def test_klee_flags_rejects_oversized_extra_flags():
+    with pytest.raises(ValidationError):
+        KleeFlags(extra_flags="--optimize " * 50)
+
+
 def test_job_request_minimal_valid():
     req = JobRequest(source="int main() { return 0; }")
     assert req.source == "int main() { return 0; }"

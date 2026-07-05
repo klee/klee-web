@@ -3,7 +3,9 @@ from enum import StrEnum
 from typing import Annotated
 from uuid import UUID, uuid4
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
+
+from .flag_allowlist import validate_extra_flags
 
 
 class JobStatus(StrEnum):
@@ -28,11 +30,20 @@ class QueryFormat(StrEnum):
 # The hard upper bound on a job's wall-clock, the ceiling the max_time flag is capped at.
 MAX_TIME_CEILING = 300
 
+# Cap on the free-text power-user flag string (ADR-0019).
+EXTRA_FLAGS_MAX_LEN = 500
+
 
 class KleeFlags(BaseModel):
     max_time: Annotated[int, Field(ge=1, le=MAX_TIME_CEILING)] = 60
     max_memory: Annotated[int, Field(ge=64, le=2048)] = 512
     query_format: QueryFormat = QueryFormat.none
+    extra_flags: Annotated[str, Field(max_length=EXTRA_FLAGS_MAX_LEN)] = ""
+
+    @field_validator("extra_flags")
+    @classmethod
+    def _validate_extra_flags(cls, v: str) -> str:
+        return validate_extra_flags(v)
 
 
 class JobRequest(BaseModel):
