@@ -3,6 +3,7 @@ import { JobNotFoundError, type HaltReason, type Job, type JobResult, type TestC
 import { useSymbolicTypes } from "../context/SymbolicTypeContext"
 import { availableTypes, decode, type SymbolicType } from "../lib/decodeSymbolic"
 import { useJob } from "../hooks/useJob"
+import { clampPage } from "../lib/pagination"
 
 type ResultsProps = {
   jobId: string | null
@@ -365,9 +366,7 @@ function PaginationControls({
         >
           Prev
         </button>
-        <span>
-          Page {page + 1} / {pageCount}
-        </span>
+        <PageInput page={page} pageCount={pageCount} onPageChange={onPageChange} />
         <button
           type="button"
           disabled={page >= pageCount - 1}
@@ -378,6 +377,40 @@ function PaginationControls({
         </button>
       </div>
     </div>
+  )
+}
+
+function PageInput({
+  page,
+  pageCount,
+  onPageChange,
+}: {
+  page: number
+  pageCount: number
+  onPageChange: (p: number) => void
+}) {
+  const commit = (el: HTMLInputElement) => {
+    const next = clampPage(el.value, page + 1, pageCount)
+    el.value = String(next)
+    onPageChange(next - 1)
+  }
+  return (
+    <span className="flex items-center gap-1">
+      Page
+      <input
+        key={page}
+        type="text"
+        inputMode="numeric"
+        aria-label="page number"
+        defaultValue={page + 1}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") e.currentTarget.blur()
+        }}
+        onBlur={(e) => commit(e.currentTarget)}
+        className="w-10 text-center tabular-nums rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-1 py-0.5 focus:outline-none focus:ring-1 focus:ring-[var(--klee-accent)]"
+      />
+      / {pageCount}
+    </span>
   )
 }
 
