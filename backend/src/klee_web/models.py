@@ -6,6 +6,7 @@ from uuid import UUID, uuid4
 from pydantic import BaseModel, Field, field_validator
 
 from .flag_allowlist import validate_extra_flags
+from .symbolic_input import SymArgs, SymFiles, SymStdin
 
 
 class JobStatus(StrEnum):
@@ -39,6 +40,9 @@ class KleeFlags(BaseModel):
     max_memory: Annotated[int, Field(ge=64, le=2048)] = 512
     query_format: QueryFormat = QueryFormat.none
     extra_flags: Annotated[str, Field(max_length=EXTRA_FLAGS_MAX_LEN)] = ""
+    sym_stdin: SymStdin | None = None
+    sym_files: SymFiles | None = None
+    sym_args: SymArgs | None = None
 
     @field_validator("extra_flags")
     @classmethod

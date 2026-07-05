@@ -69,6 +69,29 @@ def test_klee_flags_rejects_oversized_extra_flags():
         KleeFlags(extra_flags="--optimize " * 50)
 
 
+def test_klee_flags_symbolic_input_defaults_none():
+    flags = KleeFlags()
+    assert flags.sym_stdin is None
+    assert flags.sym_files is None
+    assert flags.sym_args is None
+
+
+def test_klee_flags_accepts_symbolic_input_from_dicts():
+    flags = KleeFlags(
+        sym_stdin={"size": 8},
+        sym_files={"count": 2, "size": 8},
+        sym_args={"count_min": 1, "count_max": 3, "length": 4},
+    )
+    assert flags.sym_stdin is not None and flags.sym_stdin.size == 8
+    assert flags.sym_files is not None and flags.sym_files.count == 2
+    assert flags.sym_args is not None and flags.sym_args.count_max == 3
+
+
+def test_klee_flags_rejects_bad_symbolic_input():
+    with pytest.raises(ValidationError):
+        KleeFlags(sym_args={"count_min": 3, "count_max": 1, "length": 4})
+
+
 def test_job_request_minimal_valid():
     req = JobRequest(source="int main() { return 0; }")
     assert req.source == "int main() { return 0; }"

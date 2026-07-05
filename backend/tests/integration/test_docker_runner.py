@@ -7,6 +7,7 @@ import pytest
 
 from klee_web.jobs.runner import IMAGE_TAG, DockerKleeRunner
 from klee_web.models import HaltReason, KleeFlags
+from klee_web.symbolic_input import SymStdin
 
 
 def _runner_environment_ready() -> bool:
@@ -99,6 +100,35 @@ async def test_docker_runner_runs_with_allowlisted_extra_flags():
         timeout=30,
     )
     assert len(result.test_cases) == 3
+    assert result.compile_error is None
+
+
+SYM_STDIN_SOURCE = """\
+#include <unistd.h>
+
+int main() {
+    char c;
+    if (read(0, &c, 1) <= 0) return 0;
+    if (c == 'A') return 1;
+    if (c == 'B') return 2;
+    return 0;
+}
+"""
+
+
+async def test_docker_runner_makes_stdin_symbolic_with_sym_stdin():
+    runner = DockerKleeRunner()
+    result = await asyncio.wait_for(
+        runner.execute(
+            SYM_STDIN_SOURCE,
+            KleeFlags(max_time=10, max_memory=256, sym_stdin=SymStdin(size=1)),
+            uuid4(),
+        ),
+        timeout=30,
+    )
+    # Without --sym-stdin the single read hits EOF and the program has one path;
+    # making stdin symbolic forks it, so more than one test case proves the flag took effect.
+    assert len(result.test_cases) >= 2
     assert result.compile_error is None
 
 

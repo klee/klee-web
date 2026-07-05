@@ -17,6 +17,10 @@ KLEE_EXTRA_FLAGS carries allowlisted power-user flags (validated by the backend,
 ADR-0019). They are shlex-split and spliced into the prefix, before the bitcode.
 --external-calls is pinned to concrete so a user cannot broaden the policy.
 
+KLEE_POSIX_ARGS carries the symbolic-input options (--sym-stdin/--sym-files/
+--sym-args) the backend renders from structured fields. These are POSIX-runtime
+options, so they are shlex-split and appended AFTER the bitcode, not the prefix.
+
 A SIGTERM to this process (how the backend cancels a job) is translated into a
 SIGINT to KLEE, the signal KLEE halts gracefully on: KLEE stops exploring and
 dumps the test cases found so far, the same partial result a --max-time expiry
@@ -41,7 +45,7 @@ HOST_TIMEOUT_MARGIN = 15  # bound KLEE at max_time + this, for when it overruns 
 
 
 def build_klee_command(
-    max_time: str, max_memory: str, query_format: str, extra_flags: str
+    max_time: str, max_memory: str, query_format: str, extra_flags: str, posix_args: str
 ) -> list[str]:
     cmd = [
         "klee",
@@ -56,6 +60,7 @@ def build_klee_command(
         cmd.append("--write-kqueries")
     cmd += shlex.split(extra_flags)
     cmd.append(str(BITCODE))
+    cmd += shlex.split(posix_args)
     return cmd
 
 
@@ -64,6 +69,7 @@ def main() -> int:
     max_memory = os.environ.get("KLEE_MAX_MEMORY", "512")
     query_format = os.environ.get("KLEE_QUERY_FORMAT", "none")
     extra_flags = os.environ.get("KLEE_EXTRA_FLAGS", "")
+    posix_args = os.environ.get("KLEE_POSIX_ARGS", "")
 
     compile_proc = subprocess.run(
         [
@@ -89,7 +95,7 @@ def main() -> int:
     if OUTPUT_DIR.exists():
         shutil.rmtree(OUTPUT_DIR)
 
-    klee_cmd = build_klee_command(max_time, max_memory, query_format, extra_flags)
+    klee_cmd = build_klee_command(max_time, max_memory, query_format, extra_flags, posix_args)
 
     # New session so KLEE and any solver it forks share a process group we can signal as
     # a unit. KLEE runs STP in a forked child that would otherwise survive a kill of KLEE

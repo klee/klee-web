@@ -9,6 +9,7 @@ from uuid import UUID
 
 from klee_web.models import JobResult, KleeFlags
 from klee_web.parsing.klee_output import parse_output_dir
+from klee_web.symbolic_input import render_posix_args
 
 IMAGE_TAG = "klee-web-runner"
 _WATCH_INTERVAL_SECONDS = 1.0
@@ -95,6 +96,7 @@ class DockerKleeRunner:
             tmpdir = Path(tmpdir_str)
             (tmpdir / "input.c").write_text(source)
             output_dir = tmpdir / "output"
+            posix_args = render_posix_args(flags.sym_files, flags.sym_args, flags.sym_stdin)
 
             try:
                 proc = await asyncio.create_subprocess_exec(
@@ -118,6 +120,8 @@ class DockerKleeRunner:
                     f"KLEE_QUERY_FORMAT={flags.query_format.value}",
                     "-e",
                     f"KLEE_EXTRA_FLAGS={flags.extra_flags}",
+                    "-e",
+                    f"KLEE_POSIX_ARGS={posix_args}",
                     IMAGE_TAG,
                     stdout=asyncio.subprocess.PIPE,
                     stderr=asyncio.subprocess.PIPE,
