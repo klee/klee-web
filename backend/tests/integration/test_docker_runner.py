@@ -88,6 +88,20 @@ async def test_docker_runner_runs_get_sign_end_to_end():
     assert result.stats["Instructions"] > 0
 
 
+async def test_docker_runner_runs_with_allowlisted_extra_flags():
+    runner = DockerKleeRunner()
+    result = await asyncio.wait_for(
+        runner.execute(
+            GET_SIGN_SOURCE,
+            KleeFlags(max_time=10, max_memory=256, extra_flags="--optimize --search=dfs"),
+            uuid4(),
+        ),
+        timeout=30,
+    )
+    assert len(result.test_cases) == 3
+    assert result.compile_error is None
+
+
 async def test_docker_runner_surfaces_compile_error_from_missing_include():
     runner = DockerKleeRunner()
     result = await asyncio.wait_for(

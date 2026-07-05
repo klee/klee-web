@@ -110,6 +110,8 @@ class DockerKleeRunner:
                     f"KLEE_MAX_MEMORY={flags.max_memory}",
                     "-e",
                     f"KLEE_QUERY_FORMAT={flags.query_format.value}",
+                    "-e",
+                    f"KLEE_EXTRA_FLAGS={flags.extra_flags}",
                     IMAGE_TAG,
                     stdout=asyncio.subprocess.PIPE,
                     stderr=asyncio.subprocess.PIPE,

@@ -13,6 +13,10 @@ own diagnostics) is left to flow to the container so the backend still sees it.
 When KLEE_QUERY_FORMAT=kquery, pass --write-kqueries so KLEE emits a .kquery
 (path constraint) file per test case.
 
+KLEE_EXTRA_FLAGS carries allowlisted power-user flags (validated by the backend,
+ADR-0019). They are shlex-split and spliced into the prefix, before the bitcode.
+--external-calls is pinned to concrete so a user cannot broaden the policy.
+
 A SIGTERM to this process (how the backend cancels a job) is translated into a
 SIGINT to KLEE, the signal KLEE halts gracefully on: KLEE stops exploring and
 dumps the test cases found so far, the same partial result a --max-time expiry
@@ -21,6 +25,7 @@ produces.
 
 import contextlib
 import os
+import shlex
 import shutil
 import signal
 import subprocess
@@ -35,10 +40,30 @@ GRACE_SECONDS = 10  # after forwarding the halt, SIGKILL KLEE if it has not flus
 HOST_TIMEOUT_MARGIN = 15  # bound KLEE at max_time + this, for when it overruns its own --max-time
 
 
+def build_klee_command(
+    max_time: str, max_memory: str, query_format: str, extra_flags: str
+) -> list[str]:
+    cmd = [
+        "klee",
+        "--libc=uclibc",
+        "--posix-runtime",
+        "--external-calls=concrete",
+        f"--max-time={max_time}",
+        f"--max-memory={max_memory}",
+        f"--output-dir={OUTPUT_DIR}",
+    ]
+    if query_format == "kquery":
+        cmd.append("--write-kqueries")
+    cmd += shlex.split(extra_flags)
+    cmd.append(str(BITCODE))
+    return cmd
+
+
 def main() -> int:
     max_time = os.environ.get("KLEE_MAX_TIME", "60")
     max_memory = os.environ.get("KLEE_MAX_MEMORY", "512")
     query_format = os.environ.get("KLEE_QUERY_FORMAT", "none")
+    extra_flags = os.environ.get("KLEE_EXTRA_FLAGS", "")
 
     compile_proc = subprocess.run(
         [
@@ -64,17 +89,7 @@ def main() -> int:
     if OUTPUT_DIR.exists():
         shutil.rmtree(OUTPUT_DIR)
 
-    klee_cmd = [
-        "klee",
-        "--libc=uclibc",
-        "--posix-runtime",
-        f"--max-time={max_time}",
-        f"--max-memory={max_memory}",
-        f"--output-dir={OUTPUT_DIR}",
-    ]
-    if query_format == "kquery":
-        klee_cmd.append("--write-kqueries")
-    klee_cmd.append(str(BITCODE))
+    klee_cmd = build_klee_command(max_time, max_memory, query_format, extra_flags)
 
     # New session so KLEE and any solver it forks share a process group we can signal as
     # a unit. KLEE runs STP in a forked child that would otherwise survive a kill of KLEE
