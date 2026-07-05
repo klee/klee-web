@@ -73,6 +73,21 @@ jobs:
         env:
           SKIP: mypy
 
+  integration-docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - run: uv sync
+        working-directory: backend
+      - name: Build runner image
+        run: docker build -t klee-web-runner ./runner
+      - name: Run docker integration tests
+        run: uv run pytest tests/integration -m requires_docker -v
+        working-directory: backend
+
   e2e:
     runs-on: ubuntu-latest
     steps:
