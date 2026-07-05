@@ -528,14 +528,14 @@ function TestCaseCard({ testCase }: { testCase: TestCase }) {
             <div key={input.name} className="font-mono text-xs flex items-center gap-2">
               <span className="text-slate-500">{input.name}</span>
               <span className="text-slate-400">=</span>
-              <span className="flex-1 text-slate-900 dark:text-slate-100">
+              <span className="flex-1 min-w-0 wrap-anywhere text-slate-900 dark:text-slate-100">
                 {decode(input.bytes_hex, type)}
               </span>
               <select
                 aria-label={`type for ${input.name}`}
                 value={type}
                 onChange={(e) => setType(input.name, e.target.value as SymbolicType)}
-                className="rounded border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-1 py-0.5 text-slate-600 dark:text-slate-300"
+                className="shrink-0 rounded border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-1 py-0.5 text-slate-600 dark:text-slate-300"
               >
                 {availableTypes(width).map((opt) => (
                   <option key={opt} value={opt}>
