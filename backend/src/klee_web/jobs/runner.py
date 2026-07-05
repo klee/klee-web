@@ -1,4 +1,5 @@
 import asyncio
+import os
 import tempfile
 from collections.abc import Awaitable, Callable
 from contextlib import suppress
@@ -100,6 +101,11 @@ class DockerKleeRunner:
                     "docker",
                     "run",
                     "--rm",
+                    # Run as the host user so the bind-mounted /work is writable
+                    # regardless of the image's own uid (the runner must not assume
+                    # host uid == the container's klee user).
+                    "--user",
+                    f"{os.getuid()}:{os.getgid()}",
                     "--name",
                     _container_name(job_id),
                     "-v",
