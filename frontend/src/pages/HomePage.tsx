@@ -15,7 +15,15 @@ import { useSubmitJob } from "../hooks/useSubmitJob"
 import type { HistoryEntry } from "../lib/history"
 import { deriveHistoryStatus } from "../lib/historyView"
 
-const DEFAULT_FLAGS: KleeFlags = { max_time: 60, max_memory: 512, query_format: "none", extra_flags: "" }
+const DEFAULT_FLAGS: KleeFlags = {
+  max_time: 60,
+  max_memory: 512,
+  query_format: "none",
+  extra_flags: "",
+  sym_stdin: null,
+  sym_files: null,
+  sym_args: null,
+}
 
 function initialState(entries: HistoryEntry[]) {
   const newest = entries[0]

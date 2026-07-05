@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react"
 import type { KleeFlags } from "../api/jobs"
 import { FlagBar } from "./FlagBar"
 import { SettingsPopover } from "./SettingsPopover"
+import { SymbolicInputPanel } from "./SymbolicInputPanel"
 
 type TopBarProps = {
   flags: KleeFlags
@@ -42,45 +43,48 @@ export function TopBar({
   }, [settingsOpen])
 
   return (
-    <div className="px-3 py-3 border-b border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-900 flex items-center justify-between text-slate-900 dark:text-slate-100">
-      <div className="flex items-center gap-6">
-        <KleeLogo />
-        <FlagBar flags={flags} onFlagsChange={onFlagsChange} />
-      </div>
-      <div className="flex items-center gap-2">
-        {jobActive ? (
-          <button
-            type="button"
-            onClick={onCancel}
-            disabled={cancelling}
-            className="flex items-center gap-1.5 px-4 py-1.5 rounded text-sm font-medium text-white bg-rose-600 hover:brightness-110 active:brightness-95 disabled:opacity-60 disabled:cursor-default"
-          >
-            <StopIcon />
-            {cancelling ? "Cancelling..." : "Cancel"}
-          </button>
-        ) : (
-          <button
-            type="button"
-            onClick={onRun}
-            className="flex items-center gap-1.5 px-4 py-1.5 rounded text-sm font-medium text-white bg-[var(--klee-accent)] hover:brightness-110 active:brightness-95"
-          >
-            <PlayIcon />
-            Run
-          </button>
-        )}
-        <div ref={settingsRef} className="relative">
-          <button
-            type="button"
-            onClick={() => setSettingsOpen((v) => !v)}
-            aria-label="Settings"
-            aria-expanded={settingsOpen}
-            className="p-1.5 rounded hover:bg-slate-200 dark:hover:bg-slate-800"
-          >
-            <CogIcon />
-          </button>
-          {settingsOpen && <SettingsPopover />}
+    <div className="border-b border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-900 text-slate-900 dark:text-slate-100">
+      <div className="px-3 py-3 flex items-center justify-between">
+        <div className="flex items-center gap-6">
+          <KleeLogo />
+          <FlagBar flags={flags} onFlagsChange={onFlagsChange} />
+        </div>
+        <div className="flex items-center gap-2">
+          {jobActive ? (
+            <button
+              type="button"
+              onClick={onCancel}
+              disabled={cancelling}
+              className="flex items-center gap-1.5 px-4 py-1.5 rounded text-sm font-medium text-white bg-rose-600 hover:brightness-110 active:brightness-95 disabled:opacity-60 disabled:cursor-default"
+            >
+              <StopIcon />
+              {cancelling ? "Cancelling..." : "Cancel"}
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={onRun}
+              className="flex items-center gap-1.5 px-4 py-1.5 rounded text-sm font-medium text-white bg-[var(--klee-accent)] hover:brightness-110 active:brightness-95"
+            >
+              <PlayIcon />
+              Run
+            </button>
+          )}
+          <div ref={settingsRef} className="relative">
+            <button
+              type="button"
+              onClick={() => setSettingsOpen((v) => !v)}
+              aria-label="Settings"
+              aria-expanded={settingsOpen}
+              className="p-1.5 rounded hover:bg-slate-200 dark:hover:bg-slate-800"
+            >
+              <CogIcon />
+            </button>
+            {settingsOpen && <SettingsPopover />}
+          </div>
         </div>
       </div>
+      <SymbolicInputPanel flags={flags} onFlagsChange={onFlagsChange} />
     </div>
   )
 }

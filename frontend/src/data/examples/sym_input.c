@@ -1,4 +1,5 @@
 // title: Symbolic stdin
+// Turn on "Symbolic input > stdin" in the top bar, then Run: KLEE forks on the symbolic byte.
 #include <stdio.h>
 #include <unistd.h>
 

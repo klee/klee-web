@@ -144,12 +144,36 @@ export interface components {
              * @default
              */
             extra_flags: string;
+            sym_stdin?: components["schemas"]["SymStdin"] | null;
+            sym_files?: components["schemas"]["SymFiles"] | null;
+            sym_args?: components["schemas"]["SymArgs"] | null;
         };
         /**
          * QueryFormat
          * @enum {string}
          */
         QueryFormat: "none" | "kquery";
+        /** SymArgs */
+        SymArgs: {
+            /** Count Min */
+            count_min: number;
+            /** Count Max */
+            count_max: number;
+            /** Length */
+            length: number;
+        };
+        /** SymFiles */
+        SymFiles: {
+            /** Count */
+            count: number;
+            /** Size */
+            size: number;
+        };
+        /** SymStdin */
+        SymStdin: {
+            /** Size */
+            size: number;
+        };
         /** SymbolicInput */
         SymbolicInput: {
             /** Name */
