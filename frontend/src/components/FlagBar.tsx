@@ -39,6 +39,24 @@ export function FlagBar({ flags, onFlagsChange }: FlagBarProps) {
       <FlagInput spec={TIME} flags={flags} onFlagsChange={onFlagsChange} />
       <FlagInput spec={MEMORY} flags={flags} onFlagsChange={onFlagsChange} />
       <QueryFormatSelect flags={flags} onFlagsChange={onFlagsChange} />
+      <ExtraFlagsInput flags={flags} onFlagsChange={onFlagsChange} />
+    </div>
+  )
+}
+
+function ExtraFlagsInput({ flags, onFlagsChange }: FlagBarProps) {
+  return (
+    <div className="flex items-center gap-1.5 text-sm">
+      <span className="text-slate-600 dark:text-slate-400">flags</span>
+      <input
+        type="text"
+        value={flags.extra_flags ?? ""}
+        onChange={(e) => onFlagsChange({ ...flags, extra_flags: e.target.value })}
+        placeholder="--optimize --search=dfs"
+        aria-label="extra flags"
+        spellCheck={false}
+        className="w-52 px-1.5 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 font-mono text-xs focus:outline-none focus:ring-1 focus:ring-[var(--klee-accent)]"
+      />
     </div>
   )
 }

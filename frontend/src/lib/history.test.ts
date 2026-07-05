@@ -9,7 +9,7 @@ import {
   type HistoryEntry,
 } from "./history"
 
-const FLAGS = { max_time: 60, max_memory: 512, query_format: "none" } as const
+const FLAGS = { max_time: 60, max_memory: 512, query_format: "none", extra_flags: "" } as const
 
 function entry(jobId: string, code: string, createdAt: number): HistoryEntry {
   return { jobId, code, flags: { ...FLAGS }, createdAt }

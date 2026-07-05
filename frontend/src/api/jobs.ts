@@ -42,6 +42,14 @@ function requestDetail(body: unknown): string | undefined {
   if (body && typeof body === "object" && "detail" in body) {
     const detail = (body as { detail: unknown }).detail;
     if (typeof detail === "string") return detail;
+    // FastAPI 422: detail is an array of {msg, loc}. Surface the first message,
+    // stripping Pydantic's "Value error, " prefix on our custom validators.
+    if (Array.isArray(detail) && detail.length > 0) {
+      const first = detail[0];
+      if (first && typeof first === "object" && "msg" in first) {
+        return String((first as { msg: unknown }).msg).replace(/^Value error, /, "");
+      }
+    }
   }
   return undefined;
 }

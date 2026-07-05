@@ -139,6 +139,11 @@ export interface components {
             max_memory: number;
             /** @default none */
             query_format: components["schemas"]["QueryFormat"];
+            /**
+             * Extra Flags
+             * @default
+             */
+            extra_flags: string;
         };
         /**
          * QueryFormat
