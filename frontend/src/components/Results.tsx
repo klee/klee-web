@@ -1,22 +1,28 @@
 import { useState, type ReactNode } from "react"
-import { JobNotFoundError, type HaltReason, type Job, type JobResult, type TestCase } from "../api/jobs"
+import { RequestFailedError, type HaltReason, type Job, type JobResult, type TestCase } from "../api/jobs"
 import { useSymbolicTypes } from "../context/SymbolicTypeContext"
 import { availableTypes, decode, type SymbolicType } from "../lib/decodeSymbolic"
 import { useJob } from "../hooks/useJob"
 import { clampPage } from "../lib/pagination"
+import { classifyResultsError } from "../lib/resultsError"
 
 type ResultsProps = {
   jobId: string | null
-  submitError: boolean
+  submitError: Error | null
   errorsFirst: boolean
   onErrorsFirstChange: (value: boolean) => void
 }
 
 export function Results({ jobId, submitError, errorsFirst, onErrorsFirstChange }: ResultsProps) {
-  const { data: job, isError: queryError, error } = useJob(jobId)
+  const { data: job, error: queryError } = useJob(jobId)
 
-  if (queryError && error instanceof JobNotFoundError) return <ExpiredState />
-  if (submitError || queryError) return <ConnectionErrorState />
+  const errorKind = classifyResultsError(submitError, queryError)
+  if (errorKind === "expired") return <ExpiredState />
+  if (errorKind === "submit-rejected") {
+    // classifier returns this only for a RequestFailedError, safe to narrow.
+    return <SubmitRejectedState error={submitError as RequestFailedError} />
+  }
+  if (errorKind === "unreachable") return <ConnectionErrorState />
   if (jobId === null) return <EmptyState />
   if (job === undefined) return <LoadingState />
 
@@ -79,8 +85,19 @@ function LoadingState() {
 
 function ConnectionErrorState() {
   return (
+    <CenterBlock>Could not connect. Please check your connection and try again.</CenterBlock>
+  )
+}
+
+function SubmitRejectedState({ error }: { error: RequestFailedError }) {
+  return (
     <CenterBlock>
-      Cannot reach the backend. Check that it is running on port 8000.
+      <div>This run could not be started. Please try again.</div>
+      {error.detail && (
+        <div className="mt-2 text-xs font-mono text-slate-500 dark:text-slate-500">
+          {error.detail}
+        </div>
+      )}
     </CenterBlock>
   )
 }

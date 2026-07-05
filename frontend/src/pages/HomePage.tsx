@@ -72,12 +72,14 @@ export function HomePage() {
 
   const loadExample = (code: string) => {
     setCancelling(false)
+    submitMutation.reset()
     setJobId(null)
     setSource(code)
   }
 
   const restoreRun = (entry: HistoryEntry) => {
     setCancelling(false)
+    submitMutation.reset()
     setSource(entry.code)
     setFlags(entry.flags)
     setJobId(entry.jobId)
@@ -111,7 +113,7 @@ export function HomePage() {
         <SymbolicTypeProvider>
           <Results
             jobId={jobId}
-            submitError={submitMutation.isError}
+            submitError={submitMutation.error}
             errorsFirst={errorsFirst}
             onErrorsFirstChange={setErrorsFirst}
           />

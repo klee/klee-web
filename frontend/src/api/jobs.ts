@@ -11,9 +11,9 @@ export type KleeFlags = components["schemas"]["KleeFlags"];
 export type TestCase = components["schemas"]["TestCase"];
 
 export async function submitJob(req: JobRequest): Promise<JobCreated> {
-  const { data, error } = await apiClient.POST("/jobs", { body: req });
+  const { data, error, response } = await apiClient.POST("/jobs", { body: req });
   if (error) {
-    throw new Error(`submitJob failed: ${JSON.stringify(error)}`);
+    throw new RequestFailedError(response.status, requestDetail(error));
   }
   return data;
 }
@@ -23,6 +23,27 @@ export class JobNotFoundError extends Error {
     super(`job ${jobId} not found`);
     this.name = "JobNotFoundError";
   }
+}
+
+// The server was reached but refused the request (validation, rate limit, 5xx).
+// Distinct from a network failure, which rejects before we get a response.
+export class RequestFailedError extends Error {
+  readonly status: number;
+  readonly detail?: string;
+  constructor(status: number, detail?: string) {
+    super(`request failed (${status})`);
+    this.name = "RequestFailedError";
+    this.status = status;
+    this.detail = detail;
+  }
+}
+
+function requestDetail(body: unknown): string | undefined {
+  if (body && typeof body === "object" && "detail" in body) {
+    const detail = (body as { detail: unknown }).detail;
+    if (typeof detail === "string") return detail;
+  }
+  return undefined;
 }
 
 export async function getJob(jobId: string): Promise<Job> {
