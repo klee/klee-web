@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react"
+import { useEffect, useState, type ReactNode } from "react"
 import { RequestFailedError, type HaltReason, type Job, type JobResult, type TestCase } from "../api/jobs"
 import { useSymbolicTypes } from "../context/SymbolicTypeContext"
 import { availableTypes, decode, type SymbolicType } from "../lib/decodeSymbolic"
@@ -9,11 +9,12 @@ import { classifyResultsError } from "../lib/resultsError"
 type ResultsProps = {
   jobId: string | null
   submitError: Error | null
+  maxTime: number
   errorsFirst: boolean
   onErrorsFirstChange: (value: boolean) => void
 }
 
-export function Results({ jobId, submitError, errorsFirst, onErrorsFirstChange }: ResultsProps) {
+export function Results({ jobId, submitError, maxTime, errorsFirst, onErrorsFirstChange }: ResultsProps) {
   const { data: job, error: queryError } = useJob(jobId)
 
   const errorKind = classifyResultsError(submitError, queryError)
@@ -26,15 +27,24 @@ export function Results({ jobId, submitError, errorsFirst, onErrorsFirstChange }
   if (jobId === null) return <EmptyState />
   if (job === undefined) return <LoadingState />
 
-  return <ResultsBody job={job} errorsFirst={errorsFirst} onErrorsFirstChange={onErrorsFirstChange} />
+  return (
+    <ResultsBody
+      job={job}
+      maxTime={maxTime}
+      errorsFirst={errorsFirst}
+      onErrorsFirstChange={onErrorsFirstChange}
+    />
+  )
 }
 
 function ResultsBody({
   job,
+  maxTime,
   errorsFirst,
   onErrorsFirstChange,
 }: {
   job: Job
+  maxTime: number
   errorsFirst: boolean
   onErrorsFirstChange: (value: boolean) => void
 }) {
@@ -42,7 +52,7 @@ function ResultsBody({
     case "pending":
       return <PendingState />
     case "running":
-      return <RunningState result={job.result ?? null} />
+      return <RunningState result={job.result ?? null} createdAt={job.created_at} maxTime={maxTime} />
     case "parsing":
       return <ParsingState result={job.result ?? null} />
     case "done":
@@ -121,24 +131,50 @@ function FailedState({ result }: { result: JobResult | null }) {
   )
 }
 
-function RunningState({ result }: { result: JobResult | null }) {
+function RunningState({
+  result,
+  createdAt,
+  maxTime,
+}: {
+  result: JobResult | null
+  createdAt: string | undefined
+  maxTime: number
+}) {
+  const elapsed = useElapsedSeconds(createdAt)
+  const overrun = elapsed >= maxTime
   const hasStats = !!result?.stats && Object.keys(result.stats).length > 0
   return (
     <div className="h-full p-6 flex flex-col items-center justify-center gap-6 text-slate-700 dark:text-slate-300">
       <div className="flex items-center gap-2">
         <Spinner />
-        <span>KLEE is exploring paths...</span>
+        <span>Running...</span>
       </div>
+      <div className="text-center">
+        <div
+          className={`text-3xl font-semibold tabular-nums ${
+            overrun ? "text-amber-600 dark:text-amber-400" : "text-slate-900 dark:text-slate-100"
+          }`}
+        >
+          {formatClock(elapsed)}
+        </div>
+        <div className="text-xs text-slate-500 dark:text-slate-400">
+          of {formatClock(maxTime)} limit
+        </div>
+      </div>
+      {overrun && (
+        <div className="max-w-xs text-center text-xs text-amber-600 dark:text-amber-400">
+          Time limit reached. The job may be stopped soon and return incomplete results.
+        </div>
+      )}
       {hasStats && (
-        <div className="grid grid-cols-2 gap-3 w-full max-w-sm">
+        <div className="grid grid-cols-3 gap-3 w-full max-w-md">
           <StatTile label="Instructions" value={formatCount(result!.stats.Instructions)} />
           <StatTile label="Active states" value={formatCount(result!.stats.NumStates)} />
           <StatTile label="Full branches" value={formatCount(result!.stats.FullBranches)} />
-          <StatTile label="Wall time" value={formatWallTime(result!.stats.WallTime)} />
         </div>
       )}
       <div className="text-xs text-slate-500 dark:text-slate-500">
-        Test cases will appear when KLEE finishes.
+        Test cases will appear when the run finishes.
       </div>
     </div>
   )
@@ -299,7 +335,7 @@ function MessagesWarnings({
   if (!programOutput && !messages && !warnings) return null
   return (
     <div className="shrink-0 px-4 py-2 space-y-2 border-b border-slate-200 dark:border-slate-700">
-      {programOutput && <Collapsible title="Program output" content={programOutput} />}
+      {programOutput && <Collapsible title="Raw output (all paths)" content={programOutput} />}
       {messages && <Collapsible title="Messages" content={messages} />}
       {warnings && <Collapsible title="Warnings" content={warnings} />}
     </div>
@@ -547,6 +583,16 @@ function TestCaseCard({ testCase }: { testCase: TestCase }) {
           )
         })}
       </div>
+      {testCase.program_output && (
+        <details className="border-t border-slate-200 dark:border-slate-700">
+          <summary className="px-3 py-1.5 cursor-pointer select-none text-xs text-slate-600 dark:text-slate-400">
+            Output
+          </summary>
+          <pre className="px-3 py-2 text-xs font-mono whitespace-pre-wrap wrap-anywhere overflow-auto max-h-64 bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-200">
+            {testCase.program_output}
+          </pre>
+        </details>
+      )}
       {testCase.error && (
         <div className="px-3 py-2 text-xs font-mono whitespace-pre-wrap bg-rose-50 dark:bg-rose-950 text-rose-700 dark:text-rose-300 border-t border-rose-200 dark:border-rose-900">
           {testCase.error}
@@ -610,4 +656,20 @@ function formatCount(n: number | undefined): string {
 function formatWallTime(microseconds: number | undefined): string {
   const seconds = (microseconds ?? 0) / 1_000_000
   return `${seconds.toFixed(1)}s`
+}
+
+function useElapsedSeconds(createdAtIso: string | undefined): number {
+  const [now, setNow] = useState(() => Date.now())
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 1000)
+    return () => clearInterval(id)
+  }, [])
+  if (!createdAtIso) return 0
+  return Math.max(0, Math.floor((now - new Date(createdAtIso).getTime()) / 1000))
+}
+
+function formatClock(totalSeconds: number): string {
+  const m = Math.floor(totalSeconds / 60)
+  const s = Math.floor(totalSeconds % 60)
+  return `${m}:${s.toString().padStart(2, "0")}`
 }

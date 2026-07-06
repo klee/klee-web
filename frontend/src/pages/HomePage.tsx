@@ -47,6 +47,10 @@ export function HomePage() {
   const status = job.data?.status ?? null
   const jobActive = status === "pending" || status === "running" || status === "parsing"
 
+  // The running job's own max_time, taken from its history entry so the countdown clock
+  // reflects the value it was submitted with, not a later edit to the editor's flags.
+  const activeMaxTime = entries.find((e) => e.jobId === jobId)?.flags.max_time ?? flags.max_time
+
   // Write the terminal outcome back onto the history entry so the list can show a
   // glyph. Derived during render so the effect depends on the derived value and
   // fires once when the job reaches a terminal state, not every render (which would
@@ -122,6 +126,7 @@ export function HomePage() {
           <Results
             jobId={jobId}
             submitError={submitMutation.error}
+            maxTime={activeMaxTime}
             errorsFirst={errorsFirst}
             onErrorsFirstChange={setErrorsFirst}
           />

@@ -63,7 +63,7 @@ test("a long unbreakable output line keeps the Results panel on-screen", async (
   const tab = page.getByRole("button", { name: "Test cases (2)" })
   await expect(tab).toBeVisible()
 
-  await page.locator("summary", { hasText: "Program output" }).click()
+  await page.locator("summary", { hasText: "Raw output" }).click()
 
   const viewport = page.viewportSize()!
   const box = await tab.boundingBox()
@@ -78,7 +78,7 @@ test("the program-output header shows a line count", async ({ page }) => {
   await page.getByRole("button", { name: "Run" }).click()
 
   await expect(page.getByRole("button", { name: "Test cases (2)" })).toBeVisible()
-  await expect(page.locator("summary", { hasText: "Program output" })).toContainText(
+  await expect(page.locator("summary", { hasText: "Raw output" })).toContainText(
     "1,500 lines",
   )
 })

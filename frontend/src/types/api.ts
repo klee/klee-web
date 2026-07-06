@@ -193,6 +193,8 @@ export interface components {
             error?: string | null;
             /** Path Constraint */
             path_constraint?: string | null;
+            /** Program Output */
+            program_output?: string | null;
         };
         /** ValidationError */
         ValidationError: {

@@ -15,7 +15,7 @@ const TIME: FlagSpec = {
   label: "time",
   unit: "s",
   min: 1,
-  max: 300,
+  max: 600,
   default: 60,
 }
 
