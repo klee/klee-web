@@ -7,10 +7,7 @@ const MAX_RETRIES = 3;
 // A dropped job (404 -> JobNotFoundError) is terminal: stop polling and do not
 // retry it. Otherwise React Query keeps refetching and retrying a job the backend
 // will never return, and the expired state flickers between loading and error.
-export function jobRefetchInterval(
-  error: unknown,
-  status: JobStatus | undefined,
-): number | false {
+export function jobRefetchInterval(error: unknown, status: JobStatus | undefined): number | false {
   if (error instanceof JobNotFoundError) return false;
   if (status === "done" || status === "failed") return false;
   return POLL_INTERVAL_MS;

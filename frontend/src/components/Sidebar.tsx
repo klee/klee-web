@@ -1,19 +1,19 @@
-import { useEffect, useState } from "react"
-import { EXAMPLES } from "../data/examples"
-import type { HistoryEntry } from "../lib/history"
-import { historyLabel, relativeTime, statusGlyph } from "../lib/historyView"
+import { useEffect, useState } from "react";
+import { EXAMPLES } from "../data/examples";
+import type { HistoryEntry } from "../lib/history";
+import { historyLabel, relativeTime, statusGlyph } from "../lib/historyView";
 
 type SidebarProps = {
-  entries: HistoryEntry[]
-  onLoadExample: (code: string) => void
-  onRestore: (entry: HistoryEntry) => void
-  onDelete: (jobId: string) => void
-  onClear: () => void
-  collapsed: boolean
-  onToggleCollapsed: () => void
-}
+  entries: HistoryEntry[];
+  onLoadExample: (code: string) => void;
+  onRestore: (entry: HistoryEntry) => void;
+  onDelete: (jobId: string) => void;
+  onClear: () => void;
+  collapsed: boolean;
+  onToggleCollapsed: () => void;
+};
 
-type Tab = "examples" | "history"
+type Tab = "examples" | "history";
 
 export function Sidebar({
   entries,
@@ -24,7 +24,7 @@ export function Sidebar({
   collapsed,
   onToggleCollapsed,
 }: SidebarProps) {
-  const [tab, setTab] = useState<Tab>("examples")
+  const [tab, setTab] = useState<Tab>("examples");
 
   if (collapsed) {
     return (
@@ -38,14 +38,18 @@ export function Sidebar({
           »
         </button>
       </div>
-    )
+    );
   }
 
   return (
     <div className="h-full w-56 border-r border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-900 flex flex-col text-sm text-slate-800 dark:text-slate-200">
       <div className="flex items-center justify-between px-2 py-2 border-b border-slate-200 dark:border-slate-800">
         <div className="flex gap-1">
-          <TabButton label="Examples" active={tab === "examples"} onClick={() => setTab("examples")} />
+          <TabButton
+            label="Examples"
+            active={tab === "examples"}
+            onClick={() => setTab("examples")}
+          />
           <TabButton label="History" active={tab === "history"} onClick={() => setTab("history")} />
         </div>
         <button
@@ -69,21 +73,36 @@ export function Sidebar({
                   className="w-full flex items-center justify-between gap-2 px-3 py-1.5 text-left hover:bg-slate-200 dark:hover:bg-slate-800"
                 >
                   <span className="truncate">{ex.label}</span>
-                  <span className="shrink-0 text-xs text-slate-500 dark:text-slate-400">{ex.tag}</span>
+                  <span className="shrink-0 text-xs text-slate-500 dark:text-slate-400">
+                    {ex.tag}
+                  </span>
                 </button>
               </li>
             ))}
           </ul>
         ) : (
-          <HistoryList entries={entries} onRestore={onRestore} onDelete={onDelete} onClear={onClear} />
+          <HistoryList
+            entries={entries}
+            onRestore={onRestore}
+            onDelete={onDelete}
+            onClear={onClear}
+          />
         )}
       </div>
       <HistoryHint />
     </div>
-  )
+  );
 }
 
-function TabButton({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
+function TabButton({
+  label,
+  active,
+  onClick,
+}: {
+  label: string;
+  active: boolean;
+  onClick: () => void;
+}) {
   return (
     <button
       type="button"
@@ -96,7 +115,7 @@ function TabButton({ label, active, onClick }: { label: string; active: boolean;
     >
       {label}
     </button>
-  )
+  );
 }
 
 function HistoryList({
@@ -105,13 +124,13 @@ function HistoryList({
   onDelete,
   onClear,
 }: Pick<SidebarProps, "entries" | "onRestore" | "onDelete" | "onClear">) {
-  const now = useNow()
+  const now = useNow();
   if (entries.length === 0) {
     return (
       <div className="px-3 py-6 text-xs text-slate-500 dark:text-slate-400">
         No runs yet. Hit Run to start your history.
       </div>
-    )
+    );
   }
   return (
     <div>
@@ -126,7 +145,7 @@ function HistoryList({
       </div>
       <ul>
         {entries.map((e) => {
-          const badge = e.status ? statusGlyph(e.status) : null
+          const badge = e.status ? statusGlyph(e.status) : null;
           return (
             <li key={e.jobId} className="group flex items-center">
               <button
@@ -154,11 +173,11 @@ function HistoryList({
                 ×
               </button>
             </li>
-          )
+          );
         })}
       </ul>
     </div>
-  )
+  );
 }
 
 function HistoryHint() {
@@ -170,14 +189,14 @@ function HistoryHint() {
       </code>{" "}
       to name a run in your history.
     </div>
-  )
+  );
 }
 
 function useNow(): number {
-  const [now, setNow] = useState(() => Date.now())
+  const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
-    const id = setInterval(() => setNow(Date.now()), 30_000)
-    return () => clearInterval(id)
-  }, [])
-  return now
+    const id = setInterval(() => setNow(Date.now()), 30_000);
+    return () => clearInterval(id);
+  }, []);
+  return now;
 }

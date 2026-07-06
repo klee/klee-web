@@ -1,16 +1,16 @@
-import { Editor as MonacoEditor } from "@monaco-editor/react"
-import { useSettings } from "../context/SettingsContext"
-import { defineKleeDarkTheme } from "../lib/editorThemes"
-import { registerCCompletions } from "../lib/kleeCompletions"
+import { Editor as MonacoEditor } from "@monaco-editor/react";
+import { useSettings } from "../context/SettingsContext";
+import { defineKleeDarkTheme } from "../lib/editorThemes";
+import { registerCCompletions } from "../lib/kleeCompletions";
 
 type EditorProps = {
-  value: string
-  onChange: (next: string) => void
-}
+  value: string;
+  onChange: (next: string) => void;
+};
 
 export function Editor({ value, onChange }: EditorProps) {
-  const { resolvedTheme, fontSize } = useSettings()
-  const monacoTheme = resolvedTheme === "dark" ? "klee-dark" : "vs-light"
+  const { resolvedTheme, fontSize } = useSettings();
+  const monacoTheme = resolvedTheme === "dark" ? "klee-dark" : "vs-light";
 
   return (
     <MonacoEditor
@@ -20,8 +20,8 @@ export function Editor({ value, onChange }: EditorProps) {
       value={value}
       onChange={(next) => onChange(next ?? "")}
       beforeMount={(monaco) => {
-        defineKleeDarkTheme(monaco)
-        registerCCompletions(monaco)
+        defineKleeDarkTheme(monaco);
+        registerCCompletions(monaco);
       }}
       options={{
         minimap: { enabled: false },
@@ -29,5 +29,5 @@ export function Editor({ value, onChange }: EditorProps) {
         automaticLayout: true,
       }}
     />
-  )
+  );
 }

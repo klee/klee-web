@@ -1,17 +1,17 @@
-import { useRef, useState, type KeyboardEvent } from "react"
-import type { KleeFlags } from "../api/jobs"
+import { useRef, useState, type KeyboardEvent } from "react";
+import type { KleeFlags } from "../api/jobs";
 
 type Props = {
-  flags: KleeFlags
-  onFlagsChange: (next: KleeFlags) => void
-}
+  flags: KleeFlags;
+  onFlagsChange: (next: KleeFlags) => void;
+};
 
-type SymStdin = NonNullable<KleeFlags["sym_stdin"]>
-type SymFiles = NonNullable<KleeFlags["sym_files"]>
-type SymArgs = NonNullable<KleeFlags["sym_args"]>
+type SymStdin = NonNullable<KleeFlags["sym_stdin"]>;
+type SymFiles = NonNullable<KleeFlags["sym_files"]>;
+type SymArgs = NonNullable<KleeFlags["sym_args"]>;
 
 export function SymbolicInputPanel({ flags, onFlagsChange }: Props) {
-  const active = [flags.sym_stdin, flags.sym_files, flags.sym_args].filter(Boolean).length
+  const active = [flags.sym_stdin, flags.sym_files, flags.sym_args].filter(Boolean).length;
   return (
     <details className="px-3 pb-2 text-sm">
       <summary className="cursor-pointer select-none text-slate-600 dark:text-slate-400">
@@ -35,19 +35,23 @@ export function SymbolicInputPanel({ flags, onFlagsChange }: Props) {
         />
       </div>
     </details>
-  )
+  );
 }
 
 function StdinRow({
   value,
   onChange,
 }: {
-  value: SymStdin | null
-  onChange: (v: SymStdin | null) => void
+  value: SymStdin | null;
+  onChange: (v: SymStdin | null) => void;
 }) {
   return (
     <div className="flex items-center gap-3">
-      <Toggle label="stdin" enabled={value !== null} onToggle={(on) => onChange(on ? { size: 8 } : null)} />
+      <Toggle
+        label="stdin"
+        enabled={value !== null}
+        onToggle={(on) => onChange(on ? { size: 8 } : null)}
+      />
       {value && (
         <NumField
           label="bytes"
@@ -59,15 +63,15 @@ function StdinRow({
         />
       )}
     </div>
-  )
+  );
 }
 
 function FilesRow({
   value,
   onChange,
 }: {
-  value: SymFiles | null
-  onChange: (v: SymFiles | null) => void
+  value: SymFiles | null;
+  onChange: (v: SymFiles | null) => void;
 }) {
   return (
     <div className="flex items-center gap-3">
@@ -97,15 +101,15 @@ function FilesRow({
         </>
       )}
     </div>
-  )
+  );
 }
 
 function ArgsRow({
   value,
   onChange,
 }: {
-  value: SymArgs | null
-  onChange: (v: SymArgs | null) => void
+  value: SymArgs | null;
+  onChange: (v: SymArgs | null) => void;
 }) {
   return (
     <div className="flex items-center gap-3">
@@ -143,7 +147,7 @@ function ArgsRow({
         </>
       )}
     </div>
-  )
+  );
 }
 
 function Toggle({
@@ -151,9 +155,9 @@ function Toggle({
   enabled,
   onToggle,
 }: {
-  label: string
-  enabled: boolean
-  onToggle: (on: boolean) => void
+  label: string;
+  enabled: boolean;
+  onToggle: (on: boolean) => void;
 }) {
   return (
     <label className="flex items-center gap-1.5 w-14 cursor-pointer select-none text-slate-700 dark:text-slate-300">
@@ -165,46 +169,46 @@ function Toggle({
       />
       {label}
     </label>
-  )
+  );
 }
 
 type NumFieldProps = {
-  label: string
-  name: string
-  value: number
-  min: number
-  max: number
-  onChange: (n: number) => void
-}
+  label: string;
+  name: string;
+  value: number;
+  min: number;
+  max: number;
+  onChange: (n: number) => void;
+};
 
 function NumField({ label, name, value, min, max, onChange }: NumFieldProps) {
-  const [text, setText] = useState(String(value))
-  const editStart = useRef(value)
-  const validity = numValidity(text, min, max)
+  const [text, setText] = useState(String(value));
+  const editStart = useRef(value);
+  const validity = numValidity(text, min, max);
 
   function handleFocus() {
-    editStart.current = value
+    editStart.current = value;
   }
 
   function handleChange(next: string) {
-    setText(next)
-    const v = numValidity(next, min, max)
-    if (v.kind === "valid") onChange(v.value)
+    setText(next);
+    const v = numValidity(next, min, max);
+    if (v.kind === "valid") onChange(v.value);
   }
 
   function handleBlur() {
-    if (validity.kind === "valid") return
+    if (validity.kind === "valid") return;
     // Out of range or empty: roll back to the number that was there when editing
     // began, undoing any in-range partial (e.g. "30" typed on the way to "300").
-    setText(String(editStart.current))
-    if (value !== editStart.current) onChange(editStart.current)
+    setText(String(editStart.current));
+    if (value !== editStart.current) onChange(editStart.current);
   }
 
   function handleKeyDown(e: KeyboardEvent<HTMLInputElement>) {
-    if (e.key === "Enter") e.currentTarget.blur()
+    if (e.key === "Enter") e.currentTarget.blur();
   }
 
-  const invalid = validity.kind === "invalid"
+  const invalid = validity.kind === "invalid";
 
   return (
     <label className="flex items-center gap-1 text-slate-600 dark:text-slate-400">
@@ -223,16 +227,16 @@ function NumField({ label, name, value, min, max, onChange }: NumFieldProps) {
         }`}
       />
     </label>
-  )
+  );
 }
 
-type NumValidity = { kind: "valid"; value: number } | { kind: "empty" } | { kind: "invalid" }
+type NumValidity = { kind: "valid"; value: number } | { kind: "empty" } | { kind: "invalid" };
 
 function numValidity(text: string, min: number, max: number): NumValidity {
-  const trimmed = text.trim()
-  if (trimmed === "") return { kind: "empty" }
-  const n = Number(trimmed)
-  if (!Number.isInteger(n)) return { kind: "invalid" }
-  if (n < min || n > max) return { kind: "invalid" }
-  return { kind: "valid", value: n }
+  const trimmed = text.trim();
+  if (trimmed === "") return { kind: "empty" };
+  const n = Number(trimmed);
+  if (!Number.isInteger(n)) return { kind: "invalid" };
+  if (n < min || n > max) return { kind: "invalid" };
+  return { kind: "valid", value: n };
 }

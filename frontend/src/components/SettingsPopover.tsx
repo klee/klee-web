@@ -1,4 +1,4 @@
-import { useSettings } from "../context/SettingsContext"
+import { useSettings } from "../context/SettingsContext";
 
 const ACCENT_OPTIONS = [
   { value: "slate", label: "Slate" },
@@ -6,7 +6,7 @@ const ACCENT_OPTIONS = [
   { value: "green", label: "Green" },
   { value: "amber", label: "Amber" },
   { value: "red", label: "Red" },
-] as const
+] as const;
 
 export function SettingsPopover() {
   const {
@@ -19,7 +19,7 @@ export function SettingsPopover() {
     accents,
     fontSize,
     setFontSize,
-  } = useSettings()
+  } = useSettings();
 
   return (
     <div
@@ -42,7 +42,7 @@ export function SettingsPopover() {
         <SectionLabel>Accent</SectionLabel>
         <div className="flex gap-1.5 flex-wrap">
           {ACCENT_OPTIONS.map((opt) => {
-            const active = accent === opt.value
+            const active = accent === opt.value;
             return (
               <button
                 key={opt.value}
@@ -58,7 +58,7 @@ export function SettingsPopover() {
                 }`}
                 style={{ backgroundColor: accents[opt.value] }}
               />
-            )
+            );
           })}
         </div>
       </div>
@@ -85,7 +85,7 @@ export function SettingsPopover() {
         />
       </div>
     </div>
-  )
+  );
 }
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
@@ -93,20 +93,20 @@ function SectionLabel({ children }: { children: React.ReactNode }) {
     <div className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1.5">
       {children}
     </div>
-  )
+  );
 }
 
 type SegmentedProps<T extends string> = {
-  value: T
-  options: { value: T; label: string }[]
-  onChange: (v: T) => void
-}
+  value: T;
+  options: { value: T; label: string }[];
+  onChange: (v: T) => void;
+};
 
 function Segmented<T extends string>({ value, options, onChange }: SegmentedProps<T>) {
   return (
     <div className="inline-flex rounded border border-slate-200 dark:border-slate-700 overflow-hidden">
       {options.map((opt) => {
-        const active = opt.value === value
+        const active = opt.value === value;
         return (
           <button
             key={opt.value}
@@ -121,8 +121,8 @@ function Segmented<T extends string>({ value, options, onChange }: SegmentedProp
           >
             {opt.label}
           </button>
-        )
+        );
       })}
     </div>
-  )
+  );
 }

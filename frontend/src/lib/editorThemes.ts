@@ -1,4 +1,4 @@
-import type { BeforeMount } from "@monaco-editor/react"
+import type { BeforeMount } from "@monaco-editor/react";
 
 const kleeDarkTheme = {
   base: "vs-dark" as const,
@@ -23,12 +23,12 @@ const kleeDarkTheme = {
     "input.border": "#334155",
     "input.foreground": "#f1f5f9",
     "input.placeholderForeground": "#64748b",
-    "focusBorder": "#475569",
+    focusBorder: "#475569",
     "minimap.background": "#020617",
     "diffEditor.border": "#334155",
   },
-}
+};
 
 export const defineKleeDarkTheme: BeforeMount = (monaco) => {
-  monaco.editor.defineTheme("klee-dark", kleeDarkTheme)
-}
+  monaco.editor.defineTheme("klee-dark", kleeDarkTheme);
+};

@@ -1,9 +1,9 @@
-import { test, expect, type Page } from "@playwright/test"
+import { test, expect, type Page } from "@playwright/test";
 
 // Mocked job with two test cases carrying distinct per-path program_output. No KLEE
 // needed. Guards that each path's Output foldable shows what that path printed.
 
-const JOB_ID = "22222222-2222-2222-2222-222222222222"
+const JOB_ID = "22222222-2222-2222-2222-222222222222";
 
 function makeJob() {
   return {
@@ -34,7 +34,7 @@ function makeJob() {
       compile_error: null,
       halt_reason: "completed",
     },
-  }
+  };
 }
 
 async function mockJob(page: Page) {
@@ -44,28 +44,28 @@ async function mockJob(page: Page) {
       contentType: "application/json",
       body: JSON.stringify({ job_id: JOB_ID }),
     }),
-  )
+  );
   await page.route("**/jobs/*", (r) =>
     r.fulfill({
       status: 200,
       contentType: "application/json",
       body: JSON.stringify(makeJob()),
     }),
-  )
+  );
 }
 
 test("each test case shows its own per-path output", async ({ page }) => {
-  await mockJob(page)
-  await page.goto("/")
-  await page.getByRole("button", { name: "Run" }).click()
+  await mockJob(page);
+  await page.goto("/");
+  await page.getByRole("button", { name: "Run" }).click();
 
-  await expect(page.getByRole("button", { name: "Test cases (2)" })).toBeVisible()
+  await expect(page.getByRole("button", { name: "Test cases (2)" })).toBeVisible();
 
-  const outputs = page.locator("summary", { hasText: "Output" })
-  await expect(outputs).toHaveCount(2)
+  const outputs = page.locator("summary", { hasText: "Output" });
+  await expect(outputs).toHaveCount(2);
 
-  await outputs.nth(0).click()
-  await outputs.nth(1).click()
-  await expect(page.locator("pre", { hasText: "Hello World!" })).toBeVisible()
-  await expect(page.locator("pre", { hasText: "Goodbye World!" })).toBeVisible()
-})
+  await outputs.nth(0).click();
+  await outputs.nth(1).click();
+  await expect(page.locator("pre", { hasText: "Hello World!" })).toBeVisible();
+  await expect(page.locator("pre", { hasText: "Goodbye World!" })).toBeVisible();
+});

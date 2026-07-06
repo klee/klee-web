@@ -1,31 +1,43 @@
-import { useEffect, useState, type ReactNode } from "react"
-import { RequestFailedError, type HaltReason, type Job, type JobResult, type TestCase } from "../api/jobs"
-import { useSymbolicTypes } from "../context/SymbolicTypeContext"
-import { availableTypes, decode, type SymbolicType } from "../lib/decodeSymbolic"
-import { useJob } from "../hooks/useJob"
-import { clampPage } from "../lib/pagination"
-import { classifyResultsError } from "../lib/resultsError"
+import { useEffect, useState, type ReactNode } from "react";
+import {
+  RequestFailedError,
+  type HaltReason,
+  type Job,
+  type JobResult,
+  type TestCase,
+} from "../api/jobs";
+import { useSymbolicTypes } from "../context/SymbolicTypeContext";
+import { availableTypes, decode, type SymbolicType } from "../lib/decodeSymbolic";
+import { useJob } from "../hooks/useJob";
+import { clampPage } from "../lib/pagination";
+import { classifyResultsError } from "../lib/resultsError";
 
 type ResultsProps = {
-  jobId: string | null
-  submitError: Error | null
-  maxTime: number
-  errorsFirst: boolean
-  onErrorsFirstChange: (value: boolean) => void
-}
+  jobId: string | null;
+  submitError: Error | null;
+  maxTime: number;
+  errorsFirst: boolean;
+  onErrorsFirstChange: (value: boolean) => void;
+};
 
-export function Results({ jobId, submitError, maxTime, errorsFirst, onErrorsFirstChange }: ResultsProps) {
-  const { data: job, error: queryError } = useJob(jobId)
+export function Results({
+  jobId,
+  submitError,
+  maxTime,
+  errorsFirst,
+  onErrorsFirstChange,
+}: ResultsProps) {
+  const { data: job, error: queryError } = useJob(jobId);
 
-  const errorKind = classifyResultsError(submitError, queryError)
-  if (errorKind === "expired") return <ExpiredState />
+  const errorKind = classifyResultsError(submitError, queryError);
+  if (errorKind === "expired") return <ExpiredState />;
   if (errorKind === "submit-rejected") {
     // classifier returns this only for a RequestFailedError, safe to narrow.
-    return <SubmitRejectedState error={submitError as RequestFailedError} />
+    return <SubmitRejectedState error={submitError as RequestFailedError} />;
   }
-  if (errorKind === "unreachable") return <ConnectionErrorState />
-  if (jobId === null) return <EmptyState />
-  if (job === undefined) return <LoadingState />
+  if (errorKind === "unreachable") return <ConnectionErrorState />;
+  if (jobId === null) return <EmptyState />;
+  if (job === undefined) return <LoadingState />;
 
   return (
     <ResultsBody
@@ -34,7 +46,7 @@ export function Results({ jobId, submitError, maxTime, errorsFirst, onErrorsFirs
       errorsFirst={errorsFirst}
       onErrorsFirstChange={onErrorsFirstChange}
     />
-  )
+  );
 }
 
 function ResultsBody({
@@ -43,21 +55,23 @@ function ResultsBody({
   errorsFirst,
   onErrorsFirstChange,
 }: {
-  job: Job
-  maxTime: number
-  errorsFirst: boolean
-  onErrorsFirstChange: (value: boolean) => void
+  job: Job;
+  maxTime: number;
+  errorsFirst: boolean;
+  onErrorsFirstChange: (value: boolean) => void;
 }) {
   switch (job.status) {
     case "pending":
-      return <PendingState />
+      return <PendingState />;
     case "running":
-      return <RunningState result={job.result ?? null} createdAt={job.created_at} maxTime={maxTime} />
+      return (
+        <RunningState result={job.result ?? null} createdAt={job.created_at} maxTime={maxTime} />
+      );
     case "parsing":
-      return <ParsingState result={job.result ?? null} />
+      return <ParsingState result={job.result ?? null} />;
     case "done":
       if (job.result?.compile_error) {
-        return <CompileErrorView error={job.result.compile_error} />
+        return <CompileErrorView error={job.result.compile_error} />;
       }
       return (
         <DoneView
@@ -65,9 +79,9 @@ function ResultsBody({
           errorsFirst={errorsFirst}
           onErrorsFirstChange={onErrorsFirstChange}
         />
-      )
+      );
     case "failed":
-      return <FailedState result={job.result ?? null} />
+      return <FailedState result={job.result ?? null} />;
   }
 }
 
@@ -76,27 +90,23 @@ function CenterBlock({ children }: { children: ReactNode }) {
     <div className="h-full p-6 flex flex-col items-center justify-center text-center text-slate-600 dark:text-slate-400">
       {children}
     </div>
-  )
+  );
 }
 
 function EmptyState() {
-  return <CenterBlock>Click Run to execute KLEE on your code.</CenterBlock>
+  return <CenterBlock>Click Run to execute KLEE on your code.</CenterBlock>;
 }
 
 function ExpiredState() {
-  return (
-    <CenterBlock>Results for this run are no longer kept. Re-run to regenerate.</CenterBlock>
-  )
+  return <CenterBlock>Results for this run are no longer kept. Re-run to regenerate.</CenterBlock>;
 }
 
 function LoadingState() {
-  return <CenterBlock>Loading...</CenterBlock>
+  return <CenterBlock>Loading...</CenterBlock>;
 }
 
 function ConnectionErrorState() {
-  return (
-    <CenterBlock>Could not connect. Please check your connection and try again.</CenterBlock>
-  )
+  return <CenterBlock>Could not connect. Please check your connection and try again.</CenterBlock>;
 }
 
 function SubmitRejectedState({ error }: { error: RequestFailedError }) {
@@ -109,26 +119,24 @@ function SubmitRejectedState({ error }: { error: RequestFailedError }) {
         </div>
       )}
     </CenterBlock>
-  )
+  );
 }
 
 function PendingState() {
-  return <CenterBlock>Job queued, waiting for runner...</CenterBlock>
+  return <CenterBlock>Job queued, waiting for runner...</CenterBlock>;
 }
 
 function FailedState({ result }: { result: JobResult | null }) {
   return (
     <div className="h-full overflow-auto p-6">
-      <h2 className="text-lg font-semibold text-rose-600 dark:text-rose-400 mb-3">
-        Job failed
-      </h2>
+      <h2 className="text-lg font-semibold text-rose-600 dark:text-rose-400 mb-3">Job failed</h2>
       {result?.messages && (
         <pre className="text-xs font-mono whitespace-pre-wrap p-3 rounded border border-slate-200 dark:border-slate-700 bg-slate-100 dark:bg-slate-900 text-slate-800 dark:text-slate-200">
           {result.messages}
         </pre>
       )}
     </div>
-  )
+  );
 }
 
 function RunningState({
@@ -136,13 +144,13 @@ function RunningState({
   createdAt,
   maxTime,
 }: {
-  result: JobResult | null
-  createdAt: string | undefined
-  maxTime: number
+  result: JobResult | null;
+  createdAt: string | undefined;
+  maxTime: number;
 }) {
-  const elapsed = useElapsedSeconds(createdAt)
-  const overrun = elapsed >= maxTime
-  const hasStats = !!result?.stats && Object.keys(result.stats).length > 0
+  const elapsed = useElapsedSeconds(createdAt);
+  const overrun = elapsed >= maxTime;
+  const hasStats = !!result?.stats && Object.keys(result.stats).length > 0;
   return (
     <div className="h-full p-6 flex flex-col items-center justify-center gap-6 text-slate-700 dark:text-slate-300">
       <div className="flex items-center gap-2">
@@ -177,11 +185,11 @@ function RunningState({
         Test cases will appear when the run finishes.
       </div>
     </div>
-  )
+  );
 }
 
 function ParsingState({ result }: { result: JobResult | null }) {
-  const hasStats = !!result?.stats && Object.keys(result.stats).length > 0
+  const hasStats = !!result?.stats && Object.keys(result.stats).length > 0;
   return (
     <div className="h-full p-6 flex flex-col items-center justify-center gap-6 text-slate-700 dark:text-slate-300">
       <div className="flex flex-col items-center gap-1 text-center">
@@ -202,7 +210,7 @@ function ParsingState({ result }: { result: JobResult | null }) {
         </div>
       )}
     </div>
-  )
+  );
 }
 
 function CheckIcon() {
@@ -219,13 +227,13 @@ function CheckIcon() {
         d="M16.704 4.153a.75.75 0 0 1 .143 1.052l-8 10.5a.75.75 0 0 1-1.127.075l-4.5-4.5a.75.75 0 0 1 1.06-1.06l3.894 3.893 7.48-9.817a.75.75 0 0 1 1.05-.143Z"
       />
     </svg>
-  )
+  );
 }
 
 function Spinner() {
   return (
     <div className="w-4 h-4 border-2 border-slate-300 dark:border-slate-600 border-t-[var(--klee-accent)] rounded-full animate-spin" />
-  )
+  );
 }
 
 function StatTile({ label, value }: { label: string; value: string }) {
@@ -236,7 +244,7 @@ function StatTile({ label, value }: { label: string; value: string }) {
       </div>
       <div className="text-xs text-slate-500 dark:text-slate-400">{label}</div>
     </div>
-  )
+  );
 }
 
 function CompileErrorView({ error }: { error: string }) {
@@ -249,41 +257,39 @@ function CompileErrorView({ error }: { error: string }) {
         {error}
       </pre>
     </div>
-  )
+  );
 }
 
-const PAGE_SIZES = [25, 50, 75, 100] as const
+const PAGE_SIZES = [25, 50, 75, 100] as const;
 
 function DoneView({
   result,
   errorsFirst,
   onErrorsFirstChange,
 }: {
-  result: JobResult
-  errorsFirst: boolean
-  onErrorsFirstChange: (value: boolean) => void
+  result: JobResult;
+  errorsFirst: boolean;
+  onErrorsFirstChange: (value: boolean) => void;
 }) {
-  const [tab, setTab] = useState<"tests" | "stats">("tests")
-  const [pageSize, setPageSize] = useState<number>(PAGE_SIZES[0])
-  const [page, setPage] = useState(0)
+  const [tab, setTab] = useState<"tests" | "stats">("tests");
+  const [pageSize, setPageSize] = useState<number>(PAGE_SIZES[0]);
+  const [page, setPage] = useState(0);
 
-  const errorCount = result.test_cases.filter((tc) => tc.error != null).length
+  const errorCount = result.test_cases.filter((tc) => tc.error != null).length;
   const sortedCases = errorsFirst
-    ? [...result.test_cases].sort(
-        (a, b) => (b.error != null ? 1 : 0) - (a.error != null ? 1 : 0),
-      )
-    : result.test_cases
+    ? [...result.test_cases].sort((a, b) => (b.error != null ? 1 : 0) - (a.error != null ? 1 : 0))
+    : result.test_cases;
 
-  const total = sortedCases.length
-  const pageCount = Math.max(1, Math.ceil(total / pageSize))
-  const currentPage = Math.min(page, pageCount - 1)
-  const start = currentPage * pageSize
-  const pageItems = sortedCases.slice(start, start + pageSize)
+  const total = sortedCases.length;
+  const pageCount = Math.max(1, Math.ceil(total / pageSize));
+  const currentPage = Math.min(page, pageCount - 1);
+  const start = currentPage * pageSize;
+  const pageItems = sortedCases.slice(start, start + pageSize);
 
   const handleErrorsFirstToggle = () => {
-    onErrorsFirstChange(!errorsFirst)
-    setPage(0)
-  }
+    onErrorsFirstChange(!errorsFirst);
+    setPage(0);
+  };
 
   return (
     <div className="h-full flex flex-col">
@@ -304,8 +310,8 @@ function DoneView({
           total={total}
           onPageChange={setPage}
           onPageSizeChange={(size) => {
-            setPageSize(size)
-            setPage(0)
+            setPageSize(size);
+            setPage(0);
           }}
           errorsFirst={errorsFirst}
           errorCount={errorCount}
@@ -320,7 +326,7 @@ function DoneView({
         )}
       </div>
     </div>
-  )
+  );
 }
 
 function MessagesWarnings({
@@ -328,18 +334,18 @@ function MessagesWarnings({
   messages,
   warnings,
 }: {
-  programOutput: string
-  messages: string
-  warnings: string
+  programOutput: string;
+  messages: string;
+  warnings: string;
 }) {
-  if (!programOutput && !messages && !warnings) return null
+  if (!programOutput && !messages && !warnings) return null;
   return (
     <div className="shrink-0 px-4 py-2 space-y-2 border-b border-slate-200 dark:border-slate-700">
       {programOutput && <Collapsible title="Raw output (all paths)" content={programOutput} />}
       {messages && <Collapsible title="Messages" content={messages} />}
       {warnings && <Collapsible title="Warnings" content={warnings} />}
     </div>
-  )
+  );
 }
 
 function PaginationControls({
@@ -355,17 +361,17 @@ function PaginationControls({
   errorCount,
   onToggleErrorsFirst,
 }: {
-  page: number
-  pageCount: number
-  pageSize: number
-  start: number
-  shown: number
-  total: number
-  onPageChange: (p: number) => void
-  onPageSizeChange: (s: number) => void
-  errorsFirst: boolean
-  errorCount: number
-  onToggleErrorsFirst: () => void
+  page: number;
+  pageCount: number;
+  pageSize: number;
+  start: number;
+  shown: number;
+  total: number;
+  onPageChange: (p: number) => void;
+  onPageSizeChange: (s: number) => void;
+  errorsFirst: boolean;
+  errorCount: number;
+  onToggleErrorsFirst: () => void;
 }) {
   return (
     <div className="shrink-0 flex flex-wrap items-center justify-between gap-2 px-4 py-1.5 text-xs border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-slate-600 dark:text-slate-400">
@@ -387,11 +393,7 @@ function PaginationControls({
         ))}
         <span
           className={errorCount === 0 ? "ml-2 cursor-not-allowed" : "ml-2"}
-          title={
-            errorCount === 0
-              ? "KLEE reported no error cases in this run."
-              : undefined
-          }
+          title={errorCount === 0 ? "KLEE reported no error cases in this run." : undefined}
         >
           <button
             type="button"
@@ -430,7 +432,7 @@ function PaginationControls({
         </button>
       </div>
     </div>
-  )
+  );
 }
 
 function PageInput({
@@ -438,15 +440,15 @@ function PageInput({
   pageCount,
   onPageChange,
 }: {
-  page: number
-  pageCount: number
-  onPageChange: (p: number) => void
+  page: number;
+  pageCount: number;
+  onPageChange: (p: number) => void;
 }) {
   const commit = (el: HTMLInputElement) => {
-    const next = clampPage(el.value, page + 1, pageCount)
-    el.value = String(next)
-    onPageChange(next - 1)
-  }
+    const next = clampPage(el.value, page + 1, pageCount);
+    el.value = String(next);
+    onPageChange(next - 1);
+  };
   return (
     <span className="flex items-center gap-1">
       Page
@@ -457,14 +459,14 @@ function PageInput({
         aria-label="page number"
         defaultValue={page + 1}
         onKeyDown={(e) => {
-          if (e.key === "Enter") e.currentTarget.blur()
+          if (e.key === "Enter") e.currentTarget.blur();
         }}
         onBlur={(e) => commit(e.currentTarget)}
         className="w-10 text-center tabular-nums rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-1 py-0.5 focus:outline-none focus:ring-1 focus:ring-[var(--klee-accent)]"
       />
       / {pageCount}
     </span>
-  )
+  );
 }
 
 const HALT_BADGES: Record<HaltReason, { label: string; color: string }> = {
@@ -480,15 +482,15 @@ const HALT_BADGES: Record<HaltReason, { label: string; color: string }> = {
     label: "Cancelled by user. Some paths may be unexplored.",
     color: "bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-300",
   },
-}
+};
 
 function HaltBadge({ reason }: { reason: HaltReason }) {
-  const { label, color } = HALT_BADGES[reason]
+  const { label, color } = HALT_BADGES[reason];
   return (
     <div className={`px-4 py-1.5 text-xs border-b border-slate-200 dark:border-slate-700 ${color}`}>
       {label}
     </div>
-  )
+  );
 }
 
 function TabBar({
@@ -496,9 +498,9 @@ function TabBar({
   onTabChange,
   testCaseCount,
 }: {
-  tab: "tests" | "stats"
-  onTabChange: (t: "tests" | "stats") => void
-  testCaseCount: number
+  tab: "tests" | "stats";
+  onTabChange: (t: "tests" | "stats") => void;
+  testCaseCount: number;
 }) {
   return (
     <div className="flex border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 shrink-0">
@@ -509,7 +511,7 @@ function TabBar({
         Stats
       </TabButton>
     </div>
-  )
+  );
 }
 
 function TabButton({
@@ -517,9 +519,9 @@ function TabButton({
   onClick,
   children,
 }: {
-  active: boolean
-  onClick: () => void
-  children: ReactNode
+  active: boolean;
+  onClick: () => void;
+  children: ReactNode;
 }) {
   return (
     <button
@@ -533,12 +535,12 @@ function TabButton({
     >
       {children}
     </button>
-  )
+  );
 }
 
 function TestCasesPanel({ testCases }: { testCases: TestCase[] }) {
   if (testCases.length === 0) {
-    return <div className="text-sm text-slate-500">No test cases.</div>
+    return <div className="text-sm text-slate-500">No test cases.</div>;
   }
   return (
     <div className="space-y-2">
@@ -546,11 +548,11 @@ function TestCasesPanel({ testCases }: { testCases: TestCase[] }) {
         <TestCaseCard key={tc.name} testCase={tc} />
       ))}
     </div>
-  )
+  );
 }
 
 function TestCaseCard({ testCase }: { testCase: TestCase }) {
-  const { typeFor, setType } = useSymbolicTypes()
+  const { typeFor, setType } = useSymbolicTypes();
   return (
     <div className="rounded border border-slate-200 dark:border-slate-700 overflow-hidden">
       <div className="px-3 py-1.5 bg-slate-100 dark:bg-slate-900 text-sm font-mono text-slate-700 dark:text-slate-300">
@@ -558,8 +560,8 @@ function TestCaseCard({ testCase }: { testCase: TestCase }) {
       </div>
       <div className="px-3 py-2 bg-white dark:bg-slate-950 space-y-1">
         {testCase.inputs.map((input) => {
-          const width = input.bytes_hex.length / 2
-          const type = typeFor(input.name, width)
+          const width = input.bytes_hex.length / 2;
+          const type = typeFor(input.name, width);
           return (
             <div key={input.name} className="font-mono text-xs flex items-center gap-2">
               <span className="text-slate-500">{input.name}</span>
@@ -580,7 +582,7 @@ function TestCaseCard({ testCase }: { testCase: TestCase }) {
                 ))}
               </select>
             </div>
-          )
+          );
         })}
       </div>
       {testCase.program_output && (
@@ -609,13 +611,13 @@ function TestCaseCard({ testCase }: { testCase: TestCase }) {
         </details>
       )}
     </div>
-  )
+  );
 }
 
 function StatsPanel({ stats }: { stats: Record<string, number> }) {
-  const entries = Object.entries(stats)
+  const entries = Object.entries(stats);
   if (entries.length === 0) {
-    return <div className="text-sm text-slate-500">No stats.</div>
+    return <div className="text-sm text-slate-500">No stats.</div>;
   }
   return (
     <div>
@@ -631,11 +633,11 @@ function StatsPanel({ stats }: { stats: Record<string, number> }) {
         </div>
       ))}
     </div>
-  )
+  );
 }
 
 function Collapsible({ title, content }: { title: string; content: string }) {
-  const lineCount = content.replace(/\n$/, "").split("\n").length
+  const lineCount = content.replace(/\n$/, "").split("\n").length;
   return (
     <details className="rounded border border-slate-200 dark:border-slate-700">
       <summary className="px-3 py-1.5 cursor-pointer text-sm bg-slate-50 dark:bg-slate-900 select-none text-slate-700 dark:text-slate-300">
@@ -646,30 +648,30 @@ function Collapsible({ title, content }: { title: string; content: string }) {
         {content}
       </pre>
     </details>
-  )
+  );
 }
 
 function formatCount(n: number | undefined): string {
-  return (n ?? 0).toLocaleString()
+  return (n ?? 0).toLocaleString();
 }
 
 function formatWallTime(microseconds: number | undefined): string {
-  const seconds = (microseconds ?? 0) / 1_000_000
-  return `${seconds.toFixed(1)}s`
+  const seconds = (microseconds ?? 0) / 1_000_000;
+  return `${seconds.toFixed(1)}s`;
 }
 
 function useElapsedSeconds(createdAtIso: string | undefined): number {
-  const [now, setNow] = useState(() => Date.now())
+  const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
-    const id = setInterval(() => setNow(Date.now()), 1000)
-    return () => clearInterval(id)
-  }, [])
-  if (!createdAtIso) return 0
-  return Math.max(0, Math.floor((now - new Date(createdAtIso).getTime()) / 1000))
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, []);
+  if (!createdAtIso) return 0;
+  return Math.max(0, Math.floor((now - new Date(createdAtIso).getTime()) / 1000));
 }
 
 function formatClock(totalSeconds: number): string {
-  const m = Math.floor(totalSeconds / 60)
-  const s = Math.floor(totalSeconds % 60)
-  return `${m}:${s.toString().padStart(2, "0")}`
+  const m = Math.floor(totalSeconds / 60);
+  const s = Math.floor(totalSeconds % 60);
+  return `${m}:${s.toString().padStart(2, "0")}`;
 }

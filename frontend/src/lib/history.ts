@@ -1,25 +1,20 @@
-  import type { KleeFlags } from "../api/jobs"
+import type { KleeFlags } from "../api/jobs";
 
-export type HistoryStatus =
-  | "completed"
-  | "max_time"
-  | "cancelled"
-  | "failed"
-  | "compile_error"
+export type HistoryStatus = "completed" | "max_time" | "cancelled" | "failed" | "compile_error";
 
 export type HistoryEntry = {
-  jobId: string
-  code: string
-  flags: KleeFlags
-  createdAt: number
-  status?: HistoryStatus
-}
+  jobId: string;
+  code: string;
+  flags: KleeFlags;
+  createdAt: number;
+  status?: HistoryStatus;
+};
 
-export const MAX_ENTRIES = 50
-const KEY = "klee.history"
+export const MAX_ENTRIES = 50;
+const KEY = "klee.history";
 
 function isEntry(x: unknown): x is HistoryEntry {
-  const e = x as HistoryEntry
+  const e = x as HistoryEntry;
   return (
     typeof e === "object" &&
     e !== null &&
@@ -28,32 +23,30 @@ function isEntry(x: unknown): x is HistoryEntry {
     typeof e.createdAt === "number" &&
     typeof e.flags === "object" &&
     e.flags !== null
-  )
+  );
 }
 
 export function readHistory(): HistoryEntry[] {
   try {
-    const raw = localStorage.getItem(KEY)
-    if (!raw) return []
-    const parsed: unknown = JSON.parse(raw)
-    if (!Array.isArray(parsed)) return []
-    return parsed.filter(isEntry)
+    const raw = localStorage.getItem(KEY);
+    if (!raw) return [];
+    const parsed: unknown = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter(isEntry);
   } catch {
-    return []
+    return [];
   }
 }
 
 function write(entries: HistoryEntry[]): HistoryEntry[] {
-  localStorage.setItem(KEY, JSON.stringify(entries))
-  return entries
+  localStorage.setItem(KEY, JSON.stringify(entries));
+  return entries;
 }
 
 function sameFlags(a: KleeFlags, b: KleeFlags): boolean {
   return (
-    a.max_time === b.max_time &&
-    a.max_memory === b.max_memory &&
-    a.query_format === b.query_format
-  )
+    a.max_time === b.max_time && a.max_memory === b.max_memory && a.query_format === b.query_format
+  );
 }
 
 export function addRun(entry: HistoryEntry): HistoryEntry[] {
@@ -62,18 +55,18 @@ export function addRun(entry: HistoryEntry): HistoryEntry[] {
   // rather than leaving a stale duplicate deeper down.
   const rest = readHistory().filter(
     (e) => !(e.code === entry.code && sameFlags(e.flags, entry.flags)),
-  )
-  return write([entry, ...rest].slice(0, MAX_ENTRIES))
+  );
+  return write([entry, ...rest].slice(0, MAX_ENTRIES));
 }
 
 export function setStatus(jobId: string, status: HistoryStatus): HistoryEntry[] {
-  return write(readHistory().map((e) => (e.jobId === jobId ? { ...e, status } : e)))
+  return write(readHistory().map((e) => (e.jobId === jobId ? { ...e, status } : e)));
 }
 
 export function removeEntry(jobId: string): HistoryEntry[] {
-  return write(readHistory().filter((e) => e.jobId !== jobId))
+  return write(readHistory().filter((e) => e.jobId !== jobId));
 }
 
 export function clearHistory(): HistoryEntry[] {
-  return write([])
+  return write([]);
 }

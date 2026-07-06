@@ -1,6 +1,6 @@
-import { defineConfig, devices } from "@playwright/test"
+import { defineConfig, devices } from "@playwright/test";
 
-const CI = !!process.env.CI
+const CI = !!process.env.CI;
 
 export default defineConfig({
   testDir: "./e2e",
@@ -30,4 +30,4 @@ export default defineConfig({
       timeout: 120_000,
     },
   ],
-})
+});

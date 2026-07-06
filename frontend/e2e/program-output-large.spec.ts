@@ -1,11 +1,11 @@
-import { test, expect, type Page } from "@playwright/test"
+import { test, expect, type Page } from "@playwright/test";
 
 // These specs pin the job response with page.route so program_output is an exact
 // string, no backend or KLEE needed. They guard the large-output layout bug: a long
 // line with no break opportunity used to blow out the flex width and shove the whole
 // Results panel off-screen.
 
-const JOB_ID = "11111111-1111-1111-1111-111111111111"
+const JOB_ID = "11111111-1111-1111-1111-111111111111";
 
 function makeJob(programOutput: string) {
   return {
@@ -34,7 +34,7 @@ function makeJob(programOutput: string) {
       compile_error: null,
       halt_reason: "completed",
     },
-  }
+  };
 }
 
 async function mockJob(page: Page, programOutput: string) {
@@ -44,41 +44,39 @@ async function mockJob(page: Page, programOutput: string) {
       contentType: "application/json",
       body: JSON.stringify({ job_id: JOB_ID }),
     }),
-  )
+  );
   await page.route("**/jobs/*", (r) =>
     r.fulfill({
       status: 200,
       contentType: "application/json",
       body: JSON.stringify(makeJob(programOutput)),
     }),
-  )
+  );
 }
 
 test("a long unbreakable output line keeps the Results panel on-screen", async ({ page }) => {
   // One 10k-char line with no spaces or newlines: the exact shape that blew out the layout.
-  await mockJob(page, "hi".repeat(5000))
-  await page.goto("/")
-  await page.getByRole("button", { name: "Run" }).click()
+  await mockJob(page, "hi".repeat(5000));
+  await page.goto("/");
+  await page.getByRole("button", { name: "Run" }).click();
 
-  const tab = page.getByRole("button", { name: "Test cases (2)" })
-  await expect(tab).toBeVisible()
+  const tab = page.getByRole("button", { name: "Test cases (2)" });
+  await expect(tab).toBeVisible();
 
-  await page.locator("summary", { hasText: "Raw output" }).click()
+  await page.locator("summary", { hasText: "Raw output" }).click();
 
-  const viewport = page.viewportSize()!
-  const box = await tab.boundingBox()
-  expect(box).not.toBeNull()
+  const viewport = page.viewportSize()!;
+  const box = await tab.boundingBox();
+  expect(box).not.toBeNull();
   // The whole Results panel must stay within the viewport, not be pushed off the right edge.
-  expect(box!.x + box!.width).toBeLessThanOrEqual(viewport.width)
-})
+  expect(box!.x + box!.width).toBeLessThanOrEqual(viewport.width);
+});
 
 test("the program-output header shows a line count", async ({ page }) => {
-  await mockJob(page, "hi\n".repeat(1500))
-  await page.goto("/")
-  await page.getByRole("button", { name: "Run" }).click()
+  await mockJob(page, "hi\n".repeat(1500));
+  await page.goto("/");
+  await page.getByRole("button", { name: "Run" }).click();
 
-  await expect(page.getByRole("button", { name: "Test cases (2)" })).toBeVisible()
-  await expect(page.locator("summary", { hasText: "Raw output" })).toContainText(
-    "1,500 lines",
-  )
-})
+  await expect(page.getByRole("button", { name: "Test cases (2)" })).toBeVisible();
+  await expect(page.locator("summary", { hasText: "Raw output" })).toContainText("1,500 lines");
+});

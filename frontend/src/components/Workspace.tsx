@@ -1,17 +1,17 @@
-import { type ReactNode } from "react"
-import { useSettings } from "../context/SettingsContext"
+import { type ReactNode } from "react";
+import { useSettings } from "../context/SettingsContext";
 
 type WorkspaceProps = {
-  topBar: ReactNode
-  sidebar?: ReactNode
-  main: ReactNode
-  results: ReactNode
-  statusBar: ReactNode
-}
+  topBar: ReactNode;
+  sidebar?: ReactNode;
+  main: ReactNode;
+  results: ReactNode;
+  statusBar: ReactNode;
+};
 
 export function Workspace({ topBar, sidebar, main, results, statusBar }: WorkspaceProps) {
-  const { resultsPosition } = useSettings()
-  const mainResultsDirection = resultsPosition === "right" ? "flex-row" : "flex-col"
+  const { resultsPosition } = useSettings();
+  const mainResultsDirection = resultsPosition === "right" ? "flex-row" : "flex-col";
 
   return (
     <div className="h-screen flex flex-col bg-white text-slate-900 dark:bg-slate-950 dark:text-slate-100">
@@ -25,5 +25,5 @@ export function Workspace({ topBar, sidebar, main, results, statusBar }: Workspa
       </div>
       <div className="shrink-0">{statusBar}</div>
     </div>
-  )
+  );
 }

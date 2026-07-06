@@ -1,14 +1,14 @@
-import { useState, type KeyboardEvent } from "react"
-import type { KleeFlags } from "../api/jobs"
+import { useState, type KeyboardEvent } from "react";
+import type { KleeFlags } from "../api/jobs";
 
 type FlagSpec = {
-  field: keyof KleeFlags
-  label: string
-  unit: string
-  min: number
-  max: number
-  default: number
-}
+  field: keyof KleeFlags;
+  label: string;
+  unit: string;
+  min: number;
+  max: number;
+  default: number;
+};
 
 const TIME: FlagSpec = {
   field: "max_time",
@@ -17,7 +17,7 @@ const TIME: FlagSpec = {
   min: 1,
   max: 600,
   default: 60,
-}
+};
 
 const MEMORY: FlagSpec = {
   field: "max_memory",
@@ -26,12 +26,12 @@ const MEMORY: FlagSpec = {
   min: 64,
   max: 2048,
   default: 512,
-}
+};
 
 type FlagBarProps = {
-  flags: KleeFlags
-  onFlagsChange: (next: KleeFlags) => void
-}
+  flags: KleeFlags;
+  onFlagsChange: (next: KleeFlags) => void;
+};
 
 export function FlagBar({ flags, onFlagsChange }: FlagBarProps) {
   return (
@@ -41,7 +41,7 @@ export function FlagBar({ flags, onFlagsChange }: FlagBarProps) {
       <QueryFormatSelect flags={flags} onFlagsChange={onFlagsChange} />
       <ExtraFlagsInput flags={flags} onFlagsChange={onFlagsChange} />
     </div>
-  )
+  );
 }
 
 function ExtraFlagsInput({ flags, onFlagsChange }: FlagBarProps) {
@@ -58,7 +58,7 @@ function ExtraFlagsInput({ flags, onFlagsChange }: FlagBarProps) {
         className="w-52 px-1.5 py-0.5 rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 font-mono text-xs focus:outline-none focus:ring-1 focus:ring-[var(--klee-accent)]"
       />
     </div>
-  )
+  );
 }
 
 function QueryFormatSelect({ flags, onFlagsChange }: FlagBarProps) {
@@ -80,48 +80,46 @@ function QueryFormatSelect({ flags, onFlagsChange }: FlagBarProps) {
         <option value="kquery">KQuery</option>
       </select>
     </div>
-  )
+  );
 }
 
 type FlagInputProps = {
-  spec: FlagSpec
-  flags: KleeFlags
-  onFlagsChange: (next: KleeFlags) => void
-}
+  spec: FlagSpec;
+  flags: KleeFlags;
+  onFlagsChange: (next: KleeFlags) => void;
+};
 
 function FlagInput({ spec, flags, onFlagsChange }: FlagInputProps) {
-  const current = flags[spec.field] ?? spec.default
-  const [text, setText] = useState<string>(String(current))
-  const validity = validate(text, spec)
+  const current = flags[spec.field] ?? spec.default;
+  const [text, setText] = useState<string>(String(current));
+  const validity = validate(text, spec);
 
   function handleChange(next: string) {
-    setText(next)
-    const v = validate(next, spec)
+    setText(next);
+    const v = validate(next, spec);
     if (v.kind === "valid") {
-      onFlagsChange({ ...flags, [spec.field]: v.value })
+      onFlagsChange({ ...flags, [spec.field]: v.value });
     } else if (v.kind === "empty") {
-      onFlagsChange({ ...flags, [spec.field]: spec.default })
+      onFlagsChange({ ...flags, [spec.field]: spec.default });
     }
   }
 
   function handleBlur() {
     if (validity.kind === "invalid") {
-      setText(String(flags[spec.field] ?? spec.default))
+      setText(String(flags[spec.field] ?? spec.default));
     } else if (validity.kind === "empty") {
-      setText(String(spec.default))
+      setText(String(spec.default));
     }
   }
 
   function handleKeyDown(e: KeyboardEvent<HTMLInputElement>) {
     if (e.key === "Enter") {
-      e.currentTarget.blur()
+      e.currentTarget.blur();
     }
   }
 
   const borderClass =
-    validity.kind === "invalid"
-      ? "border-rose-500"
-      : "border-slate-300 dark:border-slate-700"
+    validity.kind === "invalid" ? "border-rose-500" : "border-slate-300 dark:border-slate-700";
 
   return (
     <div className="relative flex items-center gap-1.5 text-sm">
@@ -143,19 +141,16 @@ function FlagInput({ spec, flags, onFlagsChange }: FlagInputProps) {
         </div>
       )}
     </div>
-  )
+  );
 }
 
-type Validity =
-  | { kind: "valid"; value: number }
-  | { kind: "empty" }
-  | { kind: "invalid" }
+type Validity = { kind: "valid"; value: number } | { kind: "empty" } | { kind: "invalid" };
 
 function validate(text: string, spec: FlagSpec): Validity {
-  const trimmed = text.trim()
-  if (trimmed === "") return { kind: "empty" }
-  const n = Number(trimmed)
-  if (!Number.isInteger(n)) return { kind: "invalid" }
-  if (n < spec.min || n > spec.max) return { kind: "invalid" }
-  return { kind: "valid", value: n }
+  const trimmed = text.trim();
+  if (trimmed === "") return { kind: "empty" };
+  const n = Number(trimmed);
+  if (!Number.isInteger(n)) return { kind: "invalid" };
+  if (n < spec.min || n > spec.max) return { kind: "invalid" };
+  return { kind: "valid", value: n };
 }

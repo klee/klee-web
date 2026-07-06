@@ -1,13 +1,13 @@
-import type { Monaco } from "@monaco-editor/react"
+import type { Monaco } from "@monaco-editor/react";
 
 export type CompletionSpec = {
-  label: string
-  kind: "snippet" | "function" | "module"
-  insertText: string
-  snippet?: boolean
-  detail?: string
-  documentation?: string
-}
+  label: string;
+  kind: "snippet" | "function" | "module";
+  insertText: string;
+  snippet?: boolean;
+  detail?: string;
+  documentation?: string;
+};
 
 // Curated, static completions for the C editor: KLEE intrinsics as snippets plus
 // a small set of common C calls and includes. Deliberately monaco-free data so it
@@ -161,33 +161,33 @@ export const COMPLETIONS: CompletionSpec[] = [
   { label: "#include <stdlib.h>", kind: "module", insertText: "#include <stdlib.h>" },
   { label: "#include <string.h>", kind: "module", insertText: "#include <string.h>" },
   { label: "#include <assert.h>", kind: "module", insertText: "#include <assert.h>" },
-]
+];
 
 // monaco-editor is not a dependency (the wrapper loads Monaco at runtime), so
 // rather than pull it in just for types we structurally type the two fields we
 // read off the model and position. `monaco` is the wrapper's Monaco handle.
-type EditorPosition = { lineNumber: number; column: number }
+type EditorPosition = { lineNumber: number; column: number };
 type EditorModel = {
-  getWordUntilPosition(position: EditorPosition): { startColumn: number; endColumn: number }
-}
+  getWordUntilPosition(position: EditorPosition): { startColumn: number; endColumn: number };
+};
 
 export function createCCompletionProvider(monaco: Monaco) {
   const kindMap = {
     snippet: monaco.languages.CompletionItemKind.Snippet,
     function: monaco.languages.CompletionItemKind.Function,
     module: monaco.languages.CompletionItemKind.Module,
-  }
-  const snippetRule = monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet
+  };
+  const snippetRule = monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet;
 
   return {
     provideCompletionItems(model: EditorModel, position: EditorPosition) {
-      const word = model.getWordUntilPosition(position)
+      const word = model.getWordUntilPosition(position);
       const range = {
         startLineNumber: position.lineNumber,
         endLineNumber: position.lineNumber,
         startColumn: word.startColumn,
         endColumn: word.endColumn,
-      }
+      };
       const suggestions = COMPLETIONS.map((c) => ({
         label: c.label,
         kind: kindMap[c.kind],
@@ -196,18 +196,18 @@ export function createCCompletionProvider(monaco: Monaco) {
         detail: c.detail,
         documentation: c.documentation,
         range,
-      }))
-      return { suggestions }
+      }));
+      return { suggestions };
     },
-  }
+  };
 }
 
-let registered = false
+let registered = false;
 
 // Registered once for the app: a module-level guard so a remount or StrictMode's
 // double-invoke cannot stack duplicate providers (which would double every suggestion).
 export function registerCCompletions(monaco: Monaco): void {
-  if (registered) return
-  registered = true
-  monaco.languages.registerCompletionItemProvider("c", createCCompletionProvider(monaco))
+  if (registered) return;
+  registered = true;
+  monaco.languages.registerCompletionItemProvider("c", createCCompletionProvider(monaco));
 }
