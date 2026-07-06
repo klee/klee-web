@@ -54,3 +54,5 @@ Don't write ADRs for:
 | 0016 | Job dispatch behind a JobDispatcher seam | Accepted |
 | 0017 | Result cache keyed on the submission | Accepted |
 | 0018 | Minimal failsafes: at-most-once delivery with cancel recovery | Accepted |
+| 0019 | Allowlisted free-text KLEE flags | Accepted |
+| 0020 | Native per-path replay for program output | Accepted |
