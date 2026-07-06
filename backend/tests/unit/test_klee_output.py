@@ -1,7 +1,9 @@
+import shutil
 from pathlib import Path
 
 from klee_web.models import HaltReason, SymbolicInput
 from klee_web.parsing.klee_output import (
+    PER_PATH_OUTPUT_MAX_BYTES,
     PROGRAM_OUTPUT_MAX_BYTES,
     clamp_program_output,
     parse_output_dir,
@@ -180,3 +182,48 @@ def test_parse_host_timeout_sentinel_is_max_time(tmp_path):
     result = parse_output_dir(output)
 
     assert result.halt_reason == HaltReason.max_time
+
+
+_KTEST_SRC = FIXTURES / "happy_path" / "output"
+
+
+def test_parse_pairs_per_path_stdout_by_stem(tmp_path):
+    output = tmp_path / "output"
+    output.mkdir()
+    shutil.copy(_KTEST_SRC / "test000001.ktest", output)
+    shutil.copy(_KTEST_SRC / "test000002.ktest", output)
+    (output / "test000001.stdout").write_text("hello from path one\n")
+    # test000002 has no .stdout: that path was not replayed.
+
+    result = parse_output_dir(output)
+    by_name = {tc.name: tc for tc in result.test_cases}
+
+    assert by_name["test000001"].program_output == "hello from path one\n"
+    assert by_name["test000002"].program_output is None
+
+
+def test_parse_per_path_output_empty_file_is_empty_not_none(tmp_path):
+    # An empty .stdout means the path replayed and printed nothing, distinct from a
+    # path that was never replayed (no file, program_output is None).
+    output = tmp_path / "output"
+    output.mkdir()
+    shutil.copy(_KTEST_SRC / "test000001.ktest", output)
+    (output / "test000001.stdout").write_text("")
+
+    result = parse_output_dir(output)
+
+    assert result.test_cases[0].program_output == ""
+
+
+def test_parse_per_path_output_truncated_at_per_path_cap(tmp_path):
+    output = tmp_path / "output"
+    output.mkdir()
+    shutil.copy(_KTEST_SRC / "test000001.ktest", output)
+    (output / "test000001.stdout").write_text("A" * (PER_PATH_OUTPUT_MAX_BYTES + 1000))
+
+    result = parse_output_dir(output)
+    out = result.test_cases[0].program_output
+
+    assert out is not None
+    assert "truncated" in out
+    assert len(out.encode()) < PER_PATH_OUTPUT_MAX_BYTES + 1000

@@ -253,3 +253,68 @@ async def test_docker_runner_bounds_a_klee_that_overruns_its_own_max_time():
         assert result.halt_reason == HaltReason.max_time
     finally:
         subprocess.run(["docker", "rm", "-f", name], capture_output=True)
+
+
+PER_PATH_POSIX_SOURCE = """\
+#include <stdio.h>
+#include <unistd.h>
+
+int main() {
+    char c;
+    read(0, &c, 1);
+    if (c == 'a') printf("Hello World!");
+    else printf("Goodbye World!");
+    return 0;
+}
+"""
+
+
+async def test_docker_runner_captures_per_path_output_for_posix_input():
+    runner = DockerKleeRunner()
+    result = await asyncio.wait_for(
+        runner.execute(
+            PER_PATH_POSIX_SOURCE,
+            KleeFlags(max_time=10, max_memory=256, sym_stdin=SymStdin(size=1)),
+            uuid4(),
+        ),
+        timeout=30,
+    )
+    # Replay re-runs each ktest natively, so each path shows what it printed. The
+    # symbolic byte arrives through POSIX stdin, which klee-replay reconstructs and a
+    # direct KTEST_FILE replay cannot. Membership, not equality, so an extra or an
+    # unreplayed path does not make this brittle.
+    outputs = {tc.program_output for tc in result.test_cases}
+    assert "Hello World!" in outputs
+    assert "Goodbye World!" in outputs
+
+
+PER_PATH_MAKE_SYMBOLIC_SOURCE = """\
+#include <klee/klee.h>
+#include <stdio.h>
+
+int main() {
+    int x;
+    klee_make_symbolic(&x, sizeof(x), "x");
+    if (x == 0) printf("ZERO");
+    else if (x < 0) printf("NEG");
+    else printf("POS");
+    return 0;
+}
+"""
+
+
+async def test_docker_runner_captures_per_path_output_for_make_symbolic():
+    runner = DockerKleeRunner()
+    result = await asyncio.wait_for(
+        runner.execute(
+            PER_PATH_MAKE_SYMBOLIC_SOURCE,
+            KleeFlags(max_time=10, max_memory=256),
+            uuid4(),
+        ),
+        timeout=30,
+    )
+    # The make_symbolic value is fed to the replay via KTEST_FILE + libkleeRuntest;
+    # with klee-replay on top this is mechanism C, covering both input channels.
+    assert len(result.test_cases) == 3
+    outputs = {tc.program_output for tc in result.test_cases}
+    assert outputs == {"ZERO", "NEG", "POS"}

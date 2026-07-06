@@ -29,7 +29,9 @@ class QueryFormat(StrEnum):
 
 
 # The hard upper bound on a job's wall-clock, the ceiling the max_time flag is capped at.
-MAX_TIME_CEILING = 300
+# max_time is the whole job's budget: KLEE runs up to it, then per-path replay uses the
+# leftover, so this bounds KLEE and replay together, not each separately.
+MAX_TIME_CEILING = 600
 
 # Cap on the free-text power-user flag string (ADR-0019).
 EXTRA_FLAGS_MAX_LEN = 500
@@ -67,6 +69,7 @@ class TestCase(BaseModel):
     inputs: list[SymbolicInput]
     error: str | None = None
     path_constraint: str | None = None
+    program_output: str | None = None
 
 
 class JobResult(BaseModel):

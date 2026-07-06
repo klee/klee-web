@@ -11,6 +11,10 @@ logger = logging.getLogger(__name__)
 # Cap on captured program output: ample to read in the panel, small to ship and store.
 PROGRAM_OUTPUT_MAX_BYTES = 100_000
 
+# Per-path replay output: one path prints little and there can be thousands of paths,
+# so cap each well below the global ceiling. Aggregate cap deferred until observed.
+PER_PATH_OUTPUT_MAX_BYTES = 10_000
+
 
 def clamp_program_output(raw: bytes, max_bytes: int = PROGRAM_OUTPUT_MAX_BYTES) -> str:
     # Program output is arbitrary program bytes, so decode leniently: a non-UTF-8 byte,
@@ -127,7 +131,19 @@ def _test_case_from_ktest(path: Path, err_files: list[Path]) -> TestCase:
     error = "\n".join(p.read_text() for p in err_files) if err_files else None
     kquery_path = path.with_suffix(".kquery")
     path_constraint = kquery_path.read_text() if kquery_path.exists() else None
-    return TestCase(name=path.stem, inputs=inputs, error=error, path_constraint=path_constraint)
+    stdout_path = path.with_suffix(".stdout")
+    program_output = (
+        clamp_program_output(stdout_path.read_bytes(), PER_PATH_OUTPUT_MAX_BYTES)
+        if stdout_path.exists()
+        else None
+    )
+    return TestCase(
+        name=path.stem,
+        inputs=inputs,
+        error=error,
+        path_constraint=path_constraint,
+        program_output=program_output,
+    )
 
 
 def _decode_object_value(data: bytes) -> str:

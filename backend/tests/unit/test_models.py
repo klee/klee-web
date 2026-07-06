@@ -29,11 +29,11 @@ def test_klee_flags_max_time_below_min_rejected():
 
 def test_klee_flags_max_time_above_max_rejected():
     with pytest.raises(ValidationError):
-        KleeFlags(max_time=301)
+        KleeFlags(max_time=601)
 
 
-def test_max_time_ceiling_is_300():
-    assert MAX_TIME_CEILING == 300
+def test_max_time_ceiling_is_600():
+    assert MAX_TIME_CEILING == 600
 
 
 def test_klee_flags_max_time_at_ceiling_accepted():
