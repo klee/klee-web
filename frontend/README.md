@@ -1,30 +1,43 @@
 # frontend/
 
-React + TypeScript single-page app. Editor for C source, submit button, results pane.
+React + TypeScript single-page app. Editor for C source, an examples/history sidebar, and a results pane.
 
-## Stage 1 contents
+## Contents
 
 - `package.json`: React 19, TypeScript, Vite, Tailwind v4, React Query, React Router, Monaco editor, openapi-fetch, openapi-typescript
 - `.npmrc`: `legacy-peer-deps=true` so clones do not trip on openapi-typescript's stale `typescript: ^5.x` peer-dep range while we are on TS 6
-- `vite.config.ts`: build / dev server config
+- `vite.config.ts`: build / dev server config, plus the Vitest `test` block scoped to `src/**/*.test.ts`
 - `tsconfig.json`: strict TypeScript
 - `index.html`: entry HTML
 - `src/main.tsx`: React mount point, wraps `<App />` in `QueryClientProvider`
 - `src/App.tsx`: route index (`SettingsProvider` + `BrowserRouter` + `Route` at `/`)
-- `src/api/client.ts`: typed `apiClient` over openapi-fetch; also exports `BASE_URL` for callers that need the backend origin outside the typed routes (e.g., the status bar pinging `/openapi.json`)
-- `src/api/jobs.ts`: `submitJob`, `getJob`, re-exported schema aliases
-- `src/hooks/useSubmitJob.ts`: React Query mutation over `submitJob`
-- `src/hooks/useJob.ts`: React Query polling query over `getJob`, 1000 ms cadence, stops on terminal status
+- `src/api/client.ts`: typed `apiClient` over openapi-fetch. Also exports `BASE_URL` for callers that need the backend origin outside the typed routes (e.g., the status bar pinging `/openapi.json`)
+- `src/api/jobs.ts`: `submitJob`, `getJob`, `cancelJob`, the `JobNotFoundError` and `RequestFailedError` error types, and re-exported schema aliases
 - `src/types/api.ts`: types generated from the backend OpenAPI spec, committed
-- `src/context/SettingsContext.tsx`: theme (system/dark/light, default system) and results-position (right/below), localStorage-backed
-- `src/components/Workspace.tsx`: layout chassis with five slot props (`topBar`, `sidebar?`, `main`, `results`, `statusBar`); `resultsPosition` flips main/results between row and column
-- `src/components/TopBar.tsx`: KLEE wordmark, inline `FlagBar`, Run button, settings cog. Owns the local `settingsOpen` state and the document `pointerdown` / `keydown` listeners that dismiss the popover
-- `src/components/FlagBar.tsx`: inline number inputs for `max_time` and `max_memory` with valid / empty / invalid discriminated-union validation. Empty snaps to default on blur; invalid shows a floating rose-bordered explanation and snaps back to the last valid value
-- `src/components/Editor.tsx`: `@monaco-editor/react` wrapper. C language, controlled `value` / `onChange`, theme from `useSettings().resolvedTheme` mapped to `vs-dark` / `vs-light`
-- `src/components/Results.tsx`: dispatch on job status with eight branches (empty / loading / connection error / pending / running / compile error / done / failed). Running state surfaces a curated 2x2 stat grid; DoneView holds local tab state (Test cases / Stats) and renders a `HaltBadge` between TabBar and scroll area
-- `src/components/SettingsPopover.tsx`: panel with two segmented controls (theme: system / light / dark; results position: right / below). Pure presentational, reads and writes `useSettings()`
-- `src/components/StatusBar.tsx`: bottom strip with backend-connected indicator (polls `/openapi.json` every 5 s via React Query, two-state connected/disconnected derived from `data` + `isError`), source byte count, pinned KLEE version
-- `src/pages/HomePage.tsx`: composes Workspace at route `/`. Owns `source`, `flags`, and `jobId` state. `handleRun` posts via `useSubmitJob` and sets `jobId` on success; `useJob(jobId)` inside `Results` drives the polling
+- `src/hooks/useSubmitJob.ts`: React Query mutation over `submitJob`
+- `src/hooks/useJob.ts`: React Query polling query over `getJob`, 1000 ms cadence, stops on terminal status and treats a 404 as terminal with no retry
+- `src/hooks/useCancelJob.ts`: React Query mutation over `cancelJob`, resolves true only when the cancel landed (202)
+- `src/hooks/useHistory.ts`: React state over the `history.ts` store, exposes `entries` plus `addRun` / `setStatus` / `removeEntry` / `clear`
+- `src/context/SettingsContext.tsx`: theme (system/dark/light, default system), results-position (right/below), accent colour, and editor font size, all localStorage-backed
+- `src/context/SymbolicTypeContext.tsx`: `SymbolicTypeProvider` and `useSymbolicTypes`, holds each symbolic variable's chosen decode type by name so the choice persists across reruns
+- `src/lib/decodeSymbolic.ts`: pure client-side re-interpreter of a symbolic value's raw ktest bytes as int / uint / float / double / hex / ascii (`decode`, `availableTypes`, `defaultType`), little-endian, matching ktest-tool
+- `src/lib/resultsError.ts`: `classifyResultsError`, maps a submit or poll error to `expired` / `submit-rejected` / `unreachable`
+- `src/lib/pagination.ts`: `clampPage`, parses a typed page number and clamps it into range
+- `src/lib/history.ts`: localStorage run-history store. `readHistory`, `addRun` (move-to-front dedup, capped at `MAX_ENTRIES = 50`), `setStatus`, `removeEntry`, `clearHistory`, plus the `HistoryEntry` and `HistoryStatus` types
+- `src/lib/historyView.ts`: pure view helpers for the history list. `historyLabel` (the `// title:` comment or first real code line), `relativeTime`, `statusGlyph`, and `deriveHistoryStatus`
+- `src/lib/kleeCompletions.ts`: static C and KLEE-intrinsic completion data (`COMPLETIONS`) plus the Monaco `CompletionItemProvider` registration (`registerCCompletions`) behind the editor autocomplete
+- `src/lib/editorThemes.ts`: `defineKleeDarkTheme`, the `klee-dark` Monaco theme matching the app's slate surfaces
+- `src/data/examples.ts`: the bundled example programs (`EXAMPLES`, `DEFAULT_EXAMPLE`), each C source imported `?raw` from `data/examples/*.c` and labelled by its `// title:` comment
+- `src/components/Workspace.tsx`: layout chassis with five slot props (`topBar`, `sidebar?`, `main`, `results`, `statusBar`). `resultsPosition` flips main/results between row and column
+- `src/components/TopBar.tsx`: KLEE wordmark, inline `FlagBar`, Run button, settings cog, and the collapsible `SymbolicInputPanel` mounted below the bar. Owns the local `settingsOpen` state and the document `pointerdown` / `keydown` listeners that dismiss the popover
+- `src/components/FlagBar.tsx`: inline `max_time` and `max_memory` number inputs (valid / empty / invalid discriminated-union validation, snap-back on blur), the path-constraint (`query_format`) select, and the free-text extra-flags box (validated server-side against an allowlist, a rejection's reason renders in Results)
+- `src/components/SymbolicInputPanel.tsx`: collapsible panel below the top bar. Per-spec toggles for symbolic stdin / files / args with bounded numeric fields, editing the nested `sym_stdin` / `sym_files` / `sym_args` objects on `KleeFlags`
+- `src/components/Editor.tsx`: `@monaco-editor/react` wrapper. C language, controlled `value` / `onChange`, `resolvedTheme` mapped to `klee-dark` / `vs-light`, and registers the `kleeCompletions` provider on mount
+- `src/components/Sidebar.tsx`: left panel with Examples and History tabs. Examples opens a bundled program, History lists per-browser runs with restore / delete / clear and a status glyph. Collapsible
+- `src/components/Results.tsx`: dispatches first on submit or poll error kind (expired / submit-rejected / unreachable), then on job status (pending / running / parsing / done / compile-error / failed). Running surfaces a live stat grid. DoneView holds tab state (Test cases / Stats), a `HaltBadge`, per-variable type dropdowns, and page navigation over the test cases
+- `src/components/SettingsPopover.tsx`: panel of segmented controls over `useSettings()` (theme, accent colour, font size, results position). Pure presentational
+- `src/components/StatusBar.tsx`: bottom strip with backend-connected indicator (polls `/openapi.json` every 5 s via React Query, two-state connected/disconnected derived from `data` + `isError`), source byte count, and pinned KLEE version
+- `src/pages/HomePage.tsx`: composes Workspace at route `/`. Owns `source`, `flags`, `jobId`, and the errors-first toggle. Wires the sidebar via `useHistory` (load example, restore run, delete / clear), `handleRun` posts via `useSubmitJob` and adds a history entry, `handleCancel` goes via `useCancelJob`, and `useJob(jobId)` inside `Results` drives the polling
 
 ## Editor
 

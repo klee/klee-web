@@ -55,9 +55,13 @@ Ctrl+C stops both.
 OpenAPI surface at <http://localhost:8000/docs>. App at <http://localhost:5173>.
 
 The frontend is functional end-to-end. The page loads with a demo C program in
-a Monaco editor. The top bar carries the KLEE wordmark, inline flag inputs for
-time and memory, a path-constraint selector (off or KQuery), a settings cog,
-and a Run button that becomes a Cancel button while a job is in flight. Run
+a Monaco editor with C autocomplete for KLEE intrinsics. A collapsible left
+sidebar offers bundled example programs and a per-browser run history. The top
+bar carries the KLEE wordmark, inline flag inputs for time and memory, a
+path-constraint selector (off or KQuery), a free-text extra-flags box validated
+against an allowlist, a settings cog, and a Run button that becomes a Cancel
+button while a job is in flight. A collapsible panel below the bar toggles
+KLEE's POSIX-runtime symbolic input (symbolic stdin, args, and files). Run
 posts to the backend and the results panel polls and renders pending, running
 (with a curated live-stats grid: instructions, active states, full branches,
 wall time), parsing, done (test cases plus program-output, messages, and

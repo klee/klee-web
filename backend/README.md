@@ -8,6 +8,8 @@ FastAPI service. Receives job submissions, runs KLEE through the runner, returns
 - `src/klee_web/main.py`: FastAPI app
 - `src/klee_web/api/jobs.py`: `POST /jobs`, `GET /jobs/{id}`, `POST /jobs/{id}/cancel`. POST returns `202` with a `job_id`, serving a cached result on a matching submission or else creating the job and handing it to the dispatcher. GET polls the store. Cancel flips the job terminal (ADR-0013)
 - `src/klee_web/models.py`: Pydantic schemas (`JobRequest`, `Job`, `JobCreated`, `JobResult`, `JobStatus`, `HaltReason`, `KleeFlags`, `QueryFormat`, `TestCase`, `SymbolicInput`)
+- `src/klee_web/symbolic_input.py`: the `SymStdin` / `SymFiles` / `SymArgs` sub-models carried on `KleeFlags`, plus `render_posix_args`, which renders them into the `--sym-*` POSIX-runtime args passed to the runner after the bitcode
+- `src/klee_web/flag_allowlist.py`: default-deny validation for the free-text `extra_flags` field, with per-flag boolean / bounded-integer / enum value policies (ADR-0019)
 - `src/klee_web/jobs/dispatch.py`: `JobDispatcher` protocol + `InProcessDispatcher` (Stage 1, `asyncio.create_task`) and `CeleryDispatcher` (Stage 2, enqueue). `deps.py` picks one on `CELERY_BROKER_URL` (ADR-0016)
 - `src/klee_web/jobs/run.py`: `run_job`, the shared job body both dispatchers reach: mark running, run KLEE, write the result, cache a completed run, and watch for a cancel
 - `src/klee_web/jobs/store.py`: `JobStore` protocol + `InMemoryJobStore` and `RedisJobStore`. `set_partial_result` writes mid-flight progress, `set_result` flips status to `done`, `request_cancel` sets the cancel flag
