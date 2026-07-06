@@ -54,3 +54,9 @@ npm run gen:types
 ```
 
 The script expects the backend running on `http://localhost:8000`.
+
+## Formatting and pre-commit
+
+Prettier owns formatting, eslint owns correctness. Format with `npm run format`, or check without writing via `npm run format:check`. The pre-commit hook runs the formatter on commit.
+
+The prettier and eslint hooks both run the frontend's own tooling from `node_modules`, so run `npm install` before committing. Without it they fail with a "command not found", the same way the eslint hook already would. CI runs both regardless, so unformatted or unlinted code cannot merge.

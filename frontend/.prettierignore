@@ -1,0 +1,13 @@
+# Generated from the backend OpenAPI spec; prettier must not fight gen:types
+src/types/api.ts
+
+# Build and tooling output
+dist
+playwright-report
+test-results
+
+# npm-managed, not ours to format
+package-lock.json
+
+# Docs: avoid prose reflow
+*.md
