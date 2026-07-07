@@ -121,10 +121,12 @@ jobs:
       - uses: actions/checkout@v4
       - name: Bring up the edge (nginx pulls in api and redis via depends_on)
         run: docker compose up -d --build --wait nginx
-      - name: The built app is served at the edge
-        run: curl -fsS http://localhost/ | grep -q /assets/
+      - name: HTTP redirects to HTTPS
+        run: curl -fsSI http://localhost/ | grep -q https://localhost
+      - name: The built app is served over HTTPS
+        run: curl -fsSk https://localhost/ | grep -q /assets/
       - name: The API is reachable and prefix-stripped under /api
-        run: curl -fsS http://localhost/api/openapi.json | grep -q openapi
+        run: curl -fsSk https://localhost/api/openapi.json | grep -q openapi
       - name: Tear down
         if: always()
         run: docker compose down
