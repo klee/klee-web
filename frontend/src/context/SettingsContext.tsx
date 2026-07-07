@@ -20,10 +20,12 @@ type SettingsValue = {
   accent: Accent;
   accents: Record<Accent, string>;
   fontSize: number;
+  mainPanelSize: number;
   setTheme: (t: Theme) => void;
   setResultsPosition: (p: ResultsPosition) => void;
   setAccent: (a: Accent) => void;
   setFontSize: (n: number) => void;
+  setMainPanelSize: (n: number) => void;
 };
 
 const SettingsContext = createContext<SettingsValue | null>(null);
@@ -33,6 +35,8 @@ const RESULTS_POSITION_KEY = "klee.resultsPosition";
 const ACCENT_KEY = "klee.accent";
 const FONT_SIZE_KEY = "klee.fontSize";
 const DEFAULT_FONT_SIZE = 14;
+const MAIN_PANEL_SIZE_KEY = "klee.mainPanelSize";
+const DEFAULT_MAIN_PANEL_SIZE = 50;
 
 function readTheme(): Theme {
   const stored = localStorage.getItem(THEME_KEY);
@@ -61,11 +65,21 @@ function readFontSize(): number {
   return DEFAULT_FONT_SIZE;
 }
 
+function readMainPanelSize(): number {
+  const stored = localStorage.getItem(MAIN_PANEL_SIZE_KEY);
+  if (stored) {
+    const n = Number(stored);
+    if (Number.isFinite(n) && n >= 20 && n <= 80) return n;
+  }
+  return DEFAULT_MAIN_PANEL_SIZE;
+}
+
 export function SettingsProvider({ children }: { children: ReactNode }) {
   const [theme, setTheme] = useState<Theme>(readTheme);
   const [resultsPosition, setResultsPosition] = useState<ResultsPosition>(readResultsPosition);
   const [accent, setAccent] = useState<Accent>(readAccent);
   const [fontSize, setFontSize] = useState<number>(readFontSize);
+  const [mainPanelSize, setMainPanelSize] = useState<number>(readMainPanelSize);
   const [systemPrefersDark, setSystemPrefersDark] = useState<boolean>(
     () => window.matchMedia("(prefers-color-scheme: dark)").matches,
   );
@@ -101,6 +115,10 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
     localStorage.setItem(FONT_SIZE_KEY, String(fontSize));
   }, [fontSize]);
 
+  useEffect(() => {
+    localStorage.setItem(MAIN_PANEL_SIZE_KEY, String(mainPanelSize));
+  }, [mainPanelSize]);
+
   return (
     <SettingsContext.Provider
       value={{
@@ -110,10 +128,12 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
         accent,
         accents: ACCENTS,
         fontSize,
+        mainPanelSize,
         setTheme,
         setResultsPosition,
         setAccent,
         setFontSize,
+        setMainPanelSize,
       }}
     >
       {children}
