@@ -8,3 +8,48 @@ services:
       interval: 2s
       timeout: 3s
       retries: 5
+
+  api:
+    build: ./backend
+    image: klee-web-backend
+    ports:
+      - "8000:8000"
+    environment:
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/1
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test:
+        - "CMD"
+        - "python"
+        - "-c"
+        - "import urllib.request; urllib.request.urlopen('http://localhost:8000/openapi.json')"
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+
+  worker:
+    build: ./backend
+    image: klee-web-backend
+    command:
+      - "celery"
+      - "-A"
+      - "klee_web.celery_app"
+      - "worker"
+      - "-Q"
+      - "klee-jobs"
+      - "--concurrency=2"
+      - "--loglevel=info"
+    environment:
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/1
+      TMPDIR: /var/klee-web/work
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /var/klee-web/work:/var/klee-web/work
+    depends_on:
+      redis:
+        condition: service_healthy

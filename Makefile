@@ -1,4 +1,4 @@
-.PHONY: up up-celery up-pool install runner
+.PHONY: up up-celery up-pool install runner deploy
 
 WORKERS ?= 2
 
@@ -32,6 +32,10 @@ up-pool: runner
 	done; \
 	(cd frontend && exec npm run dev) & \
 	wait
+
+deploy: runner
+	@trap 'trap - EXIT INT TERM; docker compose down' EXIT INT TERM; \
+	docker compose up --build
 
 runner:
 	docker build -t klee-web-runner ./runner
