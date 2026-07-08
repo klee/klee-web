@@ -44,7 +44,7 @@ Don't write ADRs for:
 | 0006 | Frontend tooling stack | Accepted |
 | 0007 | POST /jobs returns JobCreated, not full Job | Accepted |
 | 0008 | KleeRunner protocol surface | Accepted |
-| 0009 | Per-job containers, not a long-lived runner process | Accepted |
+| 0009 | Per-job containers, not a long-lived runner process | Accepted (transport superseded by 0021) |
 | 0010 | Frontend data layer (openapi-typescript + openapi-fetch + React Query) | Accepted |
 | 0011 | Frontend layered architecture (Types / API client / Hooks / Components) | Accepted |
 | 0012 | Add query_format to the flag schema | Accepted |
@@ -56,3 +56,4 @@ Don't write ADRs for:
 | 0018 | Minimal failsafes: at-most-once delivery with cancel recovery | Accepted |
 | 0019 | Allowlisted free-text KLEE flags | Accepted |
 | 0020 | Native per-path replay for program output | Accepted |
+| 0021 | Stream transport: source on stdin, output as a tar on stdout | Accepted |

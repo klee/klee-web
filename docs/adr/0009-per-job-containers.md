@@ -2,6 +2,13 @@
 
 **Status:** Accepted, 2026-05-21
 
+> **Superseded in part (2026-07-08).** ADR-0021 replaces the bind-mount transport
+> described below: the source now enters on stdin and the output leaves as a tar on
+> stdout, so there is no `-v <tmpdir>:/work` and no `--user`. The per-job container
+> lifetime this ADR decides is unchanged. The Positive "Stage 3 gVisor swap is a flag
+> change, no application code" no longer holds: gVisor needs `--kdalloc=false`, and the
+> sandbox pillar has since moved to Firecracker.
+
 ## Context
 
 `DockerKleeRunner.execute` could either spin up a fresh container per job (`docker run --rm` each time) or maintain a single long-lived container that accepts work over some channel and runs KLEE many times. Both end up shelling out to KLEE; the difference is the container lifetime.
