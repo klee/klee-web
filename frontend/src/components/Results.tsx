@@ -64,11 +64,9 @@ function ResultsBody({
     case "pending":
       return <PendingState />;
     case "running":
-      return (
-        <RunningState result={job.result ?? null} createdAt={job.created_at} maxTime={maxTime} />
-      );
+      return <RunningState createdAt={job.created_at} maxTime={maxTime} />;
     case "parsing":
-      return <ParsingState result={job.result ?? null} />;
+      return <ParsingState />;
     case "done":
       if (job.result?.compile_error) {
         return <CompileErrorView error={job.result.compile_error} />;
@@ -139,18 +137,9 @@ function FailedState({ result }: { result: JobResult | null }) {
   );
 }
 
-function RunningState({
-  result,
-  createdAt,
-  maxTime,
-}: {
-  result: JobResult | null;
-  createdAt: string | undefined;
-  maxTime: number;
-}) {
+function RunningState({ createdAt, maxTime }: { createdAt: string | undefined; maxTime: number }) {
   const elapsed = useElapsedSeconds(createdAt);
   const overrun = elapsed >= maxTime;
-  const hasStats = !!result?.stats && Object.keys(result.stats).length > 0;
   return (
     <div className="h-full p-6 flex flex-col items-center justify-center gap-6 text-slate-700 dark:text-slate-300">
       <div className="flex items-center gap-2">
@@ -174,13 +163,6 @@ function RunningState({
           Time limit reached. The job may be stopped soon and return incomplete results.
         </div>
       )}
-      {hasStats && (
-        <div className="grid grid-cols-3 gap-3 w-full max-w-md">
-          <StatTile label="Instructions" value={formatCount(result!.stats.Instructions)} />
-          <StatTile label="Active states" value={formatCount(result!.stats.NumStates)} />
-          <StatTile label="Full branches" value={formatCount(result!.stats.FullBranches)} />
-        </div>
-      )}
       <div className="text-xs text-slate-500 dark:text-slate-500">
         Test cases will appear when the run finishes.
       </div>
@@ -188,8 +170,7 @@ function RunningState({
   );
 }
 
-function ParsingState({ result }: { result: JobResult | null }) {
-  const hasStats = !!result?.stats && Object.keys(result.stats).length > 0;
+function ParsingState() {
   return (
     <div className="h-full p-6 flex flex-col items-center justify-center gap-6 text-slate-700 dark:text-slate-300">
       <div className="flex flex-col items-center gap-1 text-center">
@@ -201,14 +182,6 @@ function ParsingState({ result }: { result: JobResult | null }) {
           This may take a few seconds depending on the number of test cases produced.
         </div>
       </div>
-      {hasStats && (
-        <div className="grid grid-cols-2 gap-3 w-full max-w-sm">
-          <StatTile label="Instructions" value={formatCount(result!.stats.Instructions)} />
-          <StatTile label="Active states" value={formatCount(result!.stats.NumStates)} />
-          <StatTile label="Full branches" value={formatCount(result!.stats.FullBranches)} />
-          <StatTile label="Wall time" value={formatWallTime(result!.stats.WallTime)} />
-        </div>
-      )}
     </div>
   );
 }
@@ -233,17 +206,6 @@ function CheckIcon() {
 function Spinner() {
   return (
     <div className="w-4 h-4 border-2 border-slate-300 dark:border-slate-600 border-t-[var(--klee-accent)] rounded-full animate-spin" />
-  );
-}
-
-function StatTile({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="px-3 py-2 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900">
-      <div className="text-lg font-semibold tabular-nums text-slate-900 dark:text-slate-100">
-        {value}
-      </div>
-      <div className="text-xs text-slate-500 dark:text-slate-400">{label}</div>
-    </div>
   );
 }
 
@@ -649,15 +611,6 @@ function Collapsible({ title, content }: { title: string; content: string }) {
       </pre>
     </details>
   );
-}
-
-function formatCount(n: number | undefined): string {
-  return (n ?? 0).toLocaleString();
-}
-
-function formatWallTime(microseconds: number | undefined): string {
-  const seconds = (microseconds ?? 0) / 1_000_000;
-  return `${seconds.toFixed(1)}s`;
 }
 
 function useElapsedSeconds(createdAtIso: string | undefined): number {
