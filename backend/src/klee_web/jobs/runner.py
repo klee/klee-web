@@ -1,8 +1,8 @@
 import asyncio
-import os
+import io
+import tarfile
 import tempfile
 from collections.abc import Awaitable, Callable
-from contextlib import suppress
 from pathlib import Path
 from typing import Protocol
 from uuid import UUID
@@ -12,7 +12,6 @@ from klee_web.parsing.klee_output import parse_output_dir
 from klee_web.symbolic_input import render_posix_args
 
 IMAGE_TAG = "klee-web-runner"
-_WATCH_INTERVAL_SECONDS = 1.0
 
 
 def _container_name(job_id: UUID) -> str:
@@ -82,7 +81,13 @@ class FakeKleeRunner:
 
 
 class DockerKleeRunner:
-    """Runs the klee-web-runner container per job and parses /work/output back into a JobResult."""
+    """Runs the klee-web-runner container per job and parses its output into a JobResult.
+
+    Transport is stream-only: the source goes in on the container's stdin and the whole
+    output directory comes back as a tar on its stdout. There is no bind mount, so the
+    same image runs unchanged under any runtime without a shared filesystem (a microVM,
+    a serverless sandbox), not only runc.
+    """
 
     async def execute(
         self,
@@ -92,64 +97,54 @@ class DockerKleeRunner:
         on_progress: OnProgress | None = None,
         on_parsing: OnParsing | None = None,
     ) -> JobResult:
+        # on_progress is unused here: streaming partials needs a shared output directory
+        # to poll, which the stream transport deliberately removes. run_job still drives
+        # the running/parsing/done states.
+        posix_args = render_posix_args(flags.sym_files, flags.sym_args, flags.sym_stdin)
+        try:
+            proc = await asyncio.create_subprocess_exec(
+                "docker",
+                "run",
+                "--rm",
+                "-i",
+                "--name",
+                _container_name(job_id),
+                "-e",
+                f"KLEE_MAX_TIME={flags.max_time}",
+                "-e",
+                f"KLEE_MAX_MEMORY={flags.max_memory}",
+                "-e",
+                f"KLEE_QUERY_FORMAT={flags.query_format.value}",
+                "-e",
+                f"KLEE_EXTRA_FLAGS={flags.extra_flags}",
+                "-e",
+                f"KLEE_POSIX_ARGS={posix_args}",
+                IMAGE_TAG,
+                stdin=asyncio.subprocess.PIPE,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.PIPE,
+            )
+        except FileNotFoundError as e:
+            raise KleeRunnerError("docker CLI not found on PATH") from e
+
+        stdout, stderr = await proc.communicate(input=source.encode())
+
+        if proc.returncode != 0:
+            raise KleeRunnerError(
+                f"docker run exited with {proc.returncode}: "
+                f"{stderr.decode(errors='replace').strip()}"
+            )
+
         with tempfile.TemporaryDirectory(prefix="klee-job-") as tmpdir_str:
             tmpdir = Path(tmpdir_str)
-            (tmpdir / "input.c").write_text(source)
+            try:
+                with tarfile.open(fileobj=io.BytesIO(stdout), mode="r|") as tar:
+                    tar.extractall(tmpdir, filter="data")
+            except tarfile.TarError as e:
+                raise KleeRunnerError("runner produced no readable output archive") from e
             output_dir = tmpdir / "output"
-            posix_args = render_posix_args(flags.sym_files, flags.sym_args, flags.sym_stdin)
-
-            try:
-                proc = await asyncio.create_subprocess_exec(
-                    "docker",
-                    "run",
-                    "--rm",
-                    # Run as the host user so the bind-mounted /work is writable
-                    # regardless of the image's own uid (the runner must not assume
-                    # host uid == the container's klee user).
-                    "--user",
-                    f"{os.getuid()}:{os.getgid()}",
-                    "--name",
-                    _container_name(job_id),
-                    "-v",
-                    f"{tmpdir}:/work",
-                    "-e",
-                    f"KLEE_MAX_TIME={flags.max_time}",
-                    "-e",
-                    f"KLEE_MAX_MEMORY={flags.max_memory}",
-                    "-e",
-                    f"KLEE_QUERY_FORMAT={flags.query_format.value}",
-                    "-e",
-                    f"KLEE_EXTRA_FLAGS={flags.extra_flags}",
-                    "-e",
-                    f"KLEE_POSIX_ARGS={posix_args}",
-                    IMAGE_TAG,
-                    stdout=asyncio.subprocess.PIPE,
-                    stderr=asyncio.subprocess.PIPE,
-                )
-            except FileNotFoundError as e:
-                raise KleeRunnerError("docker CLI not found on PATH") from e
-
-            watcher: asyncio.Task[None] | None = None
-            if on_progress is not None:
-                watcher = asyncio.create_task(_watch_output_dir(output_dir, on_progress))
-
-            try:
-                _, stderr = await proc.communicate()
-            finally:
-                if watcher is not None:
-                    watcher.cancel()
-                    with suppress(asyncio.CancelledError):
-                        await watcher
-
-            if proc.returncode != 0:
-                raise KleeRunnerError(
-                    f"docker run exited with {proc.returncode}: "
-                    f"{stderr.decode(errors='replace').strip()}"
-                )
-
             if not output_dir.exists():
                 raise KleeRunnerError("runner produced no output directory")
-
             if on_parsing is not None:
                 await on_parsing()
             return await asyncio.to_thread(parse_output_dir, output_dir)
@@ -168,18 +163,3 @@ class DockerKleeRunner:
         )
         await proc.communicate()
         return proc.returncode == 0
-
-
-async def _watch_output_dir(output_dir: Path, on_progress: OnProgress) -> None:
-    """Poll the output directory and emit partial results as KLEE writes files.
-
-    Cancellation is the normal exit path: the caller cancels this task once docker
-    exits, then awaits the cancellation to guarantee no further on_progress call
-    races with the final set_result.
-    """
-    while True:
-        await asyncio.sleep(_WATCH_INTERVAL_SECONDS)
-        if not output_dir.exists():
-            continue
-        partial = await asyncio.to_thread(parse_output_dir, output_dir, include_test_cases=False)
-        await on_progress(partial)

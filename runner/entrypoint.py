@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
-"""Compile /work/input.c with clang, run KLEE on it, write outputs to /work/output/.
+"""Read C source from stdin, compile it with clang, run KLEE, and stream the
+output directory back as a tar on stdout.
+
+There is no shared filesystem with the host. The source arrives on stdin and the
+whole /work/output tree leaves as a tar on stdout, so the same image runs
+unchanged under any runtime without a bind mount (a microVM, a serverless
+sandbox), not only runc.
 
 Reads max_time and max_memory from KLEE_MAX_TIME and KLEE_MAX_MEMORY env vars.
 On compile failure, writes clang stderr to /work/output/compile_error.txt and
@@ -35,6 +41,7 @@ import shutil
 import signal
 import subprocess
 import sys
+import tarfile
 import time
 from pathlib import Path
 
@@ -123,10 +130,11 @@ def start_replay_phase(leftover: int) -> subprocess.Popen | None:
         ["timeout", "-k", "2", str(leftover), "bash", "-c", REPLAY_SCRIPT],
         env=env,
         start_new_session=True,
+        stdout=sys.stderr,
     )
 
 
-def main() -> int:
+def run_klee() -> int:
     start = time.monotonic()
     max_time = os.environ.get("KLEE_MAX_TIME", "60")
     max_memory = os.environ.get("KLEE_MAX_MEMORY", "512")
@@ -231,6 +239,17 @@ def main() -> int:
     # A bound-kill is a time-limit halt, not a runner crash: exit 0 so the backend
     # parses the result instead of raising on a non-zero docker exit.
     return 0 if (halted or timed_out) else proc.returncode
+
+
+def main() -> int:
+    INPUT.parent.mkdir(parents=True, exist_ok=True)
+    INPUT.write_bytes(sys.stdin.buffer.read())
+    code = run_klee()
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    with tarfile.open(fileobj=sys.stdout.buffer, mode="w|") as tar:
+        tar.add(OUTPUT_DIR, arcname="output")
+    sys.stdout.buffer.flush()
+    return code
 
 
 if __name__ == "__main__":
