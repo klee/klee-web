@@ -4,7 +4,7 @@
 
 ## Context
 
-The runner moved the job in and out through a bind mount. `docker run -v <tmpdir>:/work` wrote `input.c` into a shared host directory, and the host read `/work/output` back after the container exited. That works under runc, but Stage 3's sandbox hardening targets runtimes with no shared host directory. A Firecracker microVM exposes only virtio-net and virtio-block, not virtio-fs, and a serverless task has no host filesystem at all. The bind mount is the single thing tying the runner to the runc family.
+The runner moved the job in and out through a bind mount. `docker run -v <tmpdir>:/work` wrote `input.c` into a shared host directory, and the host read `/work/output` back after the container exited. That works under runc, but it is the single thing tying the runner to the runc family. A runtime with no shared host directory cannot use it: a microVM without virtio-fs, or a serverless task with no host filesystem at all. Keeping the runner independent of the runtime means dropping the mount.
 
 ## Decision
 

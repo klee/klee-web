@@ -55,5 +55,6 @@ Don't write ADRs for:
 | 0017 | Result cache keyed on the submission | Accepted |
 | 0018 | Minimal failsafes: at-most-once delivery with cancel recovery | Accepted |
 | 0019 | Allowlisted free-text KLEE flags | Accepted |
-| 0020 | Native per-path replay for program output | Accepted |
+| 0020 | Native per-path replay for program output | Accepted (mechanism superseded by 0022) |
 | 0021 | Stream transport: source on stdin, output as a tar on stdout | Accepted |
+| 0022 | Stage 3 sandbox: gVisor with a fork-per-ktest replay zygote | Accepted |
