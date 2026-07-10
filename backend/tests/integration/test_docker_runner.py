@@ -280,9 +280,9 @@ async def test_docker_runner_captures_per_path_output_for_posix_input():
         timeout=30,
     )
     # Replay re-runs each ktest natively, so each path shows what it printed. The
-    # symbolic byte arrives through POSIX stdin, which klee-replay reconstructs and a
-    # direct KTEST_FILE replay cannot. Membership, not equality, so an extra or an
-    # unreplayed path does not make this brittle.
+    # symbolic byte arrives through POSIX stdin, which the replay driver's setup
+    # (klee_init_env + replay_create_files) reconstructs per fork. Membership, not
+    # equality, so an extra or an unreplayed path does not make this brittle.
     outputs = {tc.program_output for tc in result.test_cases}
     assert "Hello World!" in outputs
     assert "Goodbye World!" in outputs
@@ -313,8 +313,8 @@ async def test_docker_runner_captures_per_path_output_for_make_symbolic():
         ),
         timeout=30,
     )
-    # The make_symbolic value is fed to the replay via KTEST_FILE + libkleeRuntest;
-    # with klee-replay on top this is mechanism C, covering both input channels.
+    # The make_symbolic value is consumed from the ktest by the replay driver's
+    # in-order reader; with the POSIX test above this covers both input channels.
     assert len(result.test_cases) == 3
     outputs = {tc.program_output for tc in result.test_cases}
     assert outputs == {"ZERO", "NEG", "POS"}

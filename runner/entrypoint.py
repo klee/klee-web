@@ -51,23 +51,10 @@ OUTPUT_DIR = Path("/work/output")
 KLEE_INCLUDE = "/home/klee/klee_src/include"
 GRACE_SECONDS = 10  # after forwarding the halt, SIGKILL KLEE if it has not flushed and exited
 HOST_TIMEOUT_MARGIN = 15  # bound KLEE at max_time + this, for when it overruns its own --max-time
-REPLAY_PER_TEST_TIMEOUT = 10  # KLEE_REPLAY_TIMEOUT: kills a single native infinite loop
+REPLAY_PER_TEST_TIMEOUT = 10  # KLEE_REPLAY_TIMEOUT: read by replay_driver.c, kills one hanging replay
 REPLAY_MIN_LEFTOVER = 1  # skip replay entirely below this many seconds of budget left
 REPLAY_NOSLEEP_SO = "/usr/local/lib/replay_nosleep.so"  # LD_PRELOAD: no-op sleeps in replay
-
-# Parallel per-ktest replay with an atomic write. Each replay captures its path's stdout
-# to a .part file, renamed to <stem>.stdout only after klee-replay returns, so a replay
-# killed by the outer timeout never promotes a truncated file (the parser ignores .part).
-# klee-replay's own notes go to stderr and are dropped. No `set -e`: a target that dies on
-# a signal makes klee-replay exit non-zero, but its captured stdout is still that path's
-# real output, so the mv keeps it.
-REPLAY_SCRIPT = r"""
-ls "$OUTPUT_DIR"/*.ktest 2>/dev/null | xargs -r -P "$(nproc)" -I{} bash -c '
-  kt="$1"; stem="${kt%.ktest}"
-  KTEST_FILE="$kt" klee-replay "$REPLAY_BIN" "$kt" > "$stem.stdout.part" 2>/dev/null
-  mv "$stem.stdout.part" "$stem.stdout"
-' _ {}
-"""
+ZYGOTE_OBJ_DIR = "/usr/local/lib/klee-replay-zygote"  # prebuilt by the Dockerfile
 
 
 def build_klee_command(
@@ -92,12 +79,13 @@ def build_klee_command(
     return cmd
 
 
-def resolve_runtest_lib() -> Path | None:
-    # libkleeRuntest lives under a build dir whose name is not guaranteed stable across
-    # image rebuilds, so glob for it rather than hardcoding the path.
+def resolve_klee_lib_dir() -> Path | None:
+    # libkleeBasic (the ktest reader the replay driver links) lives under a build dir
+    # whose name is not guaranteed stable across image rebuilds, so glob for it rather
+    # than hardcoding the path.
     for pattern in (
-        "/tmp/klee_build*/lib/libkleeRuntest.so*",
-        "/home/klee/klee_build/lib/libkleeRuntest.so*",
+        "/tmp/klee_build*/lib/libkleeBasic.a",
+        "/home/klee/klee_build/lib/libkleeBasic.a",
     ):
         matches = glob.glob(pattern)
         if matches:
@@ -107,12 +95,21 @@ def resolve_runtest_lib() -> Path | None:
 
 def start_replay_phase(leftover: int) -> subprocess.Popen | None:
     # Best-effort: any failure here leaves per-path output absent but never fails the job.
-    lib = resolve_runtest_lib()
+    lib = resolve_klee_lib_dir()
     if lib is None:
         return None
     replay_bin = Path("/work/replay.out")
+    # One compile-and-link: -Dmain renames main only in the user source being compiled,
+    # never in the prebuilt objects. Objects come before -l libraries so the linker can
+    # resolve their references. -lm restores replay for user programs calling libm.
     compiled = subprocess.run(
-        ["clang", str(INPUT), "-I", KLEE_INCLUDE, "-L", str(lib), "-lkleeRuntest",
+        ["clang", "-Dmain=__user_main", str(INPUT),
+         f"{ZYGOTE_OBJ_DIR}/replay_driver.o",
+         f"{ZYGOTE_OBJ_DIR}/file-creator.o",
+         f"{ZYGOTE_OBJ_DIR}/klee_init_env.o",
+         f"{ZYGOTE_OBJ_DIR}/fd_init.o",
+         "-I", KLEE_INCLUDE, "-L", str(lib),
+         "-lkleeBasic", "-lstdc++", "-lutil", "-lm",
          "-o", str(replay_bin)],
         capture_output=True,
     )
@@ -120,16 +117,15 @@ def start_replay_phase(leftover: int) -> subprocess.Popen | None:
         return None
     env = {
         **os.environ,
-        "OUTPUT_DIR": str(OUTPUT_DIR),
-        "REPLAY_BIN": str(replay_bin),
-        "LD_LIBRARY_PATH": str(lib),
         "LD_PRELOAD": REPLAY_NOSLEEP_SO,
         "KLEE_REPLAY_TIMEOUT": str(REPLAY_PER_TEST_TIMEOUT),
     }
-    # New session so a cancel can kill the whole replay group; timeout bounds the phase to
-    # the leftover budget, then SIGKILLs 2s later if a replay ignores the TERM.
+    # New session so a cancel can kill the whole replay group (the driver amplifies a
+    # lone TERM into a group-wide kill); timeout bounds the phase to the leftover budget,
+    # then SIGKILLs 2s later if needed. The driver takes the output directory and
+    # enumerates the ktests itself, so a path explosion never hits the argv size limit.
     return subprocess.Popen(
-        ["timeout", "-k", "2", str(leftover), "bash", "-c", REPLAY_SCRIPT],
+        ["timeout", "-k", "2", str(leftover), str(replay_bin), str(OUTPUT_DIR)],
         env=env,
         start_new_session=True,
         stdout=sys.stderr,
