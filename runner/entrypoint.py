@@ -78,6 +78,8 @@ def build_klee_command(
         "--libc=uclibc",
         "--posix-runtime",
         "--external-calls=concrete",
+        # KDAlloc aborts under gVisor and under THP-less guest kernels (ADR-0022).
+        "--kdalloc=false",
         f"--max-time={max_time}",
         f"--max-memory={max_memory}",
         f"--output-dir={OUTPUT_DIR}",
