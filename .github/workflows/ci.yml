@@ -82,6 +82,19 @@ jobs:
           enable-cache: true
       - run: uv sync
         working-directory: backend
+      - name: Install gVisor (runsc) and register the runtime
+        run: |
+          set -euo pipefail
+          GVISOR_RELEASE=20260706   # keep in sync with the runsc version installed on the deploy host
+          ARCH=$(uname -m)
+          URL="https://storage.googleapis.com/gvisor/releases/release/${GVISOR_RELEASE}/${ARCH}"
+          wget -q "${URL}/runsc" "${URL}/runsc.sha512" \
+               "${URL}/containerd-shim-runsc-v1" "${URL}/containerd-shim-runsc-v1.sha512"
+          sha512sum -c runsc.sha512 -c containerd-shim-runsc-v1.sha512
+          chmod a+rx runsc containerd-shim-runsc-v1
+          sudo mv runsc containerd-shim-runsc-v1 /usr/local/bin
+          sudo runsc install
+          sudo systemctl restart docker
       - name: Build runner image
         run: docker build -t klee-web-runner ./runner
       - name: Run docker integration tests
