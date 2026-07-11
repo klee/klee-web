@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     redis_url: str | None = None
     celery_broker_url: str | None = None
     klee_fake_runner: bool = False
+    klee_runtime: str | None = None
 
     @model_validator(mode="after")
     def _broker_requires_redis(self) -> Self:

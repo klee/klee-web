@@ -6,7 +6,7 @@ from fastapi import Depends
 from klee_web.config import get_settings
 from klee_web.jobs.cache import InMemoryResultCache, ResultCache
 from klee_web.jobs.dispatch import InProcessDispatcher, JobDispatcher
-from klee_web.jobs.runner import DockerKleeRunner, KleeRunner
+from klee_web.jobs.runner import DockerKleeRunner, KleeRunner, resolve_runtime
 from klee_web.jobs.store import InMemoryJobStore, JobStore
 
 
@@ -29,7 +29,7 @@ def get_runner() -> KleeRunner:
         from klee_web.jobs.runner import FakeKleeRunner
 
         return FakeKleeRunner(canned_result=get_sign_result())
-    return DockerKleeRunner()
+    return DockerKleeRunner(runtime=resolve_runtime(get_settings().klee_runtime))
 
 
 @lru_cache

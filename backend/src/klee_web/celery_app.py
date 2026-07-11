@@ -6,7 +6,7 @@ from celery import Celery
 from klee_web.config import Settings, get_settings
 from klee_web.jobs.cache import ResultCache
 from klee_web.jobs.run import run_job
-from klee_web.jobs.runner import DockerKleeRunner, KleeRunner
+from klee_web.jobs.runner import DockerKleeRunner, KleeRunner, resolve_runtime
 from klee_web.jobs.store import JobStore
 from klee_web.models import JobRequest
 
@@ -35,7 +35,7 @@ def _build_runner(settings: Settings) -> KleeRunner:
         from klee_web.jobs.runner import FakeKleeRunner
 
         return FakeKleeRunner(canned_result=get_sign_result())
-    return DockerKleeRunner()
+    return DockerKleeRunner(runtime=resolve_runtime(settings.klee_runtime))
 
 
 def _build_cache(settings: Settings) -> ResultCache:

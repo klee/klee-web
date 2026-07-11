@@ -18,6 +18,43 @@ def _container_name(job_id: UUID) -> str:
     return f"klee-job-{job_id}"
 
 
+def resolve_runtime(configured: str | None, kvm_present: bool | None = None) -> str | None:
+    """Map the KLEE_RUNTIME config value to a docker --runtime, or None for the default runc.
+
+    "auto" selects the gVisor platform: runsc-kvm where /dev/kvm exists, runsc otherwise.
+    kvm_present is injected in tests; production probes /dev/kvm when it is None.
+    """
+    if configured in (None, "", "runc"):
+        return None
+    if configured == "auto":
+        if kvm_present is None:
+            kvm_present = Path("/dev/kvm").exists()
+        return "runsc-kvm" if kvm_present else "runsc"
+    return configured
+
+
+def build_run_args(
+    job_id: UUID, flags: KleeFlags, posix_args: str, runtime: str | None
+) -> list[str]:
+    args = ["docker", "run", "--rm", "-i", "--network", "none", "--name", _container_name(job_id)]
+    if runtime is not None:
+        args += ["--runtime", runtime]
+    args += [
+        "-e",
+        f"KLEE_MAX_TIME={flags.max_time}",
+        "-e",
+        f"KLEE_MAX_MEMORY={flags.max_memory}",
+        "-e",
+        f"KLEE_QUERY_FORMAT={flags.query_format.value}",
+        "-e",
+        f"KLEE_EXTRA_FLAGS={flags.extra_flags}",
+        "-e",
+        f"KLEE_POSIX_ARGS={posix_args}",
+        IMAGE_TAG,
+    ]
+    return args
+
+
 OnProgress = Callable[[JobResult], Awaitable[None]]
 OnParsing = Callable[[], Awaitable[None]]
 
@@ -89,6 +126,9 @@ class DockerKleeRunner:
     a serverless sandbox), not only runc.
     """
 
+    def __init__(self, runtime: str | None = None) -> None:
+        self._runtime = runtime
+
     async def execute(
         self,
         source: str,
@@ -103,23 +143,7 @@ class DockerKleeRunner:
         posix_args = render_posix_args(flags.sym_files, flags.sym_args, flags.sym_stdin)
         try:
             proc = await asyncio.create_subprocess_exec(
-                "docker",
-                "run",
-                "--rm",
-                "-i",
-                "--name",
-                _container_name(job_id),
-                "-e",
-                f"KLEE_MAX_TIME={flags.max_time}",
-                "-e",
-                f"KLEE_MAX_MEMORY={flags.max_memory}",
-                "-e",
-                f"KLEE_QUERY_FORMAT={flags.query_format.value}",
-                "-e",
-                f"KLEE_EXTRA_FLAGS={flags.extra_flags}",
-                "-e",
-                f"KLEE_POSIX_ARGS={posix_args}",
-                IMAGE_TAG,
+                *build_run_args(job_id, flags, posix_args, self._runtime),
                 stdin=asyncio.subprocess.PIPE,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,

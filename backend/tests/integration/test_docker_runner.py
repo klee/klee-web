@@ -29,6 +29,29 @@ pytestmark = [
 ]
 
 
+def _runsc_registered() -> bool:
+    result = subprocess.run(
+        ["docker", "info", "--format", "{{json .Runtimes}}"],
+        capture_output=True,
+        text=True,
+    )
+    return result.returncode == 0 and "runsc" in result.stdout
+
+
+# Representative tests run under both runc (runtime=None) and gVisor. The runsc leg
+# skips where the runtime is not registered (CI today), so it exercises the sandbox
+# locally without failing the docker integration job.
+RUNTIMES = [
+    None,
+    pytest.param(
+        "runsc",
+        marks=pytest.mark.skipif(
+            not _runsc_registered(), reason="runsc runtime not registered with docker"
+        ),
+    ),
+]
+
+
 GET_SIGN_SOURCE = """\
 #include <klee/klee.h>
 
@@ -72,8 +95,9 @@ int main() {
 """
 
 
-async def test_docker_runner_runs_get_sign_end_to_end():
-    runner = DockerKleeRunner()
+@pytest.mark.parametrize("runtime", RUNTIMES)
+async def test_docker_runner_runs_get_sign_end_to_end(runtime):
+    runner = DockerKleeRunner(runtime=runtime)
     result = await asyncio.wait_for(
         runner.execute(GET_SIGN_SOURCE, KleeFlags(max_time=10, max_memory=256), uuid4()),
         timeout=30,
@@ -116,8 +140,9 @@ int main() {
 """
 
 
-async def test_docker_runner_makes_stdin_symbolic_with_sym_stdin():
-    runner = DockerKleeRunner()
+@pytest.mark.parametrize("runtime", RUNTIMES)
+async def test_docker_runner_makes_stdin_symbolic_with_sym_stdin(runtime):
+    runner = DockerKleeRunner(runtime=runtime)
     result = await asyncio.wait_for(
         runner.execute(
             SYM_STDIN_SOURCE,
@@ -132,8 +157,9 @@ async def test_docker_runner_makes_stdin_symbolic_with_sym_stdin():
     assert result.compile_error is None
 
 
-async def test_docker_runner_surfaces_compile_error_from_missing_include():
-    runner = DockerKleeRunner()
+@pytest.mark.parametrize("runtime", RUNTIMES)
+async def test_docker_runner_surfaces_compile_error_from_missing_include(runtime):
+    runner = DockerKleeRunner(runtime=runtime)
     result = await asyncio.wait_for(
         runner.execute(SOURCE_MISSING_INCLUDE, KleeFlags(max_time=10, max_memory=256), uuid4()),
         timeout=30,
@@ -303,8 +329,9 @@ int main() {
 """
 
 
-async def test_docker_runner_captures_per_path_output_for_make_symbolic():
-    runner = DockerKleeRunner()
+@pytest.mark.parametrize("runtime", RUNTIMES)
+async def test_docker_runner_captures_per_path_output_for_make_symbolic(runtime):
+    runner = DockerKleeRunner(runtime=runtime)
     result = await asyncio.wait_for(
         runner.execute(
             PER_PATH_MAKE_SYMBOLIC_SOURCE,
