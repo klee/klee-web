@@ -46,6 +46,7 @@ services:
     environment:
       REDIS_URL: redis://redis:6379/0
       CELERY_BROKER_URL: redis://redis:6379/1
+      KLEE_RUNTIME: ${KLEE_RUNTIME:-}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     depends_on:

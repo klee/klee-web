@@ -1,4 +1,4 @@
-.PHONY: up up-celery up-pool install runner deploy
+.PHONY: up up-celery up-pool install runner deploy deploy-gvisor deploy-kvm
 
 WORKERS ?= 2
 
@@ -33,9 +33,13 @@ up-pool: runner
 	(cd frontend && exec npm run dev) & \
 	wait
 
-deploy: runner
+deploy deploy-gvisor deploy-kvm: runner
 	@trap 'trap - EXIT INT TERM; docker compose down' EXIT INT TERM; \
 	docker compose up --build
+
+deploy-gvisor: KLEE_RUNTIME := runsc
+deploy-kvm:    KLEE_RUNTIME := runsc-kvm
+export KLEE_RUNTIME
 
 runner:
 	docker build -t klee-web-runner ./runner
