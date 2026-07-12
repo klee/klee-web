@@ -1,8 +1,18 @@
 services:
   redis:
     image: redis:7-alpine
+    command:
+      - "redis-server"
+      - "--appendonly"
+      - "yes"
+      - "--maxmemory"
+      - "${REDIS_MAXMEMORY:-256mb}"
+      - "--maxmemory-policy"
+      - "volatile-lru"
     ports:
       - "6379:6379"
+    volumes:
+      - redis-data:/data
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 2s
@@ -61,3 +71,6 @@ services:
     depends_on:
       api:
         condition: service_healthy
+
+volumes:
+  redis-data:
