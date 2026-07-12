@@ -9,46 +9,58 @@ The system takes C source from a browser, runs KLEE on it inside a Docker contai
 ```mermaid
 flowchart LR
     FE["Frontend<br/>React + Monaco"]
-    API["Backend API<br/>FastAPI"]
+    EDGE["nginx edge<br/>TLS, rate limit, one origin"]
+    API["Backend API<br/>FastAPI: jobs + health + admin"]
     DISP["JobDispatcher"]
     W["run_job<br/>(worker core)"]
     RUN["KleeRunner"]
-    C["KLEE container<br/>klee/klee:v3.2"]
+    C["KLEE container<br/>klee/klee:v3.2, gVisor runtime"]
     STORE[("JobStore")]
     CACHE[("ResultCache")]
+    USAGE[("UsageStatsStore")]
+    TEL["FleetTelemetry"]
     BROKER[("Broker<br/>Redis + Celery")]
 
-    FE -->|"POST /jobs, GET /jobs/:id"| API
+    FE -->|"HTTPS"| EDGE
+    EDGE -->|"/ and /api/*"| API
     API --> CACHE
     API --> STORE
+    API --> USAGE
     API --> DISP
+    API -->|"/admin/telemetry"| TEL
     DISP -->|"in-process"| W
     DISP -->|"split: enqueue"| BROKER
     BROKER --> W
+    TEL -.->|"inspect + LLEN"| BROKER
     W --> RUN
     RUN --> C
     W --> STORE
     W --> CACHE
+    W --> USAGE
 ```
 
-The API is thin: it validates the request, checks the cache, and hands the job to a dispatcher. The dispatcher decides where the real work runs. The runner is the only part that touches Docker and KLEE. The store and cache are shared state that both the API and the worker read and write.
+The API is thin: it validates the request, checks the cache, and hands the job to a dispatcher. The dispatcher decides where the real work runs. The runner is the only part that touches Docker and KLEE. The store, cache, and usage counters are shared state that both the API and the worker read and write. In Stage 3 the frontend and API sit behind an nginx edge (TLS, rate limiting, one origin), the runner container runs under a gVisor runtime, and the same FastAPI process also serves the health probes and the admin read endpoints (telemetry from Celery `inspect` plus a broker `LLEN`, usage from the counters).
 
 ## Components
 
-Each unit has one job, is reached through an interface, and can be swapped without the others knowing. The four marked `Protocol` are the swap seams (see below).
+Each unit has one job, is reached through an interface, and can be swapped without the others knowing. The units marked `Protocol` are the swap seams (see below).
 
 | Unit | What it does | How you use it | Depends on |
 |--|--|--|--|
 | **Frontend** (`frontend/`) | Monaco editor for C input, results panel. Submits a job and polls for the result (every 1s). | Open the app, type C, click Run. | The backend HTTP API only. |
-| **Backend API** (`api/jobs.py`) | Three endpoints: `POST /jobs`, `GET /jobs/{id}`, `POST /jobs/{id}/cancel`. Validates, reads the cache, dispatches. | The frontend calls it. Takes the seams via FastAPI `Depends`. | `JobStore`, `JobDispatcher`, `ResultCache`. |
+| **Backend API** (`api/jobs.py`) | Three endpoints: `POST /jobs`, `GET /jobs/{id}`, `POST /jobs/{id}/cancel`. Validates, reads the cache, dispatches. | The frontend calls it. Takes the seams via FastAPI `Depends`. | `JobStore`, `JobDispatcher`, `ResultCache`, `UsageStatsStore`. |
+| **Ops API** (`api/health.py`, `api/admin.py`) | Read-only ops surface: `GET /health` (liveness), `GET /ready` (readiness), `GET /admin/telemetry` (fleet), `GET /admin/stats` (usage). | nginx/compose poll health; the admin UI reads telemetry and stats. `/admin/*` is gated at the edge before any public deploy. | `Readiness`, `FleetTelemetry`, `UsageStatsStore`. |
 | **JobStore** (`jobs/store.py`, `Protocol`) | Holds each `Job` (status, result, cancel flag). | `create`, `get`, `set_result`, `request_cancel`, ... | Nothing (in-memory) or Redis. |
 | **KleeRunner** (`jobs/runner.py`, `Protocol`) | Runs one KLEE job in a container and parses the output into a `JobResult`. | `execute(source, flags, job_id, ...)`, `cancel(job_id)`. | Docker and the runner image. |
 | **ResultCache** (`jobs/cache.py`, `Protocol`) | Caches finished results keyed by a hash of the submission (source + flags). | `get(key)`, `set(key, result)`. | Nothing (in-memory) or Redis. |
 | **JobDispatcher** (`jobs/dispatch.py`, `Protocol`) | Decides where `run_job` runs: this process, or a Celery worker. | `dispatch(job_id, request)`. | The store/runner/cache (in-process) or the broker (Celery). |
-| **run_job** (`jobs/run.py`) | The FastAPI-free core of a run: drive status transitions, call the runner, watch for cancel, write the result, populate the cache. | Called by whichever dispatcher is wired. | `JobStore`, `KleeRunner`, `ResultCache`. |
-| **Runner image** (`runner/`) | The Docker image (based on `klee/klee:v3.2`) and `entrypoint.py`: compile C to LLVM bitcode with clang, run KLEE, capture output. | Built by `make runner`. One container per job. | KLEE, clang, Docker. |
+| **run_job** (`jobs/run.py`) | The FastAPI-free core of a run: drive status transitions, call the runner, watch for cancel, write the result, populate the cache, record the outcome. | Called by whichever dispatcher is wired. | `JobStore`, `KleeRunner`, `ResultCache`, `UsageStatsStore`. |
+| **Readiness** (`health.py`, `Protocol`) | Reports whether the service can serve (pings Redis in the split). | `is_ready()`. | Nothing (`AlwaysReady`) or Redis. |
+| **FleetTelemetry** (`jobs/telemetry.py`, `Protocol`) | Live fleet view: worker pool sizes, active/reserved jobs, queue depth (Celery `inspect` + a broker `LLEN`). | `snapshot()`. | Empty (`NullFleetTelemetry`, in-process) or Celery + the broker. |
+| **UsageStatsStore** (`jobs/usage.py`, `Protocol`) | Cumulative counters: outcomes per kind, cache hits, aggregate KLEE totals. | `record_execution`, `record_cache_hit`, `snapshot`. | Nothing (in-memory) or Redis `INCR`. |
+| **Runner image** (`runner/`) | The Docker image (based on `klee/klee:v3.2`) and `entrypoint.py`: compile C to LLVM bitcode with clang, run KLEE (`--kdalloc=false`), replay each test case through the fork-per-ktest zygote for per-path output, capture output (ADR-0020, ADR-0022). | Built by `make runner`. One container per job, launched under the `KLEE_RUNTIME` sandbox with `--network none`. | KLEE, clang, Docker. |
 | **Broker** (`celery_app.py`) | The queue between the API and the workers in the split deployment. Carries the `run_klee_job` task. | Only present when `CELERY_BROKER_URL` is set. | Redis. |
-| **Settings** (`config.py`) | Reads env vars and selects which implementation each seam gets. | `REDIS_URL`, `CELERY_BROKER_URL`, `KLEE_FAKE_RUNNER`. | pydantic-settings. |
+| **Settings** (`config.py`) | Reads env vars and selects which implementation each seam gets, plus the sandbox runtime. | `REDIS_URL`, `CELERY_BROKER_URL`, `KLEE_FAKE_RUNNER`, `KLEE_RUNTIME`. | pydantic-settings. |
 
 ## The request lifecycle
 
@@ -57,6 +69,7 @@ sequenceDiagram
     participant FE as Frontend
     participant API as Backend API
     participant CACHE as ResultCache
+    participant USAGE as UsageStatsStore
     participant DISP as Dispatcher
     participant W as run_job
     participant RUN as KleeRunner
@@ -66,6 +79,7 @@ sequenceDiagram
     API->>CACHE: get(cache_key)
     alt cache hit
         API->>STORE: create(done job, cached result)
+        API->>USAGE: record_cache_hit
         API-->>FE: 202 {job_id}
     else miss
         API->>STORE: create(pending job)
@@ -74,13 +88,14 @@ sequenceDiagram
         DISP->>W: run_job (in-process task or Celery task)
         W->>STORE: status = running
         W->>RUN: execute(source, flags)
-        RUN-->>W: JobResult (+ partials while running)
+        RUN-->>W: JobResult
         W->>STORE: set_result
         W->>CACHE: set (if run completed)
+        W->>USAGE: record_execution(outcome, test cases, instructions)
     end
     loop until done or failed
         FE->>API: GET /jobs/{id}
-        API-->>FE: Job (status, result)
+        API-->>FE: Job (status, result, outcome)
     end
 ```
 
@@ -93,7 +108,7 @@ Two paths worth calling out:
 
 ## The swap seams
 
-The four `Protocol`s are the additive spine. The endpoints take them via `Depends` and never learn which implementation is wired. `Settings` picks the implementation from one env var each, so moving between stages is a config change, not a rewrite. This is also what makes the portability of the system measurable: the redeploy delta is confined to these seams.
+The `Protocol`s are the additive spine. The endpoints take them via `Depends` and never learn which implementation is wired. `Settings` picks the implementation from one env var each, so moving between stages is a config change, not a rewrite. This is also what makes the portability of the system measurable: the redeploy delta is confined to these seams.
 
 | Seam | Default (Stage 1) | Split (Stage 2) | Selected by |
 |--|--|--|--|
@@ -101,18 +116,29 @@ The four `Protocol`s are the additive spine. The endpoints take them via `Depend
 | `ResultCache` | `InMemoryResultCache` | `RedisResultCache` | `REDIS_URL` |
 | `JobDispatcher` | `InProcessDispatcher` | `CeleryDispatcher` | `CELERY_BROKER_URL` |
 | `KleeRunner` | `DockerKleeRunner` | `DockerKleeRunner` (moves onto the worker) | `KLEE_FAKE_RUNNER` swaps in `FakeKleeRunner` for tests and CI |
+| `Readiness` | `AlwaysReady` | `RedisReadiness` | `REDIS_URL` |
+| `UsageStatsStore` | `InMemoryUsageStatsStore` | `RedisUsageStatsStore` | `REDIS_URL` |
+| `FleetTelemetry` | `NullFleetTelemetry` | `CeleryFleetTelemetry` | `CELERY_BROKER_URL` |
 
 With no env vars set, everything runs in one process against in-memory state. Set `REDIS_URL` and the store and cache move to Redis. Add `CELERY_BROKER_URL` and dispatch enqueues to a worker instead of running in-process. The validator in `config.py` enforces the one real constraint: a Celery worker cannot share the in-memory store, so `CELERY_BROKER_URL` requires `REDIS_URL`.
 
 ## Deployment shapes
 
-The same code runs in three local shapes, chosen by which seams are wired:
+The same code runs in several shapes, chosen by which seams are wired and whether the pieces run as host processes or as containers.
 
-- **`make up`**: one process. In-process dispatcher, in-memory store and cache, real Docker runner. This is Stage 1.
-- **`make up-celery`**: the API plus one Celery worker plus Redis (store, cache, and broker). The split from Stage 2.
+Host-process shapes (uvicorn, the worker, and Vite run directly on the host, with Redis in a container when needed):
+
+- **`make up`**: one process. In-process dispatcher, in-memory store and cache, real Docker runner, no Redis. This is Stage 1.
+- **`make up-celery`**: the API plus one Celery worker plus Redis (store on db 0, broker on db 1). The split from Stage 2.
 - **`make up-pool`**: the same, but `WORKERS` worker processes (default 2) against the shared broker.
 
-Stage 3 adds hardening around this without changing application code: an nginx edge for TLS and rate limiting, and gVisor as a Docker runtime flag swap (`--runtime=runsc`) for kernel-level sandboxing of the runner container. Both sit outside the seams above.
+Containerized stack (everything in Docker via `docker compose`, the Stage 3 production-like shape):
+
+- **`make deploy`**: the nginx edge, the API, a Celery worker, and Redis, all as containers, built and run together. nginx serves the built frontend and reverse-proxies `/api` (single origin, TLS), Redis persists (AOF on a named volume, bounded by `maxmemory`/`volatile-lru`), and the worker spawns sibling KLEE containers over the host Docker socket. The KLEE containers run under `runc`.
+- **`make deploy-gvisor`**: the same stack, but the KLEE containers run under gVisor's systrap platform (`KLEE_RUNTIME=runsc`).
+- **`make deploy-kvm`**: the same, on gVisor's faster KVM platform (`KLEE_RUNTIME=runsc-kvm`), where `/dev/kvm` exists.
+
+What Stage 3 adds around the seams: the nginx edge (TLS, rate limiting) and the gVisor runtime swap both sit outside the seams, the runtime being one `--runtime` flag with zero application change. Read-only observability (health and readiness probes, fleet telemetry, usage stats) adds the three seams noted above, and Redis gains persistence so job and stats state survive a restart. The admin UI and the edge auth on `/admin/*` are the remaining pieces.
 
 ## Where to look next
 

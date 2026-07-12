@@ -11,7 +11,7 @@ React + TypeScript single-page app. Editor for C source, an examples/history sid
 - `index.html`: entry HTML
 - `src/main.tsx`: React mount point, wraps `<App />` in `QueryClientProvider`
 - `src/App.tsx`: route index (`SettingsProvider` + `BrowserRouter` + `Route` at `/`)
-- `src/api/client.ts`: typed `apiClient` over openapi-fetch. Also exports `BASE_URL` for callers that need the backend origin outside the typed routes (e.g., the status bar pinging `/openapi.json`)
+- `src/api/client.ts`: typed `apiClient` over openapi-fetch. Also exports `BASE_URL` for callers that need the backend origin outside the typed routes (e.g., the status bar pinging `/health`)
 - `src/api/jobs.ts`: `submitJob`, `getJob`, `cancelJob`, the `JobNotFoundError` and `RequestFailedError` error types, and re-exported schema aliases
 - `src/types/api.ts`: types generated from the backend OpenAPI spec, committed
 - `src/hooks/useSubmitJob.ts`: React Query mutation over `submitJob`
@@ -24,7 +24,7 @@ React + TypeScript single-page app. Editor for C source, an examples/history sid
 - `src/lib/resultsError.ts`: `classifyResultsError`, maps a submit or poll error to `expired` / `submit-rejected` / `unreachable`
 - `src/lib/pagination.ts`: `clampPage`, parses a typed page number and clamps it into range
 - `src/lib/history.ts`: localStorage run-history store. `readHistory`, `addRun` (move-to-front dedup, capped at `MAX_ENTRIES = 50`), `setStatus`, `removeEntry`, `clearHistory`, plus the `HistoryEntry` and `HistoryStatus` types
-- `src/lib/historyView.ts`: pure view helpers for the history list. `historyLabel` (the `// title:` comment or first real code line), `relativeTime`, `statusGlyph`, and `deriveHistoryStatus`
+- `src/lib/historyView.ts`: pure view helpers for the history list. `historyLabel` (the `// title:` comment or first real code line), `relativeTime`, and `statusGlyph`. The terminal status a history entry shows now comes from `Job.outcome` (the backend's single classifier), not a client-side derivation
 - `src/lib/kleeCompletions.ts`: static C and KLEE-intrinsic completion data (`COMPLETIONS`) plus the Monaco `CompletionItemProvider` registration (`registerCCompletions`) behind the editor autocomplete
 - `src/lib/editorThemes.ts`: `defineKleeDarkTheme`, the `klee-dark` Monaco theme matching the app's slate surfaces
 - `src/data/examples.ts`: the bundled example programs (`EXAMPLES`, `DEFAULT_EXAMPLE`), each C source imported `?raw` from `data/examples/*.c` and labelled by its `// title:` comment
@@ -36,7 +36,7 @@ React + TypeScript single-page app. Editor for C source, an examples/history sid
 - `src/components/Sidebar.tsx`: left panel with Examples and History tabs. Examples opens a bundled program, History lists per-browser runs with restore / delete / clear and a status glyph. Collapsible
 - `src/components/Results.tsx`: dispatches first on submit or poll error kind (expired / submit-rejected / unreachable), then on job status (pending / running / parsing / done / compile-error / failed). Running surfaces a live stat grid. DoneView holds tab state (Test cases / Stats), a `HaltBadge`, per-variable type dropdowns, and page navigation over the test cases
 - `src/components/SettingsPopover.tsx`: panel of segmented controls over `useSettings()` (theme, accent colour, font size, results position). Pure presentational
-- `src/components/StatusBar.tsx`: bottom strip with backend-connected indicator (polls `/openapi.json` every 5 s via React Query, two-state connected/disconnected derived from `data` + `isError`), source byte count, and pinned KLEE version
+- `src/components/StatusBar.tsx`: bottom strip with backend-connected indicator (polls `/health` every 5 s via React Query, two-state connected/disconnected derived from `data` + `isError`), source byte count, and pinned KLEE version
 - `src/pages/HomePage.tsx`: composes Workspace at route `/`. Owns `source`, `flags`, `jobId`, and the errors-first toggle. Wires the sidebar via `useHistory` (load example, restore run, delete / clear), `handleRun` posts via `useSubmitJob` and adds a history entry, `handleCancel` goes via `useCancelJob`, and `useJob(jobId)` inside `Results` drives the polling
 
 ## Editor

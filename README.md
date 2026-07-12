@@ -10,9 +10,9 @@ KLEE today requires users to build LLVM, STP, and a chain of other dependencies 
 
 ## Current stage
 
-**Stage 3: hardening and portability.** Stages 1 and 2 are done: the synchronous monolith (React frontend, FastAPI backend, Docker runner), then the split (Celery workers, a Redis broker and result cache, a worker pool). Stage 3 adds the production edge (nginx, TLS, rate limiting), stronger sandboxing (gVisor), observability, and an admin UI. It also answers the thesis portability question: redeploy the stack across providers and count what has to change.
+**Stage 3: hardening and portability.** Stages 1 and 2 are done: the synchronous monolith (React frontend, FastAPI backend, Docker runner), then the split (Celery workers, a Redis broker and result cache, a worker pool). Stage 3 adds the production edge (nginx, TLS, rate limiting), stronger sandboxing (gVisor), observability, and an admin UI. The edge, the gVisor sandbox, and read-only observability (health probes, fleet telemetry, usage stats) are already in place. It also answers the thesis portability question: redeploy the stack across providers and count what has to change.
 
-The whole stack still runs locally. `make up` starts the in-process monolith with no Redis. `make up-celery` and `make up-pool` start the Celery split, described below.
+The whole stack still runs locally. `make up` starts the in-process monolith with no Redis. `make up-celery` and `make up-pool` start the Celery split. `make deploy` and its `deploy-gvisor` / `deploy-kvm` variants bring the whole stack up in containers behind the nginx edge. All are described below.
 
 ## Layout
 
@@ -23,7 +23,7 @@ klee-web/
 ├── runner/         Docker image and entrypoint that actually runs KLEE.
 ├── bot/            Label-gated issue agent automation (see below).
 ├── docs/           architecture.md overview, and the ADRs in docs/adr/.
-└── Makefile        make up runs backend + frontend, up-celery / up-pool add the split.
+└── Makefile        make up / up-celery / up-pool for host-process dev, make deploy* for the containerized stack.
 ```
 
 ## Running locally
@@ -69,7 +69,7 @@ warnings collapsibles), and compile-error states. Each test case's symbolic
 inputs can be re-decoded per variable through a type dropdown. A timeout reads
 as an amber `Stopped at max time` badge under the tab bar, a user cancel reads
 `Cancelled by user`, and a clean run reads `Explored all paths`. The bottom
-status bar shows a backend-connected indicator (5 s poll of `/openapi.json`),
+status bar shows a backend-connected indicator (5 s poll of `/health`),
 the current source byte count, and the pinned KLEE version. Theme (system /
 light / dark) and results-position (right / below) settings persist across
 reloads via the settings popover.
@@ -86,6 +86,23 @@ make up-pool       # same, but a pool of workers (WORKERS=2 by default)
 
 See [`backend/README.md`](backend/README.md) for what each target brings up, the
 worker-pool topology, and the manual smokes.
+
+### Stage 3: the containerized stack
+
+The targets above run the backend and frontend as host processes. To run the
+whole thing in containers behind the nginx edge, the production-like shape:
+
+```bash
+make deploy         # nginx + API + worker + Redis, all in Docker
+make deploy-gvisor  # same, KLEE jobs sandboxed under gVisor (systrap)
+make deploy-kvm     # same, gVisor on the KVM platform where /dev/kvm exists
+```
+
+nginx serves the built frontend and reverse-proxies `/api` over TLS on a single
+origin, Redis persists to a named volume (AOF, bounded by `maxmemory` with LRU
+eviction), and the worker spawns each KLEE job as a sibling container under the
+selected runtime (`runc`, `runsc`, or `runsc-kvm`). See
+[`docs/architecture.md`](docs/architecture.md) for all the deployment shapes.
 
 ## Regenerating the API contract
 

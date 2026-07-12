@@ -7,18 +7,23 @@ FastAPI service. Receives job submissions, runs KLEE through the runner, returns
 - `pyproject.toml`: dependencies and tooling config
 - `src/klee_web/main.py`: FastAPI app
 - `src/klee_web/api/jobs.py`: `POST /jobs`, `GET /jobs/{id}`, `POST /jobs/{id}/cancel`. POST returns `202` with a `job_id`, serving a cached result on a matching submission or else creating the job and handing it to the dispatcher. GET polls the store. Cancel flips the job terminal (ADR-0013)
-- `src/klee_web/models.py`: Pydantic schemas (`JobRequest`, `Job`, `JobCreated`, `JobResult`, `JobStatus`, `HaltReason`, `KleeFlags`, `QueryFormat`, `TestCase`, `SymbolicInput`)
+- `src/klee_web/api/health.py`: `GET /health` (liveness, always `up`) and `GET /ready` (readiness, pings Redis, `200` or `503`). Infra callers poll readiness, browser clients poll liveness
+- `src/klee_web/api/admin.py`: `GET /admin/telemetry` (fleet) and `GET /admin/stats` (usage). Read-only, gated at the nginx edge before any public deploy
+- `src/klee_web/health.py`: `Readiness` protocol + `AlwaysReady` and `RedisReadiness`, the readiness check behind `/ready`
+- `src/klee_web/models.py`: Pydantic schemas (`JobRequest`, `Job`, `JobCreated`, `JobResult`, `JobStatus`, `HaltReason`, `JobOutcome`, `KleeFlags`, `QueryFormat`, `TestCase`, `SymbolicInput`) plus the ops models (`Telemetry`, `WorkerTelemetry`, `QueueTelemetry`, `UsageStats`). `Job.outcome` is a computed field from `outcome_of_job` / `outcome_of_result`, the single terminal-outcome classifier the frontend also reads
 - `src/klee_web/symbolic_input.py`: the `SymStdin` / `SymFiles` / `SymArgs` sub-models carried on `KleeFlags`, plus `render_posix_args`, which renders them into the `--sym-*` POSIX-runtime args passed to the runner after the bitcode
 - `src/klee_web/flag_allowlist.py`: default-deny validation for the free-text `extra_flags` field, with per-flag boolean / bounded-integer / enum value policies (ADR-0019)
 - `src/klee_web/jobs/dispatch.py`: `JobDispatcher` protocol + `InProcessDispatcher` (Stage 1, `asyncio.create_task`) and `CeleryDispatcher` (Stage 2, enqueue). `deps.py` picks one on `CELERY_BROKER_URL` (ADR-0016)
-- `src/klee_web/jobs/run.py`: `run_job`, the shared job body both dispatchers reach: mark running, run KLEE, write the result, cache a completed run, and watch for a cancel
+- `src/klee_web/jobs/run.py`: `run_job`, the shared job body both dispatchers reach: mark running, run KLEE, write the result, cache a completed run, record the outcome, and watch for a cancel
 - `src/klee_web/jobs/store.py`: `JobStore` protocol + `InMemoryJobStore` and `RedisJobStore`. `set_partial_result` writes mid-flight progress, `set_result` flips status to `done`, `request_cancel` sets the cancel flag
-- `src/klee_web/jobs/runner.py`: `KleeRunner` protocol + `DockerKleeRunner` and `FakeKleeRunner`. Spawns a watcher coroutine that polls the output dir every second and emits partials via an `on_progress` callback
+- `src/klee_web/jobs/runner.py`: `KleeRunner` protocol + `DockerKleeRunner` and `FakeKleeRunner`. Stream-only transport: source in on the container's stdin, the whole output dir back as a tar on stdout, no bind mount (ADR-0021). Runtime is picked by `KLEE_RUNTIME` (`runc` default, `runsc`, `runsc-kvm`), and `--network none` is always set
 - `src/klee_web/jobs/cache.py`: `ResultCache` protocol + `InMemoryResultCache` and `RedisResultCache`, keyed on the submission (ADR-0017)
+- `src/klee_web/jobs/telemetry.py`: `FleetTelemetry` protocol + `NullFleetTelemetry` (in-process) and `CeleryFleetTelemetry` (worker pool sizes and active/reserved via Celery `inspect`, queue depth via a broker `LLEN`)
+- `src/klee_web/jobs/usage.py`: `UsageStatsStore` protocol + `InMemoryUsageStatsStore` and `RedisUsageStatsStore` (`INCR` counters for outcomes, cache hits, and aggregate KLEE totals), read at `/admin/stats`
 - `src/klee_web/celery_app.py`: the Celery app and the `run_klee_job` task the worker runs (Stage 2)
 - `src/klee_web/parsing/klee_output.py`: parse KLEE output dir into a `JobResult`. Detects halt reason from `HaltTimer invoked` in `messages.txt` (`max_time`) or `KLEE: done:` in `info` (`completed`)
 - `src/klee_web/parsing/ktest.py`: vendored KLEE ktest reader (NCSA, trimmed to `KTest.fromfile`)
-- `src/klee_web/deps.py`: dependency providers (`get_job_store`, `get_runner`, `get_cache`, `get_dispatcher`), each selecting the Stage 1 or Stage 2 implementation from config
+- `src/klee_web/deps.py`: dependency providers (`get_job_store`, `get_runner`, `get_cache`, `get_dispatcher`, `get_readiness`, `get_telemetry`, `get_usage_stats`), each selecting the Stage 1 or Stage 2 implementation from config
 - `tests/unit/`: handler, dispatch, run-job, store, cache, model, config, and parser tests (parser golden fixtures: `happy_path`, `compile_error`, `runtime_error`, `max_time`)
 - `tests/integration/`: real-Docker runner, Redis store and cache, and the Celery worker end to end
 
