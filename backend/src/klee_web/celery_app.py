@@ -10,9 +10,11 @@ from klee_web.jobs.runner import DockerKleeRunner, KleeRunner, resolve_runtime
 from klee_web.jobs.store import JobStore
 from klee_web.models import JobRequest
 
+TASK_QUEUE = "klee-jobs"
+
 app = Celery("klee_web", broker=get_settings().celery_broker_url)
 app.conf.update(
-    task_default_queue="klee-jobs",
+    task_default_queue=TASK_QUEUE,
     task_ignore_result=True,
     task_serializer="json",
     accept_content=["json"],

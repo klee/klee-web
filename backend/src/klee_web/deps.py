@@ -9,6 +9,7 @@ from klee_web.jobs.cache import InMemoryResultCache, ResultCache
 from klee_web.jobs.dispatch import InProcessDispatcher, JobDispatcher
 from klee_web.jobs.runner import DockerKleeRunner, KleeRunner, resolve_runtime
 from klee_web.jobs.store import InMemoryJobStore, JobStore
+from klee_web.jobs.telemetry import FleetTelemetry
 
 
 @lru_cache
@@ -55,6 +56,23 @@ def get_cache() -> ResultCache:
 
         return RedisResultCache(Redis.from_url(settings.redis_url))
     return InMemoryResultCache()
+
+
+@lru_cache
+def get_telemetry() -> FleetTelemetry:
+    settings = get_settings()
+    if settings.celery_broker_url:
+        from redis.asyncio import Redis
+
+        from klee_web.celery_app import TASK_QUEUE, app
+        from klee_web.jobs.telemetry import CeleryFleetTelemetry
+
+        # Queue depth is read from the broker, where the queue list lives, not the store Redis.
+        broker_redis = Redis.from_url(settings.celery_broker_url)
+        return CeleryFleetTelemetry(app, broker_redis, TASK_QUEUE)
+    from klee_web.jobs.telemetry import NullFleetTelemetry
+
+    return NullFleetTelemetry()
 
 
 def get_dispatcher(

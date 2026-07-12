@@ -92,3 +92,20 @@ class Job(BaseModel):
 
 class JobCreated(BaseModel):
     job_id: UUID
+
+
+class WorkerTelemetry(BaseModel):
+    name: str
+    concurrency: int  # pool size: jobs this Worker runs at once
+    active: int  # jobs running now
+    reserved: int  # jobs prefetched, not yet started
+
+
+class QueueTelemetry(BaseModel):
+    name: str
+    depth: int  # jobs waiting in the broker, not yet on a Worker
+
+
+class Telemetry(BaseModel):
+    workers: list[WorkerTelemetry]
+    queue: QueueTelemetry | None = None  # None: no queue (in-process) or unreadable
