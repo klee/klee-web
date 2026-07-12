@@ -14,7 +14,7 @@ export function StatusBar({ source }: StatusBarProps) {
   const { data, isError } = useQuery({
     queryKey: ["health"],
     queryFn: async () => {
-      const response = await fetch(`${BASE_URL}/openapi.json`);
+      const response = await fetch(`${BASE_URL}/health`);
       if (!response.ok) throw new Error(`status ${response.status}`);
       return true;
     },

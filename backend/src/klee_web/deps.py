@@ -4,6 +4,7 @@ from typing import Annotated
 from fastapi import Depends
 
 from klee_web.config import get_settings
+from klee_web.health import AlwaysReady, Readiness
 from klee_web.jobs.cache import InMemoryResultCache, ResultCache
 from klee_web.jobs.dispatch import InProcessDispatcher, JobDispatcher
 from klee_web.jobs.runner import DockerKleeRunner, KleeRunner, resolve_runtime
@@ -30,6 +31,18 @@ def get_runner() -> KleeRunner:
 
         return FakeKleeRunner(canned_result=get_sign_result())
     return DockerKleeRunner(runtime=resolve_runtime(get_settings().klee_runtime))
+
+
+@lru_cache
+def get_readiness() -> Readiness:
+    settings = get_settings()
+    if settings.redis_url:
+        from redis.asyncio import Redis
+
+        from klee_web.health import RedisReadiness
+
+        return RedisReadiness(Redis.from_url(settings.redis_url))
+    return AlwaysReady()
 
 
 @lru_cache

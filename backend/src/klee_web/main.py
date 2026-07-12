@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 
+from klee_web.api.health import router as health_router
 from klee_web.api.jobs import router as jobs_router
 
 app = FastAPI(
@@ -9,3 +10,4 @@ app = FastAPI(
 )
 
 app.include_router(jobs_router)
+app.include_router(health_router)
