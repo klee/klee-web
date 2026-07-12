@@ -4,15 +4,15 @@ from klee_web.jobs.cache import InMemoryResultCache, RedisResultCache
 from klee_web.jobs.dispatch import CeleryDispatcher, InProcessDispatcher
 
 
-def test_get_dispatcher_defaults_to_in_process(monkeypatch, store, runner, cache):
+def test_get_dispatcher_defaults_to_in_process(monkeypatch, store, runner, cache, usage):
     monkeypatch.setattr(
         "klee_web.deps.get_settings",
         lambda: Settings(redis_url=None, celery_broker_url=None),
     )
-    assert isinstance(get_dispatcher(store, runner, cache), InProcessDispatcher)
+    assert isinstance(get_dispatcher(store, runner, cache, usage), InProcessDispatcher)
 
 
-def test_get_dispatcher_selects_celery_when_broker_set(monkeypatch, store, runner, cache):
+def test_get_dispatcher_selects_celery_when_broker_set(monkeypatch, store, runner, cache, usage):
     monkeypatch.setattr(
         "klee_web.deps.get_settings",
         lambda: Settings(
@@ -20,7 +20,7 @@ def test_get_dispatcher_selects_celery_when_broker_set(monkeypatch, store, runne
             celery_broker_url="redis://localhost:6379/1",
         ),
     )
-    assert isinstance(get_dispatcher(store, runner, cache), CeleryDispatcher)
+    assert isinstance(get_dispatcher(store, runner, cache, usage), CeleryDispatcher)
 
 
 def test_get_cache_defaults_to_in_memory(monkeypatch):

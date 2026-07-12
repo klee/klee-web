@@ -6,6 +6,7 @@ from klee_web.jobs.cache import ResultCache
 from klee_web.jobs.run import run_job
 from klee_web.jobs.runner import KleeRunner
 from klee_web.jobs.store import JobStore
+from klee_web.jobs.usage import UsageStatsStore
 from klee_web.models import JobRequest
 
 
@@ -20,13 +21,18 @@ _background_tasks: set[asyncio.Task[None]] = set()
 
 
 class InProcessDispatcher:
-    def __init__(self, store: JobStore, runner: KleeRunner, cache: ResultCache) -> None:
+    def __init__(
+        self, store: JobStore, runner: KleeRunner, cache: ResultCache, usage: UsageStatsStore
+    ) -> None:
         self._store = store
         self._runner = runner
         self._cache = cache
+        self._usage = usage
 
     async def dispatch(self, job_id: UUID, request: JobRequest) -> None:
-        task = asyncio.create_task(run_job(job_id, request, self._store, self._runner, self._cache))
+        task = asyncio.create_task(
+            run_job(job_id, request, self._store, self._runner, self._cache, self._usage)
+        )
         _background_tasks.add(task)
         task.add_done_callback(_background_tasks.discard)
 

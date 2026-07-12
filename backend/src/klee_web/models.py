@@ -3,7 +3,7 @@ from enum import StrEnum
 from typing import Annotated
 from uuid import UUID, uuid4
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, computed_field, field_validator
 
 from .flag_allowlist import validate_extra_flags
 from .symbolic_input import SymArgs, SymFiles, SymStdin
@@ -21,6 +21,14 @@ class HaltReason(StrEnum):
     completed = "completed"
     max_time = "max_time"
     cancelled = "cancelled"
+
+
+class JobOutcome(StrEnum):
+    completed = "completed"
+    max_time = "max_time"
+    cancelled = "cancelled"
+    compile_error = "compile_error"
+    failed = "failed"
 
 
 class QueryFormat(StrEnum):
@@ -89,6 +97,29 @@ class Job(BaseModel):
     result: JobResult | None = None
     cancel_requested: bool = Field(default=False, exclude=True)
 
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def outcome(self) -> JobOutcome | None:
+        return outcome_of_job(self)
+
+
+def outcome_of_result(result: JobResult) -> JobOutcome:
+    if result.compile_error is not None:
+        return JobOutcome.compile_error
+    halt = result.halt_reason
+    if halt is None:
+        # done with no halt marker (an anomaly): default to completed, matching the frontend
+        return JobOutcome.completed
+    return JobOutcome(halt.value)  # completed / max_time / cancelled map through by value
+
+
+def outcome_of_job(job: Job) -> JobOutcome | None:
+    if job.status == JobStatus.failed:
+        return JobOutcome.failed
+    if job.status != JobStatus.done or job.result is None:
+        return None
+    return outcome_of_result(job.result)
+
 
 class JobCreated(BaseModel):
     job_id: UUID
@@ -109,3 +140,10 @@ class QueueTelemetry(BaseModel):
 class Telemetry(BaseModel):
     workers: list[WorkerTelemetry]
     queue: QueueTelemetry | None = None  # None: no queue (in-process) or unreadable
+
+
+class UsageStats(BaseModel):
+    outcomes: dict[JobOutcome, int]  # all JobOutcome keys present, 0 if unrecorded
+    cache_hits: int
+    test_cases_generated: int
+    instructions_executed: int

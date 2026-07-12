@@ -10,6 +10,7 @@ from klee_web.jobs.dispatch import InProcessDispatcher, JobDispatcher
 from klee_web.jobs.runner import DockerKleeRunner, KleeRunner, resolve_runtime
 from klee_web.jobs.store import InMemoryJobStore, JobStore
 from klee_web.jobs.telemetry import FleetTelemetry
+from klee_web.jobs.usage import InMemoryUsageStatsStore, UsageStatsStore
 
 
 @lru_cache
@@ -75,13 +76,26 @@ def get_telemetry() -> FleetTelemetry:
     return NullFleetTelemetry()
 
 
+@lru_cache
+def get_usage_stats() -> UsageStatsStore:
+    settings = get_settings()
+    if settings.redis_url:
+        from redis.asyncio import Redis
+
+        from klee_web.jobs.usage import RedisUsageStatsStore
+
+        return RedisUsageStatsStore(Redis.from_url(settings.redis_url))
+    return InMemoryUsageStatsStore()
+
+
 def get_dispatcher(
     store: Annotated[JobStore, Depends(get_job_store)],
     runner: Annotated[KleeRunner, Depends(get_runner)],
     cache: Annotated[ResultCache, Depends(get_cache)],
+    usage: Annotated[UsageStatsStore, Depends(get_usage_stats)],
 ) -> JobDispatcher:
     if get_settings().celery_broker_url:
         from klee_web.jobs.dispatch import CeleryDispatcher
 
         return CeleryDispatcher()
-    return InProcessDispatcher(store, runner, cache)
+    return InProcessDispatcher(store, runner, cache, usage)

@@ -328,3 +328,20 @@ async def test_post_jobs_second_identical_submission_hits_cache(client, app, wai
     await client.post("/jobs", json=payload)
     await wait_for_jobs()
     assert len(runner.calls) == 1  # second identical submission served from cache, no re-run
+
+
+async def test_post_jobs_cache_hit_records_a_cache_hit(client, cache, usage, wait_for_jobs):
+    payload = {"source": "int main(){}"}
+    cached = JobResult(
+        test_cases=[],
+        messages="from cache",
+        warnings="",
+        stats={},
+        halt_reason=HaltReason.completed,
+    )
+    await cache.set(cache_key(JobRequest(source=payload["source"])), cached)
+
+    await client.post("/jobs", json=payload)
+    await wait_for_jobs()
+
+    assert (await usage.snapshot()).cache_hits == 1

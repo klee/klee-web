@@ -4,9 +4,11 @@ from uuid import UUID
 from klee_web.jobs.cache import InMemoryResultCache, cache_key
 from klee_web.jobs.run import run_job
 from klee_web.jobs.runner import FakeKleeRunner, KleeRunnerError
+from klee_web.jobs.usage import InMemoryUsageStatsStore
 from klee_web.models import (
     HaltReason,
     Job,
+    JobOutcome,
     JobRequest,
     JobResult,
     JobStatus,
@@ -256,3 +258,48 @@ async def test_run_job_does_not_cache_cancelled_job(store, runner):
     await run_job(job.id, request, store, runner, cache)
 
     assert await cache.get(cache_key(request)) is None
+
+
+async def test_run_job_records_completed_outcome_and_totals(store):
+    job = await _seed_job(store)
+    result = JobResult(
+        test_cases=[TestCase(name="t1", inputs=[]), TestCase(name="t2", inputs=[])],
+        messages="",
+        warnings="",
+        stats={"Instructions": 250},
+        halt_reason=HaltReason.completed,
+    )
+    runner = FakeKleeRunner(canned_result=result)
+    usage = InMemoryUsageStatsStore()
+
+    await run_job(job.id, JobRequest(source=SOURCE), store, runner, usage=usage)
+
+    snap = await usage.snapshot()
+    assert snap.outcomes[JobOutcome.completed] == 1
+    assert snap.test_cases_generated == 2
+    assert snap.instructions_executed == 250
+
+
+async def test_run_job_records_failed_outcome_with_zero_totals(store):
+    job = await _seed_job(store)
+    runner = FakeKleeRunner(raise_exc=KleeRunnerError("KLEE crashed"))
+    usage = InMemoryUsageStatsStore()
+
+    await run_job(job.id, JobRequest(source=SOURCE), store, runner, usage=usage)
+
+    snap = await usage.snapshot()
+    assert snap.outcomes[JobOutcome.failed] == 1
+    assert snap.test_cases_generated == 0
+    assert snap.instructions_executed == 0
+
+
+async def test_run_job_records_cancelled_outcome_when_cancelled_before_start(store, runner):
+    job = await _seed_job(store)
+    await store.request_cancel(job.id)
+    usage = InMemoryUsageStatsStore()
+
+    await run_job(job.id, JobRequest(source=SOURCE), store, runner, usage=usage)
+
+    snap = await usage.snapshot()
+    assert snap.outcomes[JobOutcome.cancelled] == 1
+    assert runner.calls == []

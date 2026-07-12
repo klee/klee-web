@@ -5,7 +5,15 @@ from uuid import UUID
 from klee_web.jobs.cache import ResultCache, cache_key
 from klee_web.jobs.runner import KleeRunner, KleeRunnerError
 from klee_web.jobs.store import JobStore
-from klee_web.models import HaltReason, JobRequest, JobResult, JobStatus
+from klee_web.jobs.usage import UsageStatsStore
+from klee_web.models import (
+    HaltReason,
+    JobOutcome,
+    JobRequest,
+    JobResult,
+    JobStatus,
+    outcome_of_result,
+)
 
 _CANCEL_POLL_SECONDS = 1.0
 
@@ -27,10 +35,21 @@ async def run_job(
     store: JobStore,
     runner: KleeRunner,
     cache: ResultCache | None = None,
+    usage: UsageStatsStore | None = None,
 ) -> None:
+    async def record_outcome(outcome: JobOutcome, result: JobResult | None = None) -> None:
+        if usage is None:
+            return
+        await usage.record_execution(
+            outcome,
+            test_cases=len(result.test_cases) if result is not None else 0,
+            instructions=result.stats.get("Instructions", 0) if result is not None else 0,
+        )
+
     job = await store.get(job_id)
     if job is not None and job.cancel_requested:
         await store.set_result(job_id, _cancelled_result())
+        await record_outcome(JobOutcome.cancelled)
         return
 
     await store.update_status(job_id, JobStatus.running)
@@ -63,8 +82,10 @@ async def run_job(
         await store.set_result(job_id, result)
         if cache is not None and result.halt_reason == HaltReason.completed:
             await cache.set(cache_key(request), result)
+        await record_outcome(outcome_of_result(result), result)
     except KleeRunnerError:
         await store.update_status(job_id, JobStatus.failed)
+        await record_outcome(JobOutcome.failed)
     finally:
         watcher.cancel()
         with contextlib.suppress(asyncio.CancelledError):

@@ -3,10 +3,11 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from klee_web.deps import get_cache, get_dispatcher, get_job_store
+from klee_web.deps import get_cache, get_dispatcher, get_job_store, get_usage_stats
 from klee_web.jobs.cache import ResultCache, cache_key
 from klee_web.jobs.dispatch import JobDispatcher
 from klee_web.jobs.store import JobStore
+from klee_web.jobs.usage import UsageStatsStore
 from klee_web.models import HaltReason, Job, JobCreated, JobRequest, JobResult, JobStatus
 
 router = APIRouter()
@@ -18,11 +19,13 @@ async def create_job(
     store: Annotated[JobStore, Depends(get_job_store)],
     dispatcher: Annotated[JobDispatcher, Depends(get_dispatcher)],
     cache: Annotated[ResultCache, Depends(get_cache)],
+    usage: Annotated[UsageStatsStore, Depends(get_usage_stats)],
 ) -> JobCreated:
     cached = await cache.get(cache_key(request))
     if cached is not None:
         job = Job(status=JobStatus.done, result=cached)
         await store.create(job)
+        await usage.record_cache_hit()
         return JobCreated(job_id=job.id)
     job = Job()
     await store.create(job)
