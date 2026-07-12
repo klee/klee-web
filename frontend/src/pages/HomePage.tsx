@@ -13,7 +13,6 @@ import { useHistory } from "../hooks/useHistory";
 import { useJob } from "../hooks/useJob";
 import { useSubmitJob } from "../hooks/useSubmitJob";
 import type { HistoryEntry } from "../lib/history";
-import { deriveHistoryStatus } from "../lib/historyView";
 
 const DEFAULT_FLAGS: KleeFlags = {
   max_time: 60,
@@ -55,7 +54,7 @@ export function HomePage() {
   // glyph. Derived during render so the effect depends on the derived value and
   // fires once when the job reaches a terminal state, not every render (which would
   // loop under StrictMode).
-  const terminalStatus = job.data ? deriveHistoryStatus(job.data) : null;
+  const terminalStatus = job.data?.outcome ?? null;
   useEffect(() => {
     if (jobId && terminalStatus) setStatus(jobId, terminalStatus);
   }, [jobId, terminalStatus, setStatus]);

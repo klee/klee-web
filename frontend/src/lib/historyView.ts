@@ -1,4 +1,3 @@
-import type { Job } from "../api/jobs";
 import type { HistoryStatus } from "./history";
 
 const MAX_LABEL = 48;
@@ -60,13 +59,4 @@ export function statusGlyph(status: HistoryStatus): { glyph: string; label: stri
     case "compile_error":
       return { glyph: "!", label: "Compile error" };
   }
-}
-
-export function deriveHistoryStatus(job: Job): HistoryStatus | null {
-  if (job.status === "failed") return "failed";
-  if (job.status !== "done") return null;
-  if (job.result?.compile_error) return "compile_error";
-  const halt = job.result?.halt_reason;
-  if (halt === "max_time" || halt === "cancelled" || halt === "completed") return halt;
-  return "completed";
 }

@@ -1,6 +1,5 @@
 import { describe, expect, test } from "vitest";
-import type { Job } from "../api/jobs";
-import { deriveHistoryStatus, historyLabel, relativeTime, statusGlyph } from "./historyView";
+import { historyLabel, relativeTime, statusGlyph } from "./historyView";
 
 describe("historyLabel", () => {
   test("uses a // title: comment when present", () => {
@@ -48,51 +47,5 @@ describe("statusGlyph", () => {
   test("maps each status to a glyph and label", () => {
     expect(statusGlyph("completed").glyph).toBe("✓");
     expect(statusGlyph("failed").label).toBe("Failed");
-  });
-});
-
-describe("deriveHistoryStatus", () => {
-  const base: Job = {
-    id: "j",
-    status: "done",
-    created_at: "2026-07-04T00:00:00Z",
-    result: null,
-  };
-  test("failed job maps to failed", () => {
-    expect(deriveHistoryStatus({ ...base, status: "failed" })).toBe("failed");
-  });
-  test("non-terminal job maps to null", () => {
-    expect(deriveHistoryStatus({ ...base, status: "running" })).toBeNull();
-  });
-  test("compile error takes precedence", () => {
-    const job = {
-      ...base,
-      result: {
-        test_cases: [],
-        messages: "",
-        warnings: "",
-        stats: {},
-        program_output: "",
-        compile_error: "boom",
-      },
-    } as Job;
-    expect(deriveHistoryStatus(job)).toBe("compile_error");
-  });
-  test("done maps to its halt reason, defaulting to completed", () => {
-    const mk = (halt: string | undefined) =>
-      ({
-        ...base,
-        result: {
-          test_cases: [],
-          messages: "",
-          warnings: "",
-          stats: {},
-          program_output: "",
-          halt_reason: halt,
-        },
-      }) as Job;
-    expect(deriveHistoryStatus(mk("max_time"))).toBe("max_time");
-    expect(deriveHistoryStatus(mk("cancelled"))).toBe("cancelled");
-    expect(deriveHistoryStatus(mk(undefined))).toBe("completed");
   });
 });

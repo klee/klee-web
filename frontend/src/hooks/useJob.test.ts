@@ -36,6 +36,7 @@ describe("jobShouldRetry", () => {
 describe("isAwaitingCancelPartials", () => {
   const cancelledEmpty: Job = {
     status: "done",
+    outcome: "cancelled",
     result: {
       test_cases: [],
       messages: "",
@@ -69,7 +70,9 @@ describe("isAwaitingCancelPartials", () => {
   });
 
   test("false while still running", () => {
-    expect(isAwaitingCancelPartials({ status: "running", result: null })).toBe(false);
+    expect(isAwaitingCancelPartials({ status: "running", outcome: null, result: null })).toBe(
+      false,
+    );
   });
 
   test("false for no job", () => {

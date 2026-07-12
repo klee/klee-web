@@ -55,6 +55,74 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/health": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Health */
+        get: operations["health_health_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/ready": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Ready */
+        get: operations["ready_ready_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/telemetry": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Telemetry */
+        get: operations["telemetry_admin_telemetry_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/stats": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Stats */
+        get: operations["stats_admin_stats_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -84,6 +152,7 @@ export interface components {
              */
             created_at?: string;
             result?: components["schemas"]["JobResult"] | null;
+            readonly outcome: components["schemas"]["JobOutcome"] | null;
         };
         /** JobCreated */
         JobCreated: {
@@ -93,6 +162,11 @@ export interface components {
              */
             job_id: string;
         };
+        /**
+         * JobOutcome
+         * @enum {string}
+         */
+        JobOutcome: "completed" | "max_time" | "cancelled" | "compile_error" | "failed";
         /** JobRequest */
         JobRequest: {
             /** Source */
@@ -153,6 +227,13 @@ export interface components {
          * @enum {string}
          */
         QueryFormat: "none" | "kquery";
+        /** QueueTelemetry */
+        QueueTelemetry: {
+            /** Name */
+            name: string;
+            /** Depth */
+            depth: number;
+        };
         /** SymArgs */
         SymArgs: {
             /** Count Min */
@@ -183,6 +264,12 @@ export interface components {
             /** Bytes Hex */
             bytes_hex: string;
         };
+        /** Telemetry */
+        Telemetry: {
+            /** Workers */
+            workers: components["schemas"]["WorkerTelemetry"][];
+            queue?: components["schemas"]["QueueTelemetry"] | null;
+        };
         /** TestCase */
         TestCase: {
             /** Name */
@@ -196,6 +283,19 @@ export interface components {
             /** Program Output */
             program_output?: string | null;
         };
+        /** UsageStats */
+        UsageStats: {
+            /** Outcomes */
+            outcomes: {
+                [key: string]: number;
+            };
+            /** Cache Hits */
+            cache_hits: number;
+            /** Test Cases Generated */
+            test_cases_generated: number;
+            /** Instructions Executed */
+            instructions_executed: number;
+        };
         /** ValidationError */
         ValidationError: {
             /** Location */
@@ -208,6 +308,17 @@ export interface components {
             input?: unknown;
             /** Context */
             ctx?: Record<string, never>;
+        };
+        /** WorkerTelemetry */
+        WorkerTelemetry: {
+            /** Name */
+            name: string;
+            /** Concurrency */
+            concurrency: number;
+            /** Active */
+            active: number;
+            /** Reserved */
+            reserved: number;
         };
     };
     responses: never;
@@ -309,6 +420,88 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    health_health_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: string;
+                    };
+                };
+            };
+        };
+    };
+    ready_ready_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+        };
+    };
+    telemetry_admin_telemetry_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Telemetry"];
+                };
+            };
+        };
+    };
+    stats_admin_stats_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UsageStats"];
                 };
             };
         };
