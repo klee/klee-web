@@ -8,7 +8,7 @@ FastAPI service. Receives job submissions, runs KLEE through the runner, returns
 - `src/klee_web/main.py`: FastAPI app
 - `src/klee_web/api/jobs.py`: `POST /jobs`, `GET /jobs/{id}`, `POST /jobs/{id}/cancel`. POST returns `202` with a `job_id`, serving a cached result on a matching submission or else creating the job and handing it to the dispatcher. GET polls the store. Cancel flips the job terminal (ADR-0013)
 - `src/klee_web/api/health.py`: `GET /health` (liveness, always `up`) and `GET /ready` (readiness, pings Redis, `200` or `503`). Infra callers poll readiness, browser clients poll liveness
-- `src/klee_web/api/admin.py`: `GET /admin/telemetry` (fleet) and `GET /admin/stats` (usage). Read-only, gated at the nginx edge before any public deploy
+- `src/klee_web/api/admin.py`: `GET /admin/telemetry` (fleet), `GET /admin/stats` (usage), and `PATCH /admin/workers/{name}/capacity` (live per-worker maximum). Gated at the nginx edge before any public deploy
 - `src/klee_web/health.py`: `Readiness` protocol + `AlwaysReady` and `RedisReadiness`, the readiness check behind `/ready`
 - `src/klee_web/models.py`: Pydantic schemas (`JobRequest`, `Job`, `JobCreated`, `JobResult`, `JobStatus`, `HaltReason`, `JobOutcome`, `KleeFlags`, `QueryFormat`, `TestCase`, `SymbolicInput`) plus the ops models (`Telemetry`, `WorkerTelemetry`, `QueueTelemetry`, `UsageStats`). `Job.outcome` is a computed field from `outcome_of_job` / `outcome_of_result`, the single terminal-outcome classifier the frontend also reads
 - `src/klee_web/symbolic_input.py`: the `SymStdin` / `SymFiles` / `SymArgs` sub-models carried on `KleeFlags`, plus `render_posix_args`, which renders them into the `--sym-*` POSIX-runtime args passed to the runner after the bitcode
@@ -18,7 +18,7 @@ FastAPI service. Receives job submissions, runs KLEE through the runner, returns
 - `src/klee_web/jobs/store.py`: `JobStore` protocol + `InMemoryJobStore` and `RedisJobStore`. `set_partial_result` writes mid-flight progress, `set_result` flips status to `done`, `request_cancel` sets the cancel flag
 - `src/klee_web/jobs/runner.py`: `KleeRunner` protocol + `DockerKleeRunner` and `FakeKleeRunner`. Stream-only transport: source in on the container's stdin, the whole output dir back as a tar on stdout, no bind mount (ADR-0021). Runtime is picked by `KLEE_RUNTIME` (`runc` default, `runsc`, `runsc-kvm`), and `--network none` is always set
 - `src/klee_web/jobs/cache.py`: `ResultCache` protocol + `InMemoryResultCache` and `RedisResultCache`, keyed on the submission (ADR-0017)
-- `src/klee_web/jobs/telemetry.py`: `FleetTelemetry` protocol + `NullFleetTelemetry` (in-process) and `CeleryFleetTelemetry` (worker pool sizes and active/reserved via Celery `inspect`, queue depth via a broker `LLEN`)
+- `src/klee_web/jobs/telemetry.py`: `FleetTelemetry` for worker pool sizes, active/reserved jobs, and queue depth, plus `FleetControl` for changing a worker's autoscaler maximum through Celery remote control
 - `src/klee_web/jobs/usage.py`: `UsageStatsStore` protocol + `InMemoryUsageStatsStore` and `RedisUsageStatsStore` (`INCR` counters for outcomes, cache hits, and aggregate KLEE totals), read at `/admin/stats`
 - `src/klee_web/celery_app.py`: the Celery app and the `run_klee_job` task the worker runs (Stage 2)
 - `src/klee_web/parsing/klee_output.py`: parse KLEE output dir into a `JobResult`. Detects halt reason from `HaltTimer invoked` in `messages.txt` (`max_time`) or `KLEE: done:` in `info` (`completed`)
@@ -39,7 +39,7 @@ By default the backend runs each job in-process, with no Redis and no worker. Th
 make up-celery
 ```
 
-It brings up Redis through `docker compose`, then runs the API, a Celery worker (`-Q klee-jobs --concurrency=2`), and the frontend as host processes, with `REDIS_URL` (the store, db 0) and `CELERY_BROKER_URL` (the broker, db 1) set. With both set the API enqueues jobs instead of running them inline, and the worker runs KLEE and writes results to the shared `RedisJobStore`. Ctrl+C brings Redis back down.
+It brings up Redis through `docker compose`, then runs the API, a Celery worker (`-Q klee-jobs --autoscale=4,1`), and the frontend as host processes, with `REDIS_URL` (the store, db 0) and `CELERY_BROKER_URL` (the broker, db 1) set. With both set the API enqueues jobs instead of running them inline, and the worker runs KLEE and writes results to the shared `RedisJobStore`. Override the worker maximum with `make up-celery WORKER_CONCURRENCY_MAX=8`. Ctrl+C brings Redis back down.
 
 ### Manual worker smoke
 
@@ -69,7 +69,7 @@ A dead worker's job is lost, not redelivered (ADR-0018, at-most-once). Celery ac
 make up-pool
 ```
 
-Same stack as `make up-celery`, with the single worker replaced by `WORKERS` host processes (default 2), each at `--concurrency=1` and a distinct Celery node name so they are tellable apart in the logs. Override the count with `make up-pool WORKERS=4`. The broker spreads jobs across the pool: submit several at once and each worker claims a distinct task.
+Same stack as `make up-celery`, with the single worker replaced by `WORKERS` host processes (default 2), each autoscaling from one process to `WORKER_CONCURRENCY_MAX` (default 4) and using a distinct Celery node name so they are tellable apart in the logs. Override either axis with `make up-pool WORKERS=4 WORKER_CONCURRENCY_MAX=2`. The broker spreads jobs across the pool: submit several at once and each worker claims a distinct task.
 
 The pool is about throughput, not failover. It does not make an in-flight job survive its worker's death: a dying worker loses only the one job it had acked, while the jobs still queued in the broker are untouched and the live peers keep draining them. That one lost job is recovered by cancel (above), not by a peer. Cancel routes through the shared store, so it reaches the right job whichever worker held it.
 

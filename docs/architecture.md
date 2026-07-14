@@ -19,6 +19,7 @@ flowchart LR
     CACHE[("ResultCache")]
     USAGE[("UsageStatsStore")]
     TEL["FleetTelemetry"]
+    CTRL["FleetControl"]
     BROKER[("Broker<br/>Redis + Celery")]
 
     FE -->|"HTTPS"| EDGE
@@ -28,10 +29,12 @@ flowchart LR
     API --> USAGE
     API --> DISP
     API -->|"/admin/telemetry"| TEL
+    API -->|"/admin/workers/.../capacity"| CTRL
     DISP -->|"in-process"| W
     DISP -->|"split: enqueue"| BROKER
     BROKER --> W
     TEL -.->|"inspect + LLEN"| BROKER
+    CTRL -.->|"autoscale"| BROKER
     W --> RUN
     RUN --> C
     W --> STORE
@@ -39,7 +42,7 @@ flowchart LR
     W --> USAGE
 ```
 
-The API is thin: it validates the request, checks the cache, and hands the job to a dispatcher. The dispatcher decides where the real work runs. The runner is the only part that touches Docker and KLEE. The store, cache, and usage counters are shared state that both the API and the worker read and write. In Stage 3 the frontend and API sit behind an nginx edge (TLS, rate limiting, one origin), the runner container runs under a gVisor runtime, and the same FastAPI process also serves the health probes and the admin read endpoints (telemetry from Celery `inspect` plus a broker `LLEN`, usage from the counters).
+The API is thin: it validates the request, checks the cache, and hands the job to a dispatcher. The dispatcher decides where the real work runs. The runner is the only part that touches Docker and KLEE. The store, cache, and usage counters are shared state that both the API and the worker read and write. In Stage 3 the frontend and API sit behind an nginx edge (TLS, rate limiting, one origin), the runner container runs under a gVisor runtime, and the same FastAPI process also serves the health probes and admin operations (telemetry from Celery `inspect` plus a broker `LLEN`, usage from the counters, and worker capacity through Celery remote control).
 
 ## Components
 
@@ -49,7 +52,7 @@ Each unit has one job, is reached through an interface, and can be swapped witho
 |--|--|--|--|
 | **Frontend** (`frontend/`) | Monaco editor for C input, results panel. Submits a job and polls for the result (every 1s). | Open the app, type C, click Run. | The backend HTTP API only. |
 | **Backend API** (`api/jobs.py`) | Three endpoints: `POST /jobs`, `GET /jobs/{id}`, `POST /jobs/{id}/cancel`. Validates, reads the cache, dispatches. | The frontend calls it. Takes the seams via FastAPI `Depends`. | `JobStore`, `JobDispatcher`, `ResultCache`, `UsageStatsStore`. |
-| **Ops API** (`api/health.py`, `api/admin.py`) | Read-only ops surface: `GET /health` (liveness), `GET /ready` (readiness), `GET /admin/telemetry` (fleet), `GET /admin/stats` (usage). | nginx/compose poll health; the admin UI reads telemetry and stats. `/admin/*` is gated at the edge before any public deploy. | `Readiness`, `FleetTelemetry`, `UsageStatsStore`. |
+| **Ops API** (`api/health.py`, `api/admin.py`) | `GET /health` (liveness), `GET /ready` (readiness), admin telemetry and usage reads, and per-worker maximum-capacity writes. | nginx/compose poll health; the admin UI reads telemetry and stats and changes worker capacity. `/admin/*` is gated at the edge before any public deploy. | `Readiness`, `FleetTelemetry`, `FleetControl`, `UsageStatsStore`. |
 | **JobStore** (`jobs/store.py`, `Protocol`) | Holds each `Job` (status, result, cancel flag). | `create`, `get`, `set_result`, `request_cancel`, ... | Nothing (in-memory) or Redis. |
 | **KleeRunner** (`jobs/runner.py`, `Protocol`) | Runs one KLEE job in a container and parses the output into a `JobResult`. | `execute(source, flags, job_id, ...)`, `cancel(job_id)`. | Docker and the runner image. |
 | **ResultCache** (`jobs/cache.py`, `Protocol`) | Caches finished results keyed by a hash of the submission (source + flags). | `get(key)`, `set(key, result)`. | Nothing (in-memory) or Redis. |
@@ -57,10 +60,11 @@ Each unit has one job, is reached through an interface, and can be swapped witho
 | **run_job** (`jobs/run.py`) | The FastAPI-free core of a run: drive status transitions, call the runner, watch for cancel, write the result, populate the cache, record the outcome. | Called by whichever dispatcher is wired. | `JobStore`, `KleeRunner`, `ResultCache`, `UsageStatsStore`. |
 | **Readiness** (`health.py`, `Protocol`) | Reports whether the service can serve (pings Redis in the split). | `is_ready()`. | Nothing (`AlwaysReady`) or Redis. |
 | **FleetTelemetry** (`jobs/telemetry.py`, `Protocol`) | Live fleet view: worker pool sizes, active/reserved jobs, queue depth (Celery `inspect` + a broker `LLEN`). | `snapshot()`. | Empty (`NullFleetTelemetry`, in-process) or Celery + the broker. |
+| **FleetControl** (`jobs/telemetry.py`, `Protocol`) | Changes one worker's autoscaler maximum, bounded by the deployment setting. | `set_max_concurrency(worker_name, maximum)`. | Unavailable in-process or Celery remote control. |
 | **UsageStatsStore** (`jobs/usage.py`, `Protocol`) | Cumulative counters: outcomes per kind, cache hits, aggregate KLEE totals. | `record_execution`, `record_cache_hit`, `snapshot`. | Nothing (in-memory) or Redis `INCR`. |
 | **Runner image** (`runner/`) | The Docker image (based on `klee/klee:v3.2`) and `entrypoint.py`: compile C to LLVM bitcode with clang, run KLEE (`--kdalloc=false`), replay each test case through the fork-per-ktest zygote for per-path output, capture output (ADR-0020, ADR-0022). | Built by `make runner`. One container per job, launched under the `KLEE_RUNTIME` sandbox with `--network none`. | KLEE, clang, Docker. |
 | **Broker** (`celery_app.py`) | The queue between the API and the workers in the split deployment. Carries the `run_klee_job` task. | Only present when `CELERY_BROKER_URL` is set. | Redis. |
-| **Settings** (`config.py`) | Reads env vars and selects which implementation each seam gets, plus the sandbox runtime. | `REDIS_URL`, `CELERY_BROKER_URL`, `KLEE_FAKE_RUNNER`, `KLEE_RUNTIME`. | pydantic-settings. |
+| **Settings** (`config.py`) | Reads env vars and selects which implementation each seam gets, plus the sandbox runtime and worker-capacity bound. | `REDIS_URL`, `CELERY_BROKER_URL`, `KLEE_FAKE_RUNNER`, `KLEE_RUNTIME`, `WORKER_CONCURRENCY_MAX`. | pydantic-settings. |
 
 ## The request lifecycle
 
@@ -119,6 +123,7 @@ The `Protocol`s are the additive spine. The endpoints take them via `Depends` an
 | `Readiness` | `AlwaysReady` | `RedisReadiness` | `REDIS_URL` |
 | `UsageStatsStore` | `InMemoryUsageStatsStore` | `RedisUsageStatsStore` | `REDIS_URL` |
 | `FleetTelemetry` | `NullFleetTelemetry` | `CeleryFleetTelemetry` | `CELERY_BROKER_URL` |
+| `FleetControl` | `UnavailableFleetControl` | `CeleryFleetControl` | `CELERY_BROKER_URL` |
 
 With no env vars set, everything runs in one process against in-memory state. Set `REDIS_URL` and the store and cache move to Redis. Add `CELERY_BROKER_URL` and dispatch enqueues to a worker instead of running in-process. The validator in `config.py` enforces the one real constraint: a Celery worker cannot share the in-memory store, so `CELERY_BROKER_URL` requires `REDIS_URL`.
 
