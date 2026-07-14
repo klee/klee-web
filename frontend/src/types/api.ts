@@ -123,6 +123,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/admin/workers/{worker_name}/capacity": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Set Worker Capacity */
+        patch: operations["set_worker_capacity_admin_workers__worker_name__capacity_patch"];
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -266,6 +283,8 @@ export interface components {
         };
         /** Telemetry */
         Telemetry: {
+            /** Max Worker Concurrency */
+            max_worker_concurrency: number;
             /** Workers */
             workers: components["schemas"]["WorkerTelemetry"][];
             queue?: components["schemas"]["QueueTelemetry"] | null;
@@ -309,12 +328,19 @@ export interface components {
             /** Context */
             ctx?: Record<string, never>;
         };
+        /** WorkerCapacityUpdate */
+        WorkerCapacityUpdate: {
+            /** Max Concurrency */
+            max_concurrency: number;
+        };
         /** WorkerTelemetry */
         WorkerTelemetry: {
             /** Name */
             name: string;
             /** Concurrency */
             concurrency: number;
+            /** Max Concurrency */
+            max_concurrency: number;
             /** Active */
             active: number;
             /** Reserved */
@@ -502,6 +528,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["UsageStats"];
+                };
+            };
+        };
+    };
+    set_worker_capacity_admin_workers__worker_name__capacity_patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                worker_name: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WorkerCapacityUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

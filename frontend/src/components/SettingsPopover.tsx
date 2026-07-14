@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import { useSettings } from "../context/SettingsContext";
 
 const ACCENT_OPTIONS = [
@@ -83,6 +84,15 @@ export function SettingsPopover() {
           ]}
           onChange={setResultsPosition}
         />
+      </div>
+      <div className="mt-3 border-t border-slate-200 pt-3 dark:border-slate-700">
+        <Link
+          to="/admin"
+          className="flex items-center justify-between rounded px-2 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
+        >
+          Administration
+          <span aria-hidden="true">→</span>
+        </Link>
       </div>
     </div>
   );

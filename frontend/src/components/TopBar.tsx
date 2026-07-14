@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { KleeFlags } from "../api/jobs";
 import { FlagBar } from "./FlagBar";
+import { KleeLogo } from "./KleeLogo";
 import { SettingsPopover } from "./SettingsPopover";
 import { SymbolicInputPanel } from "./SymbolicInputPanel";
 
@@ -86,27 +87,6 @@ export function TopBar({
       </div>
       <SymbolicInputPanel flags={flags} onFlagsChange={onFlagsChange} />
     </div>
-  );
-}
-
-function KleeLogo() {
-  return (
-    <svg
-      viewBox="0 0 960 560"
-      className="h-7 w-auto"
-      fill="currentColor"
-      role="img"
-      aria-label="KLEE"
-    >
-      <polygon points="960,293.2 929.7,268.2 828.4,389.3 767.8,338.8 843.7,248 813.5,222.5 737.6,313.3 676.6,262.9 777.9,141.8 747.6,116.3 519.9,389.3 459.4,338.8 535.3,248 505,222.5 429.1,313.3 368.6,262.9 469.5,141.8 439.2,116.3 211.5,389.3 39.5,245.8 39.5,115 0,115 0,445 39.5,445 39.5,297.1 216.7,445 343.1,293.2 525.2,445 651.6,293.2 651.6,293.2 833.6,445" />
-      <rect
-        x="80.3"
-        y="185.7"
-        transform="matrix(0.6402 -0.7682 0.7682 0.6402 -93.3865 211.4502)"
-        width="197.4"
-        height="39.5"
-      />
-    </svg>
   );
 }
 
