@@ -127,7 +127,8 @@ class JobCreated(BaseModel):
 
 class WorkerTelemetry(BaseModel):
     name: str
-    concurrency: int  # pool size: jobs this Worker runs at once
+    concurrency: int  # current pool processes: Jobs this Worker can run now
+    max_concurrency: int
     active: int  # jobs running now
     reserved: int  # jobs prefetched, not yet started
 
@@ -138,8 +139,13 @@ class QueueTelemetry(BaseModel):
 
 
 class Telemetry(BaseModel):
+    max_worker_concurrency: int
     workers: list[WorkerTelemetry]
     queue: QueueTelemetry | None = None  # None: no queue (in-process) or unreadable
+
+
+class WorkerCapacityUpdate(BaseModel):
+    max_concurrency: Annotated[int, Field(ge=1)]
 
 
 class UsageStats(BaseModel):

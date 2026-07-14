@@ -2,7 +2,12 @@ from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
 
 from klee_web.api.admin import router as admin_router
-from klee_web.deps import get_telemetry, get_usage_stats
+from klee_web.deps import get_fleet_control, get_telemetry, get_usage_stats
+from klee_web.jobs.telemetry import (
+    CapacityAboveLimit,
+    WorkerControlRejected,
+    WorkerUnavailable,
+)
 from klee_web.jobs.usage import InMemoryUsageStatsStore
 from klee_web.models import JobOutcome, QueueTelemetry, Telemetry, UsageStats, WorkerTelemetry
 
@@ -15,6 +20,17 @@ class FakeFleetTelemetry:
         return self._telemetry
 
 
+class FakeFleetControl:
+    def __init__(self, error: Exception | None = None) -> None:
+        self.error = error
+        self.calls: list[tuple[str, int]] = []
+
+    async def set_max_concurrency(self, worker_name: str, maximum: int) -> None:
+        self.calls.append((worker_name, maximum))
+        if self.error:
+            raise self.error
+
+
 def make_client(telemetry: Telemetry) -> AsyncClient:
     app = FastAPI()
     app.include_router(admin_router)
@@ -24,28 +40,50 @@ def make_client(telemetry: Telemetry) -> AsyncClient:
 
 async def test_telemetry_returns_workers_and_queue() -> None:
     telemetry = Telemetry(
-        workers=[WorkerTelemetry(name="worker1@host", concurrency=4, active=2, reserved=1)],
+        max_worker_concurrency=4,
+        workers=[
+            WorkerTelemetry(
+                name="worker1@host",
+                concurrency=4,
+                max_concurrency=4,
+                active=2,
+                reserved=1,
+            )
+        ],
         queue=QueueTelemetry(name="klee-jobs", depth=3),
     )
     async with make_client(telemetry) as client:
         response = await client.get("/admin/telemetry")
     assert response.status_code == 200
     assert response.json() == {
-        "workers": [{"name": "worker1@host", "concurrency": 4, "active": 2, "reserved": 1}],
+        "max_worker_concurrency": 4,
+        "workers": [
+            {
+                "name": "worker1@host",
+                "concurrency": 4,
+                "max_concurrency": 4,
+                "active": 2,
+                "reserved": 1,
+            }
+        ],
         "queue": {"name": "klee-jobs", "depth": 3},
     }
 
 
 async def test_telemetry_empty_fleet_in_process() -> None:
-    async with make_client(Telemetry(workers=[], queue=None)) as client:
+    async with make_client(Telemetry(max_worker_concurrency=4, workers=[], queue=None)) as client:
         response = await client.get("/admin/telemetry")
     assert response.status_code == 200
-    assert response.json() == {"workers": [], "queue": None}
+    assert response.json() == {"max_worker_concurrency": 4, "workers": [], "queue": None}
 
 
 async def test_telemetry_reports_dead_fleet_with_backlog() -> None:
     # The alarm state: no worker answered, but jobs are still piling up in the queue.
-    telemetry = Telemetry(workers=[], queue=QueueTelemetry(name="klee-jobs", depth=5))
+    telemetry = Telemetry(
+        max_worker_concurrency=4,
+        workers=[],
+        queue=QueueTelemetry(name="klee-jobs", depth=5),
+    )
     async with make_client(telemetry) as client:
         response = await client.get("/admin/telemetry")
     assert response.status_code == 200
@@ -92,3 +130,67 @@ async def test_stats_empty_snapshot_is_zero_filled() -> None:
         test_cases_generated=0,
         instructions_executed=0,
     ).model_dump(mode="json")
+
+
+def make_control_client(control: FakeFleetControl) -> AsyncClient:
+    app = FastAPI()
+    app.include_router(admin_router)
+    app.dependency_overrides[get_fleet_control] = lambda: control
+    return AsyncClient(transport=ASGITransport(app=app), base_url="http://test")
+
+
+async def test_set_worker_capacity_targets_named_worker() -> None:
+    control = FakeFleetControl()
+    async with make_control_client(control) as client:
+        response = await client.patch(
+            "/admin/workers/worker1@host/capacity",
+            json={"max_concurrency": 3},
+        )
+
+    assert response.status_code == 204
+    assert control.calls == [("worker1@host", 3)]
+
+
+async def test_set_worker_capacity_rejects_above_deployment_maximum() -> None:
+    control = FakeFleetControl(CapacityAboveLimit(5, 4))
+    async with make_control_client(control) as client:
+        response = await client.patch(
+            "/admin/workers/worker1@host/capacity",
+            json={"max_concurrency": 5},
+        )
+
+    assert response.status_code == 422
+
+
+async def test_set_worker_capacity_reports_unavailable_worker() -> None:
+    control = FakeFleetControl(WorkerUnavailable("worker1@host"))
+    async with make_control_client(control) as client:
+        response = await client.patch(
+            "/admin/workers/worker1@host/capacity",
+            json={"max_concurrency": 3},
+        )
+
+    assert response.status_code == 503
+
+
+async def test_set_worker_capacity_reports_celery_rejection() -> None:
+    control = FakeFleetControl(WorkerControlRejected("Autoscale not enabled"))
+    async with make_control_client(control) as client:
+        response = await client.patch(
+            "/admin/workers/worker1@host/capacity",
+            json={"max_concurrency": 3},
+        )
+
+    assert response.status_code == 409
+
+
+async def test_set_worker_capacity_rejects_zero() -> None:
+    control = FakeFleetControl()
+    async with make_control_client(control) as client:
+        response = await client.patch(
+            "/admin/workers/worker1@host/capacity",
+            json={"max_concurrency": 0},
+        )
+
+    assert response.status_code == 422
+    assert control.calls == []

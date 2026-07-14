@@ -9,7 +9,7 @@ from klee_web.jobs.cache import InMemoryResultCache, ResultCache
 from klee_web.jobs.dispatch import InProcessDispatcher, JobDispatcher
 from klee_web.jobs.runner import DockerKleeRunner, KleeRunner, resolve_runtime
 from klee_web.jobs.store import InMemoryJobStore, JobStore
-from klee_web.jobs.telemetry import FleetTelemetry
+from klee_web.jobs.telemetry import FleetControl, FleetTelemetry
 from klee_web.jobs.usage import InMemoryUsageStatsStore, UsageStatsStore
 
 
@@ -70,10 +70,28 @@ def get_telemetry() -> FleetTelemetry:
 
         # Queue depth is read from the broker, where the queue list lives, not the store Redis.
         broker_redis = Redis.from_url(settings.celery_broker_url)
-        return CeleryFleetTelemetry(app, broker_redis, TASK_QUEUE)
+        return CeleryFleetTelemetry(
+            app,
+            broker_redis,
+            TASK_QUEUE,
+            settings.worker_concurrency_max,
+        )
     from klee_web.jobs.telemetry import NullFleetTelemetry
 
-    return NullFleetTelemetry()
+    return NullFleetTelemetry(settings.worker_concurrency_max)
+
+
+@lru_cache
+def get_fleet_control() -> FleetControl:
+    settings = get_settings()
+    if settings.celery_broker_url:
+        from klee_web.celery_app import app
+        from klee_web.jobs.telemetry import CeleryFleetControl
+
+        return CeleryFleetControl(app, settings.worker_concurrency_max)
+    from klee_web.jobs.telemetry import UnavailableFleetControl
+
+    return UnavailableFleetControl()
 
 
 @lru_cache

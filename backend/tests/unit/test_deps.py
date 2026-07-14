@@ -1,7 +1,8 @@
 from klee_web.config import Settings
-from klee_web.deps import get_cache, get_dispatcher
+from klee_web.deps import get_cache, get_dispatcher, get_fleet_control
 from klee_web.jobs.cache import InMemoryResultCache, RedisResultCache
 from klee_web.jobs.dispatch import CeleryDispatcher, InProcessDispatcher
+from klee_web.jobs.telemetry import CeleryFleetControl, UnavailableFleetControl
 
 
 def test_get_dispatcher_defaults_to_in_process(monkeypatch, store, runner, cache, usage):
@@ -36,3 +37,23 @@ def test_get_cache_selects_redis_when_redis_url_set(monkeypatch):
     )
     get_cache.cache_clear()
     assert isinstance(get_cache(), RedisResultCache)
+
+
+def test_get_fleet_control_defaults_to_unavailable(monkeypatch):
+    monkeypatch.setattr("klee_web.deps.get_settings", lambda: Settings())
+    get_fleet_control.cache_clear()
+
+    assert isinstance(get_fleet_control(), UnavailableFleetControl)
+
+
+def test_get_fleet_control_selects_celery_when_broker_set(monkeypatch):
+    monkeypatch.setattr(
+        "klee_web.deps.get_settings",
+        lambda: Settings(
+            redis_url="redis://localhost:6379/0",
+            celery_broker_url="redis://localhost:6379/1",
+        ),
+    )
+    get_fleet_control.cache_clear()
+
+    assert isinstance(get_fleet_control(), CeleryFleetControl)

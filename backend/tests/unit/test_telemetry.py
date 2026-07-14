@@ -1,4 +1,4 @@
-from klee_web.jobs.telemetry import build_worker_telemetry
+from klee_web.jobs.telemetry import NullFleetTelemetry, build_worker_telemetry
 
 
 def test_none_inputs_produce_no_workers() -> None:
@@ -20,9 +20,11 @@ def test_worker_fields_are_shaped_from_inspect_dicts() -> None:
     }
     by_name = {w.name: w for w in build_worker_telemetry(stats, active, reserved)}
     assert by_name["worker1@host"].concurrency == 4
+    assert by_name["worker1@host"].max_concurrency == 4
     assert by_name["worker1@host"].active == 2
     assert by_name["worker1@host"].reserved == 1
     assert by_name["worker2@host"].concurrency == 2
+    assert by_name["worker2@host"].max_concurrency == 2
     assert by_name["worker2@host"].active == 0
     assert by_name["worker2@host"].reserved == 0
 
@@ -34,3 +36,23 @@ def test_worker_absent_from_active_counts_zero() -> None:
     assert workers[0].concurrency == 1
     assert workers[0].active == 0
     assert workers[0].reserved == 0
+
+
+def test_autoscaler_values_override_the_stale_pool_concurrency() -> None:
+    stats = {
+        "worker1@host": {
+            "pool": {"max-concurrency": 1},
+            "autoscaler": {"current": 3, "min": 1, "max": 4},
+        }
+    }
+
+    worker = build_worker_telemetry(stats, active=None, reserved=None)[0]
+
+    assert worker.concurrency == 3
+    assert worker.max_concurrency == 4
+
+
+async def test_null_telemetry_reports_deployment_maximum() -> None:
+    snapshot = await NullFleetTelemetry(max_worker_concurrency=4).snapshot()
+
+    assert snapshot.max_worker_concurrency == 4

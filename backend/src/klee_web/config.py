@@ -1,7 +1,7 @@
 from functools import lru_cache
-from typing import Self
+from typing import Annotated, Self
 
-from pydantic import model_validator
+from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     celery_broker_url: str | None = None
     klee_fake_runner: bool = False
     klee_runtime: str | None = None
+    worker_concurrency_max: Annotated[int, Field(ge=1)] = 4
 
     @model_validator(mode="after")
     def _broker_requires_redis(self) -> Self:

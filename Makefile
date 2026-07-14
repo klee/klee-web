@@ -1,6 +1,8 @@
 .PHONY: up up-celery up-pool install runner deploy deploy-gvisor deploy-kvm
 
 WORKERS ?= 2
+WORKER_CONCURRENCY_MAX ?= 4
+export WORKER_CONCURRENCY_MAX
 
 install:
 	cd backend && uv sync
@@ -18,7 +20,7 @@ up-celery: runner
 	@trap 'trap - EXIT INT TERM; docker compose down; kill 0' EXIT INT TERM; \
 	export REDIS_URL=redis://localhost:6379/0 CELERY_BROKER_URL=redis://localhost:6379/1; \
 	(cd backend && exec uv run uvicorn klee_web.main:app --port 8000 --reload) & \
-	(cd backend && exec uv run celery -A klee_web.celery_app worker -Q klee-jobs --concurrency=2 --loglevel=info) & \
+	(cd backend && exec uv run celery -A klee_web.celery_app worker -Q klee-jobs --autoscale=$(WORKER_CONCURRENCY_MAX),1 --loglevel=info) & \
 	(cd frontend && exec npm run dev) & \
 	wait
 
@@ -28,7 +30,7 @@ up-pool: runner
 	export REDIS_URL=redis://localhost:6379/0 CELERY_BROKER_URL=redis://localhost:6379/1; \
 	(cd backend && exec uv run uvicorn klee_web.main:app --port 8000 --reload) & \
 	for i in $$(seq 1 $(WORKERS)); do \
-		(cd backend && exec uv run celery -A klee_web.celery_app worker -Q klee-jobs --concurrency=1 --hostname=worker$$i@%h --loglevel=info) & \
+		(cd backend && exec uv run celery -A klee_web.celery_app worker -Q klee-jobs --autoscale=$(WORKER_CONCURRENCY_MAX),1 --hostname=worker$$i@%h --loglevel=info) & \
 	done; \
 	(cd frontend && exec npm run dev) & \
 	wait
