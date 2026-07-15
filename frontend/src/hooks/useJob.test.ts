@@ -44,6 +44,7 @@ describe("isAwaitingCancelPartials", () => {
       stats: {},
       program_output: "",
       halt_reason: "cancelled",
+      states_culled_for_memory: 0,
     },
   };
 
