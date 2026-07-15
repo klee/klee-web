@@ -215,6 +215,44 @@ def test_parse_per_path_output_empty_file_is_empty_not_none(tmp_path):
     assert result.test_cases[0].program_output == ""
 
 
+def test_parse_counts_memory_culled_states_from_warnings(tmp_path):
+    output = tmp_path / "output"
+    output.mkdir()
+    (output / "warnings.txt").write_text(
+        "KLEE: WARNING ONCE: calling external: syscall(16, 0, 21505, 93825039028880)\n"
+        "KLEE: WARNING: killing 12197 states (over memory cap: 2153MB)\n"
+        "KLEE: WARNING: killing 11391 states (over memory cap: 2151MB)\n"
+        "KLEE: WARNING: killing 9650 states (over memory cap: 2149MB)\n"
+    )
+
+    result = parse_output_dir(output)
+
+    assert result.states_culled_for_memory == 12197 + 11391 + 9650
+
+
+def test_parse_memory_cull_count_is_zero_when_no_cull_warnings(tmp_path):
+    output = tmp_path / "output"
+    output.mkdir()
+    (output / "warnings.txt").write_text(
+        "KLEE: WARNING ONCE: calling external: syscall(16, 0, 21505)\n"
+        'KLEE: WARNING ONCE: Alignment of memory from call "malloc" is not modelled.\n'
+    )
+
+    result = parse_output_dir(output)
+
+    assert result.states_culled_for_memory == 0
+
+
+def test_parse_memory_cull_count_is_zero_when_no_warnings_file(tmp_path):
+    output = tmp_path / "output"
+    output.mkdir()
+    # no warnings.txt written
+
+    result = parse_output_dir(output)
+
+    assert result.states_culled_for_memory == 0
+
+
 def test_parse_per_path_output_truncated_at_per_path_cap(tmp_path):
     output = tmp_path / "output"
     output.mkdir()
