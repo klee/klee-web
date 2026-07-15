@@ -263,7 +263,7 @@ function DoneView({
     <div className="h-full flex flex-col">
       <TabBar tab={tab} onTabChange={setTab} testCaseCount={total} />
       {result.halt_reason && <HaltBadge reason={result.halt_reason} />}
-      {result.states_culled_for_memory > 0 && (
+      {result.states_culled_for_memory && (
         <MemoryCullBadge count={result.states_culled_for_memory} />
       )}
       <MessagesWarnings
