@@ -64,7 +64,7 @@ function ResultsBody({
     case "pending":
       return <PendingState />;
     case "running":
-      return <RunningState startedAt={job.started_at ?? job.created_at} maxTime={maxTime} />;
+      return <RunningState startedAt={job.started_at} maxTime={maxTime} />;
     case "parsing":
       return <ParsingState />;
     case "done":
@@ -137,7 +137,13 @@ function FailedState({ result }: { result: JobResult | null }) {
   );
 }
 
-function RunningState({ startedAt, maxTime }: { startedAt: string | undefined; maxTime: number }) {
+function RunningState({
+  startedAt,
+  maxTime,
+}: {
+  startedAt: string | null | undefined;
+  maxTime: number;
+}) {
   const elapsed = useElapsedSeconds(startedAt);
   const overrun = elapsed >= maxTime;
   return (
@@ -613,7 +619,7 @@ function Collapsible({ title, content }: { title: string; content: string }) {
   );
 }
 
-function useElapsedSeconds(startedAtIso: string | undefined): number {
+function useElapsedSeconds(startedAtIso: string | null | undefined): number {
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), 1000);

@@ -86,7 +86,7 @@ def _to_hash(job: Job) -> dict[str, str]:
 
 def _from_hash(data: dict[bytes, bytes]) -> Job:
     result = data[b"result"]
-    started_at = data.get(b"started_at", b"")
+    started_at = data[b"started_at"]
     return Job(
         id=UUID(data[b"id"].decode()),
         status=JobStatus(data[b"status"].decode()),
