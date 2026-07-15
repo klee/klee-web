@@ -56,7 +56,8 @@ test("admin reads fleet state and changes a worker maximum", async ({ page }) =>
 
   await expect(page.getByRole("heading", { name: "Fleet operations" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "worker1@host" })).toBeVisible();
-  await expect(page.getByText("5 waiting")).toBeVisible();
+  await expect(page.getByText("Waiting jobs")).toBeVisible();
+  await expect(page.getByText("6 waiting")).toBeVisible();
   await expect(page.getByText("4 per worker")).toBeVisible();
   await expect(page.getByText("18 submissions")).toBeVisible();
 

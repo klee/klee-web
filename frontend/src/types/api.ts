@@ -168,6 +168,11 @@ export interface components {
              * Format: date-time
              */
             created_at?: string;
+            /**
+             * Started At
+             * Format: date-time
+             */
+            started_at?: string | null;
             result?: components["schemas"]["JobResult"] | null;
             readonly outcome: components["schemas"]["JobOutcome"] | null;
         };

@@ -71,6 +71,6 @@ make up-pool
 
 Same stack as `make up-celery`, with the single worker replaced by `WORKERS` host processes (default 2), each autoscaling from one process to `WORKER_CONCURRENCY_MAX` (default 4) and using a distinct Celery node name so they are tellable apart in the logs. Override either axis with `make up-pool WORKERS=4 WORKER_CONCURRENCY_MAX=2`. The broker spreads jobs across the pool: submit several at once and each worker claims a distinct task.
 
-The pool is about throughput, not failover. It does not make an in-flight job survive its worker's death: a dying worker loses only the one job it had acked, while the jobs still queued in the broker are untouched and the live peers keep draining them. That one lost job is recovered by cancel (above), not by a peer. Cancel routes through the shared store, so it reaches the right job whichever worker held it.
+The pool is about throughput, not failover. It does not make an in-flight job survive its worker's death: a dying worker loses its active acknowledged jobs, while reserved jobs remain eligible for broker restoration and jobs still queued in the broker are untouched. Each lost job is recovered by cancel (above), not by a peer. Cancel routes through the shared store, so it reaches the right job whichever worker held it.
 
 Each worker runs as a host process, not a container. Containerising it would mean mounting the host docker socket so the worker could spawn sibling KLEE containers, i.e. handing a container root on the host. That is a deployment and security decision Stage 3 owns, not Stage 2.

@@ -1,4 +1,5 @@
 import asyncio
+from datetime import UTC, datetime
 from uuid import uuid4
 
 import fakeredis
@@ -37,13 +38,20 @@ async def test_two_distinct_jobs_can_coexist(store):
     assert (await store.get(b.id)) == b
 
 
-async def test_update_status_changes_status(store):
+async def test_update_status_to_running_records_start_time(store):
     job = Job()
+    assert job.started_at is None
     await store.create(job)
+
+    before = datetime.now(UTC)
     await store.update_status(job.id, JobStatus.running)
+    after = datetime.now(UTC)
+
     retrieved = await store.get(job.id)
     assert retrieved is not None
     assert retrieved.status == JobStatus.running
+    assert retrieved.started_at is not None
+    assert before <= retrieved.started_at <= after
 
 
 async def test_update_status_on_unknown_id_raises_job_not_found(store):

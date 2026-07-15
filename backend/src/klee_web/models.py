@@ -94,6 +94,7 @@ class Job(BaseModel):
     id: UUID = Field(default_factory=uuid4)
     status: JobStatus = JobStatus.pending
     created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+    started_at: datetime | None = None
     result: JobResult | None = None
     cancel_requested: bool = Field(default=False, exclude=True)
 

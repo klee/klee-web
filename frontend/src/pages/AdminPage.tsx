@@ -30,6 +30,8 @@ export function AdminPage() {
   const workers = telemetry.data?.workers ?? [];
   const currentProcesses = workers.reduce((total, worker) => total + worker.concurrency, 0);
   const activeJobs = workers.reduce((total, worker) => total + worker.active, 0);
+  const reservedJobs = workers.reduce((total, worker) => total + worker.reserved, 0);
+  const waitingJobs = (telemetry.data?.queue?.depth ?? 0) + reservedJobs;
   const submissions = stats.data
     ? Object.values(stats.data.outcomes).reduce((total, count) => total + count, 0)
     : 0;
@@ -67,7 +69,7 @@ export function AdminPage() {
         )}
 
         <section aria-label="Fleet summary" className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <Metric label="Queue" value={`${telemetry.data?.queue?.depth ?? 0} waiting`} />
+          <Metric label="Waiting jobs" value={`${waitingJobs} waiting`} />
           <Metric label="Active jobs" value={`${activeJobs} active`} />
           <Metric label="Current capacity" value={`${currentProcesses} processes`} />
           <Metric

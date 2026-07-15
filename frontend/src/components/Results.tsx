@@ -64,7 +64,7 @@ function ResultsBody({
     case "pending":
       return <PendingState />;
     case "running":
-      return <RunningState createdAt={job.created_at} maxTime={maxTime} />;
+      return <RunningState startedAt={job.started_at ?? job.created_at} maxTime={maxTime} />;
     case "parsing":
       return <ParsingState />;
     case "done":
@@ -137,8 +137,8 @@ function FailedState({ result }: { result: JobResult | null }) {
   );
 }
 
-function RunningState({ createdAt, maxTime }: { createdAt: string | undefined; maxTime: number }) {
-  const elapsed = useElapsedSeconds(createdAt);
+function RunningState({ startedAt, maxTime }: { startedAt: string | undefined; maxTime: number }) {
+  const elapsed = useElapsedSeconds(startedAt);
   const overrun = elapsed >= maxTime;
   return (
     <div className="h-full p-6 flex flex-col items-center justify-center gap-6 text-slate-700 dark:text-slate-300">
@@ -613,14 +613,14 @@ function Collapsible({ title, content }: { title: string; content: string }) {
   );
 }
 
-function useElapsedSeconds(createdAtIso: string | undefined): number {
+function useElapsedSeconds(startedAtIso: string | undefined): number {
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
     const id = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(id);
   }, []);
-  if (!createdAtIso) return 0;
-  return Math.max(0, Math.floor((now - new Date(createdAtIso).getTime()) / 1000));
+  if (!startedAtIso) return 0;
+  return Math.max(0, Math.floor((now - new Date(startedAtIso).getTime()) / 1000));
 }
 
 function formatClock(totalSeconds: number): string {

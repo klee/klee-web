@@ -1,5 +1,5 @@
 import asyncio
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Protocol, cast
 from uuid import UUID
 
@@ -40,6 +40,8 @@ class InMemoryJobStore:
             if job is None:
                 raise JobNotFound(job_id)
             job.status = status
+            if status == JobStatus.running:
+                job.started_at = datetime.now(UTC)
 
     async def set_partial_result(self, job_id: UUID, result: JobResult) -> None:
         async with self._lock:
@@ -76,6 +78,7 @@ def _to_hash(job: Job) -> dict[str, str]:
         "id": str(job.id),
         "status": job.status.value,
         "created_at": job.created_at.isoformat(),
+        "started_at": job.started_at.isoformat() if job.started_at is not None else "",
         "result": job.result.model_dump_json() if job.result is not None else "",
         "cancel_requested": "1" if job.cancel_requested else "0",
     }
@@ -83,10 +86,12 @@ def _to_hash(job: Job) -> dict[str, str]:
 
 def _from_hash(data: dict[bytes, bytes]) -> Job:
     result = data[b"result"]
+    started_at = data.get(b"started_at", b"")
     return Job(
         id=UUID(data[b"id"].decode()),
         status=JobStatus(data[b"status"].decode()),
         created_at=datetime.fromisoformat(data[b"created_at"].decode()),
+        started_at=datetime.fromisoformat(started_at.decode()) if started_at else None,
         result=JobResult.model_validate_json(result) if result else None,
         cancel_requested=data[b"cancel_requested"] == b"1",
     )
@@ -107,7 +112,10 @@ class RedisJobStore:
         return _from_hash(data) if data else None
 
     async def update_status(self, job_id: UUID, status: JobStatus) -> None:
-        await self._write_fields(job_id, {"status": status.value})
+        fields = {"status": status.value}
+        if status == JobStatus.running:
+            fields["started_at"] = datetime.now(UTC).isoformat()
+        await self._write_fields(job_id, fields)
 
     async def set_partial_result(self, job_id: UUID, result: JobResult) -> None:
         await self._write_fields(job_id, {"result": result.model_dump_json()})
