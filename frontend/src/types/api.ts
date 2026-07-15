@@ -217,6 +217,11 @@ export interface components {
             /** Compile Error */
             compile_error?: string | null;
             halt_reason?: components["schemas"]["HaltReason"] | null;
+            /**
+             * States Culled For Memory
+             * @default 0
+             */
+            states_culled_for_memory: number;
         };
         /**
          * JobStatus
