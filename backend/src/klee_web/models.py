@@ -146,7 +146,11 @@ class Telemetry(BaseModel):
 
 
 class WorkerCapacityUpdate(BaseModel):
-    max_concurrency: Annotated[int, Field(ge=1)]
+    max_concurrency: Annotated[int, Field(ge=1, strict=True)]
+
+
+class ErrorResponse(BaseModel):
+    detail: str
 
 
 class UsageStats(BaseModel):

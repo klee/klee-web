@@ -2,11 +2,16 @@ import { test, expect } from "@playwright/test";
 
 test.setTimeout(10_000);
 
-test("admin reads fleet state and changes a worker maximum", async ({ page }) => {
+test("admin opens separately, reads fleet state, and changes a worker maximum", async ({
+  page,
+  context,
+}) => {
   let liveMaximum = 4;
   let requestedMaximum: number | null = null;
+  let queueAvailable = true;
+  let capacityError: string | null = null;
 
-  await page.route("**/api/admin/telemetry", (route) =>
+  await context.route("**/api/admin/telemetry", (route) =>
     route.fulfill({
       status: 200,
       contentType: "application/json",
@@ -21,11 +26,11 @@ test("admin reads fleet state and changes a worker maximum", async ({ page }) =>
             reserved: 1,
           },
         ],
-        queue: { name: "klee-jobs", depth: 5 },
+        queue: queueAvailable ? { name: "klee-jobs", depth: 5 } : null,
       }),
     }),
   );
-  await page.route("**/api/admin/stats", (route) =>
+  await context.route("**/api/admin/stats", (route) =>
     route.fulfill({
       status: 200,
       contentType: "application/json",
@@ -43,7 +48,11 @@ test("admin reads fleet state and changes a worker maximum", async ({ page }) =>
       }),
     }),
   );
-  await page.route("**/api/admin/workers/*/capacity", async (route) => {
+  await context.route("**/api/admin/workers/*/capacity", async (route) => {
+    if (capacityError !== null) {
+      await route.fulfill({ status: 503, json: { detail: capacityError } });
+      return;
+    }
     const body = route.request().postDataJSON() as { max_concurrency: number };
     requestedMaximum = body.max_concurrency;
     liveMaximum = body.max_concurrency;
@@ -52,21 +61,39 @@ test("admin reads fleet state and changes a worker maximum", async ({ page }) =>
 
   await page.goto("/");
   await page.getByRole("button", { name: "Settings" }).click();
+  const adminPagePromise = page.waitForEvent("popup");
   await page.getByRole("link", { name: "Administration" }).click();
+  const adminPage = await adminPagePromise;
 
-  await expect(page.getByRole("heading", { name: "Fleet operations" })).toBeVisible();
-  await expect(page.getByRole("heading", { name: "worker1@host" })).toBeVisible();
-  await expect(page.getByText("Waiting jobs")).toBeVisible();
-  await expect(page.getByText("6 waiting")).toBeVisible();
-  await expect(page.getByText("4 per worker")).toBeVisible();
-  await expect(page.getByText("18 submissions")).toBeVisible();
+  await expect(page).toHaveURL("/");
+  await expect(adminPage).toHaveURL("/admin");
+  await expect(adminPage.getByRole("heading", { name: "Fleet operations" })).toBeVisible();
+  await expect(adminPage.getByRole("heading", { name: "worker1@host" })).toBeVisible();
+  await expect(adminPage.getByText("Waiting jobs")).toBeVisible();
+  await expect(adminPage.getByText("6 waiting")).toBeVisible();
+  await expect(adminPage.getByText("4 per worker")).toBeVisible();
+  await expect(adminPage.getByText("18 executions")).toBeVisible();
 
-  const capacity = page.getByRole("spinbutton", {
+  const capacity = adminPage.getByRole("spinbutton", {
     name: "Maximum concurrency for worker1@host",
   });
+  await capacity.fill("");
+  await adminPage.getByRole("button", { name: "Apply worker1@host capacity" }).click();
+  await adminPage.waitForTimeout(100);
+  expect(requestedMaximum).toBeNull();
+
   await capacity.fill("2");
-  await page.getByRole("button", { name: "Apply worker1@host capacity" }).click();
+  await adminPage.getByRole("button", { name: "Apply worker1@host capacity" }).click();
 
   await expect.poll(() => requestedMaximum).toBe(2);
-  await expect(page.getByText("Live maximum 2")).toBeVisible();
+  await expect(adminPage.getByText("Live maximum 2")).toBeVisible();
+
+  queueAvailable = false;
+  await adminPage.reload();
+  await expect(adminPage.getByText("Unavailable")).toBeVisible();
+
+  capacityError = "Worker did not respond: worker1@host";
+  await capacity.fill("3");
+  await adminPage.getByRole("button", { name: "Apply worker1@host capacity" }).click();
+  await expect(adminPage.getByText(capacityError)).toBeVisible();
 });

@@ -31,8 +31,8 @@ export function AdminPage() {
   const currentProcesses = workers.reduce((total, worker) => total + worker.concurrency, 0);
   const activeJobs = workers.reduce((total, worker) => total + worker.active, 0);
   const reservedJobs = workers.reduce((total, worker) => total + worker.reserved, 0);
-  const waitingJobs = (telemetry.data?.queue?.depth ?? 0) + reservedJobs;
-  const submissions = stats.data
+  const waitingJobs = telemetry.data?.queue ? telemetry.data.queue.depth + reservedJobs : null;
+  const executions = stats.data
     ? Object.values(stats.data.outcomes).reduce((total, count) => total + count, 0)
     : 0;
 
@@ -69,7 +69,10 @@ export function AdminPage() {
         )}
 
         <section aria-label="Fleet summary" className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <Metric label="Waiting jobs" value={`${waitingJobs} waiting`} />
+          <Metric
+            label="Waiting jobs"
+            value={waitingJobs === null ? "Unavailable" : `${waitingJobs} waiting`}
+          />
           <Metric label="Active jobs" value={`${activeJobs} active`} />
           <Metric label="Current capacity" value={`${currentProcesses} processes`} />
           <Metric
@@ -100,8 +103,8 @@ export function AdminPage() {
             )}
           </div>
           {capacity.isError && (
-            <p className="mt-3 text-sm text-rose-600 dark:text-rose-400">
-              The capacity change was rejected. Refresh the fleet state and try again.
+            <p role="alert" className="mt-3 text-sm text-rose-600 dark:text-rose-400">
+              {capacity.error.message}
             </p>
           )}
         </section>
@@ -110,7 +113,7 @@ export function AdminPage() {
           <div className="mb-3 flex items-baseline justify-between gap-4">
             <h2 className="text-lg font-semibold">Usage</h2>
             <p className="text-sm font-medium tabular-nums text-slate-600 dark:text-slate-300">
-              {submissions} submissions
+              {executions} executions
             </p>
           </div>
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -182,6 +185,7 @@ function WorkerCard({
               aria-label={`Maximum concurrency for ${worker.name}`}
               min={1}
               max={deploymentMaximum}
+              required
               defaultValue={worker.max_concurrency}
               className="w-32 rounded border border-slate-300 bg-white px-3 py-2 text-right text-base tabular-nums text-slate-900 focus:outline-none focus:ring-1 focus:ring-[var(--klee-accent)] dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
             />

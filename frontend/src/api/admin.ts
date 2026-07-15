@@ -22,5 +22,8 @@ export async function setWorkerCapacity(workerName: string, maximum: number): Pr
     params: { path: { worker_name: workerName } },
     body: { max_concurrency: maximum },
   });
-  if (error) throw new Error(`setWorkerCapacity failed: ${JSON.stringify(error)}`);
+  if (error) {
+    if (typeof error.detail === "string") throw new Error(error.detail);
+    throw new Error(`setWorkerCapacity failed: ${JSON.stringify(error)}`);
+  }
 }

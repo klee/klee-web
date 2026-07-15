@@ -88,6 +88,8 @@ export function SettingsPopover() {
       <div className="mt-3 border-t border-slate-200 pt-3 dark:border-slate-700">
         <Link
           to="/admin"
+          target="_blank"
+          rel="noopener"
           className="flex items-center justify-between rounded px-2 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
         >
           Administration

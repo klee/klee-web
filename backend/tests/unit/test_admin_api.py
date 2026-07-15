@@ -1,3 +1,4 @@
+import pytest
 from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
 
@@ -139,6 +140,20 @@ def make_control_client(control: FakeFleetControl) -> AsyncClient:
     return AsyncClient(transport=ASGITransport(app=app), base_url="http://test")
 
 
+def test_worker_capacity_openapi_declares_runtime_errors() -> None:
+    app = FastAPI()
+    app.include_router(admin_router)
+
+    responses = app.openapi()["paths"]["/admin/workers/{worker_name}/capacity"]["patch"][
+        "responses"
+    ]
+
+    assert set(responses) == {"204", "409", "422", "503"}
+    for status_code in ("409", "503"):
+        schema = responses[status_code]["content"]["application/json"]["schema"]
+        assert schema["$ref"] == "#/components/schemas/ErrorResponse"
+
+
 async def test_set_worker_capacity_targets_named_worker() -> None:
     control = FakeFleetControl()
     async with make_control_client(control) as client:
@@ -159,7 +174,8 @@ async def test_set_worker_capacity_rejects_above_deployment_maximum() -> None:
             json={"max_concurrency": 5},
         )
 
-    assert response.status_code == 422
+    assert response.status_code == 409
+    assert response.json() == {"detail": "Maximum worker capacity is 4"}
 
 
 async def test_set_worker_capacity_reports_unavailable_worker() -> None:
@@ -184,12 +200,13 @@ async def test_set_worker_capacity_reports_celery_rejection() -> None:
     assert response.status_code == 409
 
 
-async def test_set_worker_capacity_rejects_zero() -> None:
+@pytest.mark.parametrize("invalid_capacity", [0, True])
+async def test_set_worker_capacity_rejects_invalid_integer(invalid_capacity: int | bool) -> None:
     control = FakeFleetControl()
     async with make_control_client(control) as client:
         response = await client.patch(
             "/admin/workers/worker1@host/capacity",
-            json={"max_concurrency": 0},
+            json={"max_concurrency": invalid_capacity},
         )
 
     assert response.status_code == 422

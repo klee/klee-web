@@ -11,7 +11,7 @@ from klee_web.jobs.telemetry import (
     WorkerUnavailable,
 )
 from klee_web.jobs.usage import UsageStatsStore
-from klee_web.models import Telemetry, UsageStats, WorkerCapacityUpdate
+from klee_web.models import ErrorResponse, Telemetry, UsageStats, WorkerCapacityUpdate
 
 router = APIRouter(prefix="/admin")
 
@@ -29,6 +29,10 @@ async def stats(usage: Annotated[UsageStatsStore, Depends(get_usage_stats)]) -> 
 @router.patch(
     "/workers/{worker_name}/capacity",
     status_code=status.HTTP_204_NO_CONTENT,
+    responses={
+        status.HTTP_409_CONFLICT: {"model": ErrorResponse},
+        status.HTTP_503_SERVICE_UNAVAILABLE: {"model": ErrorResponse},
+    },
 )
 async def set_worker_capacity(
     worker_name: str,
@@ -39,7 +43,7 @@ async def set_worker_capacity(
         await fleet.set_max_concurrency(worker_name, update.max_concurrency)
     except CapacityAboveLimit as exc:
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            status_code=status.HTTP_409_CONFLICT,
             detail=f"Maximum worker capacity is {exc.maximum}",
         ) from exc
     except WorkerUnavailable as exc:
