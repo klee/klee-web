@@ -1,4 +1,5 @@
 import logging
+import re
 import sqlite3
 import struct
 from pathlib import Path
@@ -55,14 +56,26 @@ def parse_output_dir(output_dir: Path, *, include_test_cases: bool = True) -> Jo
     messages = _read_or_empty(output_dir / "messages.txt")
     info = _read_or_empty(output_dir / "info")
     host_timed_out = (output_dir / "host_timeout").exists()
+    warnings = _read_or_empty(output_dir / "warnings.txt")
     return JobResult(
         test_cases=test_cases,
         messages=messages,
-        warnings=_read_or_empty(output_dir / "warnings.txt"),
+        warnings=warnings,
         stats=_read_stats(output_dir / "run.stats"),
         program_output=_read_program_output(output_dir / "program_output.txt"),
         halt_reason=_detect_halt_reason(messages, info, host_timed_out),
+        states_culled_for_memory=_count_memory_culls(warnings),
     )
+
+
+# Lines like "KLEE: WARNING: killing 9650 states (over memory cap: 2150MB)"
+_MEMORY_CULL_RE = re.compile(r"KLEE: WARNING: killing (\d+) states \(over memory cap:")
+
+
+def _count_memory_culls(warnings: str) -> int:
+    if not warnings:
+        return 0
+    return sum(int(m.group(1)) for m in _MEMORY_CULL_RE.finditer(warnings))
 
 
 def _detect_halt_reason(messages: str, info: str, host_timed_out: bool) -> HaltReason | None:

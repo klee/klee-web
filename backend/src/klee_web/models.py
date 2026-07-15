@@ -88,6 +88,7 @@ class JobResult(BaseModel):
     program_output: str = ""
     compile_error: str | None = None
     halt_reason: HaltReason | None = None
+    states_culled_for_memory: int = 0
 
 
 class Job(BaseModel):

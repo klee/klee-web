@@ -263,6 +263,9 @@ function DoneView({
     <div className="h-full flex flex-col">
       <TabBar tab={tab} onTabChange={setTab} testCaseCount={total} />
       {result.halt_reason && <HaltBadge reason={result.halt_reason} />}
+      {result.states_culled_for_memory > 0 && (
+        <MemoryCullBadge count={result.states_culled_for_memory} />
+      )}
       <MessagesWarnings
         programOutput={result.program_output}
         messages={result.messages}
@@ -457,6 +460,14 @@ function HaltBadge({ reason }: { reason: HaltReason }) {
   return (
     <div className={`px-4 py-1.5 text-xs border-b border-slate-200 dark:border-slate-700 ${color}`}>
       {label}
+    </div>
+  );
+}
+
+function MemoryCullBadge({ count }: { count: number }) {
+  return (
+    <div className="px-4 py-1.5 text-xs border-b border-slate-200 dark:border-slate-700 bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300">
+      {count.toLocaleString()} state{count === 1 ? "" : "s"} culled for memory
     </div>
   );
 }
