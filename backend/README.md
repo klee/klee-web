@@ -23,7 +23,7 @@ FastAPI service. Receives job submissions, runs KLEE through the runner, returns
 - `src/klee_web/celery_app.py`: the Celery app and the `run_klee_job` task the worker runs (Stage 2)
 - `src/klee_web/parsing/klee_output.py`: parse KLEE output dir into a `JobResult`. Detects halt reason from `HaltTimer invoked` in `messages.txt` (`max_time`) or `KLEE: done:` in `info` (`completed`)
 - `src/klee_web/parsing/ktest.py`: vendored KLEE ktest reader (NCSA, trimmed to `KTest.fromfile`)
-- `src/klee_web/deps.py`: dependency providers (`get_job_store`, `get_runner`, `get_cache`, `get_dispatcher`, `get_readiness`, `get_telemetry`, `get_usage_stats`), each selecting the Stage 1 or Stage 2 implementation from config
+- `src/klee_web/deps.py`: dependency providers (`get_job_store`, `get_runner`, `get_cache`, `get_dispatcher`, `get_readiness`, `get_telemetry`, `get_fleet_control`, `get_usage_stats`), each selecting the Stage 1 or Stage 2 implementation from config
 - `tests/unit/`: handler, dispatch, run-job, store, cache, model, config, and parser tests (parser golden fixtures: `happy_path`, `compile_error`, `runtime_error`, `max_time`)
 - `tests/integration/`: real-Docker runner, Redis store and cache, and the Celery worker end to end
 

@@ -52,7 +52,7 @@ Each unit has one job, is reached through an interface, and can be swapped witho
 |--|--|--|--|
 | **Frontend** (`frontend/`) | Monaco editor for C input, results panel. Submits a job and polls for the result (every 1s). | Open the app, type C, click Run. | The backend HTTP API only. |
 | **Backend API** (`api/jobs.py`) | Three endpoints: `POST /jobs`, `GET /jobs/{id}`, `POST /jobs/{id}/cancel`. Validates, reads the cache, dispatches. | The frontend calls it. Takes the seams via FastAPI `Depends`. | `JobStore`, `JobDispatcher`, `ResultCache`, `UsageStatsStore`. |
-| **Ops API** (`api/health.py`, `api/admin.py`) | `GET /health` (liveness), `GET /ready` (readiness), admin telemetry and usage reads, and per-worker maximum-capacity writes. | nginx/compose poll health; the admin UI reads telemetry and stats and changes worker capacity. `/admin/*` is gated at the edge before any public deploy. | `Readiness`, `FleetTelemetry`, `FleetControl`, `UsageStatsStore`. |
+| **Ops API** (`api/health.py`, `api/admin.py`) | `GET /health` (liveness), `GET /ready` (readiness), admin telemetry and usage reads, and per-worker maximum-capacity writes. | nginx/compose poll health; the admin UI reads telemetry and stats and changes worker capacity. `/admin` and `/api/admin/*` are gated at the edge before any public deploy. | `Readiness`, `FleetTelemetry`, `FleetControl`, `UsageStatsStore`. |
 | **JobStore** (`jobs/store.py`, `Protocol`) | Holds each `Job` (status, result, cancel flag). | `create`, `get`, `set_result`, `request_cancel`, ... | Nothing (in-memory) or Redis. |
 | **KleeRunner** (`jobs/runner.py`, `Protocol`) | Runs one KLEE job in a container and parses the output into a `JobResult`. | `execute(source, flags, job_id, ...)`, `cancel(job_id)`. | Docker and the runner image. |
 | **ResultCache** (`jobs/cache.py`, `Protocol`) | Caches finished results keyed by a hash of the submission (source + flags). | `get(key)`, `set(key, result)`. | Nothing (in-memory) or Redis. |
@@ -143,7 +143,7 @@ Containerized stack (everything in Docker via `docker compose`, the Stage 3 prod
 - **`make deploy-gvisor`**: the same stack, but the KLEE containers run under gVisor's systrap platform (`KLEE_RUNTIME=runsc`).
 - **`make deploy-kvm`**: the same, on gVisor's faster KVM platform (`KLEE_RUNTIME=runsc-kvm`), where `/dev/kvm` exists.
 
-What Stage 3 adds around the seams: the nginx edge (TLS, rate limiting) and the gVisor runtime swap both sit outside the seams, the runtime being one `--runtime` flag with zero application change. Read-only observability (health and readiness probes, fleet telemetry, usage stats) adds the three seams noted above, and Redis gains persistence so job and stats state survive a restart. The admin UI and the edge auth on `/admin/*` are the remaining pieces.
+What Stage 3 adds around the seams: the nginx edge (TLS, rate limiting) and the gVisor runtime swap both sit outside the seams, the runtime being one `--runtime` flag with zero application change. Read-only observability (health and readiness probes, fleet telemetry, usage stats) adds the three seams noted above, and Redis gains persistence so job and stats state survive a restart. The admin UI and Worker capacity control are in place. Edge auth on `/admin` and `/api/admin/*` remains before public deployment.
 
 ## Where to look next
 
