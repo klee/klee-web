@@ -159,6 +159,17 @@ def test_job_result_compile_error_defaults_to_none():
     assert result.compile_error is None
 
 
+def test_job_result_rejects_negative_memory_cull_count():
+    with pytest.raises(ValidationError):
+        JobResult(
+            test_cases=[],
+            messages="",
+            warnings="",
+            stats={},
+            states_culled_for_memory=-1,
+        )
+
+
 def test_job_result_with_compile_error_set():
     result = JobResult(
         test_cases=[],
