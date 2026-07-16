@@ -58,3 +58,4 @@ Don't write ADRs for:
 | 0020 | Native per-path replay for program output | Accepted (mechanism superseded by 0022) |
 | 0021 | Stream transport: source on stdin, output as a tar on stdout | Accepted |
 | 0022 | Stage 3 sandbox: gVisor with a fork-per-ktest replay zygote | Accepted |
+| 0023 | Bounded tmpfs for Runner storage | Accepted |

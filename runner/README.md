@@ -11,7 +11,7 @@ Docker image and entrypoint that actually runs KLEE on user-submitted C code. To
 
 ## Why a separate image per job, not a long-lived process
 
-Per-job containers give cgroup isolation, easy resource accounting (memory, CPU, pids), and trivial cleanup with `docker rm`. A long-lived KLEE process accumulates state: leaked fds, fragmented memory, half-cleaned tmp dirs. Per-job means every run starts from a known clean state. See `../docs/adr/0008-kleerunner-protocol-surface.md` and `../docs/adr/0009-per-job-containers.md`.
+Per-job containers give cgroup isolation, fixed CPU, memory, swap, and PID Caps, a read-only root, bounded temporary storage on `/work`, and trivial cleanup with `docker rm`. A long-lived KLEE process accumulates state: leaked fds, fragmented memory, half-cleaned tmp dirs. Per-job means every run starts from a known clean state. See `../docs/adr/0008-kleerunner-protocol-surface.md` and `../docs/adr/0009-per-job-containers.md`.
 
 ## Known working invocation (reference)
 
