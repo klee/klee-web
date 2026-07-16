@@ -39,6 +39,7 @@ def get_runner() -> KleeRunner:
             memory_mb=settings.runner_memory_mb,
             swap_mb=settings.runner_swap_mb,
             pids_limit=settings.runner_pids_limit,
+            storage_mb=settings.runner_storage_mb,
         ),
         runtime=resolve_runtime(settings.klee_runtime),
     )

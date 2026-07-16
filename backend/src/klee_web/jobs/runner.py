@@ -21,6 +21,7 @@ class RunnerCaps:
     memory_mb: int
     swap_mb: int
     pids_limit: int
+    storage_mb: int
 
 
 def _container_name(job_id: UUID) -> str:
@@ -54,6 +55,9 @@ def build_run_args(
         "run",
         "--rm",
         "-i",
+        "--read-only",
+        "--tmpfs",
+        f"/work:rw,exec,size={caps.storage_mb}m,uid=1000,gid=1000,mode=0700",
         "--network",
         "none",
         "--name",
@@ -70,6 +74,8 @@ def build_run_args(
     if runtime is not None:
         args += ["--runtime", runtime]
     args += [
+        "-e",
+        "TMPDIR=/work",
         "-e",
         f"KLEE_MAX_TIME={flags.max_time}",
         "-e",

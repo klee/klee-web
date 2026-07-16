@@ -62,6 +62,7 @@ services:
       RUNNER_MEMORY_MB: ${RUNNER_MEMORY_MB:-3072}
       RUNNER_SWAP_MB: ${RUNNER_SWAP_MB:-0}
       RUNNER_PIDS_LIMIT: ${RUNNER_PIDS_LIMIT:-128}
+      RUNNER_STORAGE_MB: ${RUNNER_STORAGE_MB:-768}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     depends_on:

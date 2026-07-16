@@ -25,6 +25,7 @@ def test_runner_caps_have_safe_defaults():
     assert settings.runner_memory_mb == 3072
     assert settings.runner_swap_mb == 0
     assert settings.runner_pids_limit == 128
+    assert settings.runner_storage_mb == 768
 
 
 def test_runner_caps_read_environment(monkeypatch):
@@ -32,6 +33,7 @@ def test_runner_caps_read_environment(monkeypatch):
     monkeypatch.setenv("RUNNER_MEMORY_MB", "4096")
     monkeypatch.setenv("RUNNER_SWAP_MB", "512")
     monkeypatch.setenv("RUNNER_PIDS_LIMIT", "64")
+    monkeypatch.setenv("RUNNER_STORAGE_MB", "1024")
 
     settings = Settings()
 
@@ -39,6 +41,7 @@ def test_runner_caps_read_environment(monkeypatch):
     assert settings.runner_memory_mb == 4096
     assert settings.runner_swap_mb == 512
     assert settings.runner_pids_limit == 64
+    assert settings.runner_storage_mb == 1024
 
 
 @pytest.mark.parametrize(
@@ -48,6 +51,7 @@ def test_runner_caps_read_environment(monkeypatch):
         ("runner_memory_mb", 0),
         ("runner_swap_mb", -1),
         ("runner_pids_limit", 0),
+        ("runner_storage_mb", 0),
     ],
 )
 def test_runner_caps_reject_invalid_values(field, value):

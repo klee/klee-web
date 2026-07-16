@@ -20,17 +20,21 @@ RUN clang -shared -fPIC -o /usr/local/lib/replay_nosleep.so /tmp/replay_nosleep.
 # The KLEE build dir name is not stable across image rebuilds, so the
 # generated-headers include dir is located via config.h rather than hardcoded
 # (same reason entrypoint.py globs for libkleeRuntest).
+# file-creator hardcodes /tmp, so compile a copy whose per-replay temporary
+# directory lives on the bounded /work filesystem when the root is read-only.
 COPY replay_driver.c /tmp/replay_driver.c
 RUN mkdir -p /usr/local/lib/klee-replay-zygote \
     && INC=/home/klee/klee_src/include \
     && BINC=$(dirname $(dirname $(dirname $(find /tmp/klee_build* -path '*klee/Config/config.h' | head -1)))) \
     && TOOLS=/home/klee/klee_src/tools/klee-replay \
     && POSIX=/home/klee/klee_src/runtime/POSIX \
-    && clang -I$INC -I$BINC -c $TOOLS/file-creator.c  -o /usr/local/lib/klee-replay-zygote/file-creator.o \
+    && sed 's#/tmp/klee-replay-XXXXXX#/work/klee-replay-XXXXXX#g' \
+        $TOOLS/file-creator.c > /tmp/file-creator.c \
+    && clang -I$INC -I$BINC -I$TOOLS -c /tmp/file-creator.c -o /usr/local/lib/klee-replay-zygote/file-creator.o \
     && clang -I$INC -I$BINC -c $TOOLS/klee_init_env.c -o /usr/local/lib/klee-replay-zygote/klee_init_env.o \
     && clang -I$INC -I$BINC -c $TOOLS/fd_init.c       -o /usr/local/lib/klee-replay-zygote/fd_init.o \
     && clang -I$INC -I$BINC -I$POSIX -c /tmp/replay_driver.c -o /usr/local/lib/klee-replay-zygote/replay_driver.o \
-    && rm /tmp/replay_driver.c
+    && rm /tmp/replay_driver.c /tmp/file-creator.c
 
 COPY --chown=klee:klee entrypoint.py /home/klee/entrypoint.py
 

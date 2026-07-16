@@ -5,11 +5,17 @@ from uuid import uuid4
 
 import pytest
 
-from klee_web.jobs.runner import IMAGE_TAG, DockerKleeRunner, RunnerCaps
+from klee_web.jobs.runner import IMAGE_TAG, DockerKleeRunner, KleeRunnerError, RunnerCaps
 from klee_web.models import HaltReason, KleeFlags
 from klee_web.symbolic_input import SymStdin
 
-TEST_CAPS = RunnerCaps(cpus=2, memory_mb=3072, swap_mb=0, pids_limit=128)
+TEST_CAPS = RunnerCaps(
+    cpus=2,
+    memory_mb=3072,
+    swap_mb=0,
+    pids_limit=128,
+    storage_mb=768,
+)
 
 
 def _runner_environment_ready() -> bool:
@@ -172,6 +178,34 @@ async def test_docker_runner_surfaces_compile_error_from_missing_include(runtime
     assert result.stats == {}
 
 
+@pytest.mark.parametrize("runtime", RUNTIMES)
+async def test_docker_runner_contains_storage_exhaustion(runtime):
+    caps = RunnerCaps(
+        cpus=2,
+        memory_mb=3072,
+        swap_mb=0,
+        pids_limit=128,
+        storage_mb=1,
+    )
+    runner = DockerKleeRunner(caps, runtime=runtime)
+    job_id = uuid4()
+    name = f"klee-job-{job_id}"
+
+    try:
+        with pytest.raises(KleeRunnerError, match="No space left on device"):
+            await asyncio.wait_for(
+                runner.execute(
+                    GET_SIGN_SOURCE,
+                    KleeFlags(max_time=10, max_memory=256),
+                    job_id,
+                ),
+                timeout=30,
+            )
+        assert not await _container_running(name)
+    finally:
+        subprocess.run(["docker", "rm", "-f", name], capture_output=True)
+
+
 MANY_PATHS_SOURCE = """\
 #include <klee/klee.h>
 
@@ -220,6 +254,21 @@ async def _container_caps(name: str) -> tuple[int, int, int, int]:
     return nano_cpus, memory, memory_swap, pids_limit
 
 
+async def _container_storage(name: str) -> tuple[bool, str]:
+    proc = await asyncio.create_subprocess_exec(
+        "docker",
+        "inspect",
+        "--format",
+        '{{.HostConfig.ReadonlyRootfs}}|{{index .HostConfig.Tmpfs "/work"}}',
+        name,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.DEVNULL,
+    )
+    out, _ = await proc.communicate()
+    read_only, tmpfs = out.decode().strip().split("|", maxsplit=1)
+    return read_only == "true", tmpfs
+
+
 @pytest.mark.parametrize("runtime", RUNTIMES)
 async def test_docker_runner_applies_caps_and_cancel_halts_with_partial_results(runtime):
     runner = DockerKleeRunner(TEST_CAPS, runtime=runtime)
@@ -242,6 +291,10 @@ async def test_docker_runner_applies_caps_and_cancel_halts_with_partial_results(
             memory_bytes,
             memory_bytes + TEST_CAPS.swap_mb * 1024 * 1024,
             TEST_CAPS.pids_limit,
+        )
+        assert await _container_storage(name) == (
+            True,
+            "rw,exec,size=768m,uid=1000,gid=1000,mode=0700",
         )
 
         await asyncio.sleep(2)  # let KLEE explore so the halt has states to dump

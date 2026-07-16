@@ -3,7 +3,7 @@ from uuid import uuid4
 from klee_web.jobs.runner import RunnerCaps, build_run_args, resolve_runtime
 from klee_web.models import KleeFlags
 
-CAPS = RunnerCaps(cpus=2, memory_mb=3072, swap_mb=0, pids_limit=128)
+CAPS = RunnerCaps(cpus=2, memory_mb=3072, swap_mb=0, pids_limit=128, storage_mb=768)
 
 
 def _value_after(args: list[str], flag: str) -> str | None:
@@ -42,12 +42,27 @@ def test_build_run_args_applies_runner_caps() -> None:
     assert _value_after(args, "--pids-limit") == "128"
 
 
+def test_build_run_args_limits_writable_storage() -> None:
+    args = build_run_args(uuid4(), KleeFlags(), "", runtime=None, caps=CAPS)
+
+    assert "--read-only" in args
+    assert _value_after(args, "--tmpfs") == ("/work:rw,exec,size=768m,uid=1000,gid=1000,mode=0700")
+    assert "TMPDIR=/work" in args
+
+
 def test_build_run_args_adds_swap_allowance_to_docker_total() -> None:
-    caps = RunnerCaps(cpus=1.5, memory_mb=3072, swap_mb=512, pids_limit=64)
+    caps = RunnerCaps(
+        cpus=1.5,
+        memory_mb=3072,
+        swap_mb=512,
+        pids_limit=64,
+        storage_mb=1024,
+    )
 
     args = build_run_args(uuid4(), KleeFlags(), "", runtime=None, caps=caps)
 
     assert _value_after(args, "--memory-swap") == "3584m"
+    assert _value_after(args, "--tmpfs") == ("/work:rw,exec,size=1024m,uid=1000,gid=1000,mode=0700")
 
 
 def test_resolve_runtime_unset_is_runc() -> None:

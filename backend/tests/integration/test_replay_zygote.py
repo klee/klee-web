@@ -15,7 +15,13 @@ from klee_web.jobs.runner import IMAGE_TAG, DockerKleeRunner, RunnerCaps
 from klee_web.models import KleeFlags
 from klee_web.symbolic_input import SymArgs, SymFiles, SymStdin
 
-TEST_CAPS = RunnerCaps(cpus=2, memory_mb=3072, swap_mb=0, pids_limit=128)
+TEST_CAPS = RunnerCaps(
+    cpus=2,
+    memory_mb=3072,
+    swap_mb=0,
+    pids_limit=128,
+    storage_mb=768,
+)
 
 
 def _runner_environment_ready() -> bool:

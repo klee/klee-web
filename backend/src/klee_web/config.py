@@ -17,6 +17,7 @@ class Settings(BaseSettings):
     runner_memory_mb: Annotated[int, Field(gt=0)] = 3072
     runner_swap_mb: Annotated[int, Field(ge=0)] = 0
     runner_pids_limit: Annotated[int, Field(gt=0)] = 128
+    runner_storage_mb: Annotated[int, Field(gt=0)] = 768
 
     @model_validator(mode="after")
     def _broker_requires_redis(self) -> Self:
