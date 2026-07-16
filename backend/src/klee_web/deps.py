@@ -7,7 +7,7 @@ from klee_web.config import get_settings
 from klee_web.health import AlwaysReady, Readiness
 from klee_web.jobs.cache import InMemoryResultCache, ResultCache
 from klee_web.jobs.dispatch import InProcessDispatcher, JobDispatcher
-from klee_web.jobs.runner import DockerKleeRunner, KleeRunner, resolve_runtime
+from klee_web.jobs.runner import DockerKleeRunner, KleeRunner, RunnerCaps, resolve_runtime
 from klee_web.jobs.store import InMemoryJobStore, JobStore
 from klee_web.jobs.telemetry import FleetControl, FleetTelemetry
 from klee_web.jobs.usage import InMemoryUsageStatsStore, UsageStatsStore
@@ -27,12 +27,21 @@ def get_job_store() -> JobStore:
 
 @lru_cache
 def get_runner() -> KleeRunner:
-    if get_settings().klee_fake_runner:
+    settings = get_settings()
+    if settings.klee_fake_runner:
         from klee_web.jobs.fake_data import get_sign_result
         from klee_web.jobs.runner import FakeKleeRunner
 
         return FakeKleeRunner(canned_result=get_sign_result())
-    return DockerKleeRunner(runtime=resolve_runtime(get_settings().klee_runtime))
+    return DockerKleeRunner(
+        caps=RunnerCaps(
+            cpus=settings.runner_cpus,
+            memory_mb=settings.runner_memory_mb,
+            swap_mb=settings.runner_swap_mb,
+            pids_limit=settings.runner_pids_limit,
+        ),
+        runtime=resolve_runtime(settings.klee_runtime),
+    )
 
 
 @lru_cache

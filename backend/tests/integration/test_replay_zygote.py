@@ -11,9 +11,11 @@ from uuid import uuid4
 
 import pytest
 
-from klee_web.jobs.runner import IMAGE_TAG, DockerKleeRunner
+from klee_web.jobs.runner import IMAGE_TAG, DockerKleeRunner, RunnerCaps
 from klee_web.models import KleeFlags
 from klee_web.symbolic_input import SymArgs, SymFiles, SymStdin
+
+TEST_CAPS = RunnerCaps(cpus=2, memory_mb=3072, swap_mb=0, pids_limit=128)
 
 
 def _runner_environment_ready() -> bool:
@@ -36,7 +38,7 @@ pytestmark = [
 
 
 async def _run(source: str, flags: KleeFlags, timeout: int = 45):
-    runner = DockerKleeRunner()
+    runner = DockerKleeRunner(TEST_CAPS)
     return await asyncio.wait_for(runner.execute(source, flags, uuid4()), timeout=timeout)
 
 

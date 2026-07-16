@@ -18,6 +18,43 @@ def test_worker_concurrency_max_must_be_positive():
         Settings(worker_concurrency_max=0)
 
 
+def test_runner_caps_have_safe_defaults():
+    settings = Settings()
+
+    assert settings.runner_cpus == 2
+    assert settings.runner_memory_mb == 3072
+    assert settings.runner_swap_mb == 0
+    assert settings.runner_pids_limit == 128
+
+
+def test_runner_caps_read_environment(monkeypatch):
+    monkeypatch.setenv("RUNNER_CPUS", "1.5")
+    monkeypatch.setenv("RUNNER_MEMORY_MB", "4096")
+    monkeypatch.setenv("RUNNER_SWAP_MB", "512")
+    monkeypatch.setenv("RUNNER_PIDS_LIMIT", "64")
+
+    settings = Settings()
+
+    assert settings.runner_cpus == 1.5
+    assert settings.runner_memory_mb == 4096
+    assert settings.runner_swap_mb == 512
+    assert settings.runner_pids_limit == 64
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("runner_cpus", 0),
+        ("runner_memory_mb", 0),
+        ("runner_swap_mb", -1),
+        ("runner_pids_limit", 0),
+    ],
+)
+def test_runner_caps_reject_invalid_values(field, value):
+    with pytest.raises(ValidationError):
+        Settings(**{field: value})
+
+
 def test_celery_broker_without_redis_is_rejected():
     with pytest.raises(ValidationError):
         Settings(celery_broker_url="redis://localhost:6379/1", redis_url=None)

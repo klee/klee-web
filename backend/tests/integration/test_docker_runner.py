@@ -5,9 +5,11 @@ from uuid import uuid4
 
 import pytest
 
-from klee_web.jobs.runner import IMAGE_TAG, DockerKleeRunner
+from klee_web.jobs.runner import IMAGE_TAG, DockerKleeRunner, RunnerCaps
 from klee_web.models import HaltReason, KleeFlags
 from klee_web.symbolic_input import SymStdin
+
+TEST_CAPS = RunnerCaps(cpus=2, memory_mb=3072, swap_mb=0, pids_limit=128)
 
 
 def _runner_environment_ready() -> bool:
@@ -97,7 +99,7 @@ int main() {
 
 @pytest.mark.parametrize("runtime", RUNTIMES)
 async def test_docker_runner_runs_get_sign_end_to_end(runtime):
-    runner = DockerKleeRunner(runtime=runtime)
+    runner = DockerKleeRunner(TEST_CAPS, runtime=runtime)
     result = await asyncio.wait_for(
         runner.execute(GET_SIGN_SOURCE, KleeFlags(max_time=10, max_memory=256), uuid4()),
         timeout=30,
@@ -114,7 +116,7 @@ async def test_docker_runner_runs_get_sign_end_to_end(runtime):
 
 
 async def test_docker_runner_runs_with_allowlisted_extra_flags():
-    runner = DockerKleeRunner()
+    runner = DockerKleeRunner(TEST_CAPS)
     result = await asyncio.wait_for(
         runner.execute(
             GET_SIGN_SOURCE,
@@ -142,7 +144,7 @@ int main() {
 
 @pytest.mark.parametrize("runtime", RUNTIMES)
 async def test_docker_runner_makes_stdin_symbolic_with_sym_stdin(runtime):
-    runner = DockerKleeRunner(runtime=runtime)
+    runner = DockerKleeRunner(TEST_CAPS, runtime=runtime)
     result = await asyncio.wait_for(
         runner.execute(
             SYM_STDIN_SOURCE,
@@ -159,7 +161,7 @@ async def test_docker_runner_makes_stdin_symbolic_with_sym_stdin(runtime):
 
 @pytest.mark.parametrize("runtime", RUNTIMES)
 async def test_docker_runner_surfaces_compile_error_from_missing_include(runtime):
-    runner = DockerKleeRunner(runtime=runtime)
+    runner = DockerKleeRunner(TEST_CAPS, runtime=runtime)
     result = await asyncio.wait_for(
         runner.execute(SOURCE_MISSING_INCLUDE, KleeFlags(max_time=10, max_memory=256), uuid4()),
         timeout=30,
@@ -202,8 +204,25 @@ async def _container_running(name: str) -> bool:
     return name in out.decode()
 
 
-async def test_docker_runner_cancel_halts_with_partial_results():
-    runner = DockerKleeRunner()
+async def _container_caps(name: str) -> tuple[int, int, int, int]:
+    proc = await asyncio.create_subprocess_exec(
+        "docker",
+        "inspect",
+        "--format",
+        "{{.HostConfig.NanoCpus}} {{.HostConfig.Memory}} "
+        "{{.HostConfig.MemorySwap}} {{.HostConfig.PidsLimit}}",
+        name,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.DEVNULL,
+    )
+    out, _ = await proc.communicate()
+    nano_cpus, memory, memory_swap, pids_limit = (int(value) for value in out.decode().split())
+    return nano_cpus, memory, memory_swap, pids_limit
+
+
+@pytest.mark.parametrize("runtime", RUNTIMES)
+async def test_docker_runner_applies_caps_and_cancel_halts_with_partial_results(runtime):
+    runner = DockerKleeRunner(TEST_CAPS, runtime=runtime)
     job_id = uuid4()
     name = f"klee-job-{job_id}"
     task = asyncio.create_task(
@@ -216,6 +235,14 @@ async def test_docker_runner_cancel_halts_with_partial_results():
             await asyncio.sleep(0.3)
         else:
             pytest.fail("container never started")
+
+        memory_bytes = TEST_CAPS.memory_mb * 1024 * 1024
+        assert await _container_caps(name) == (
+            int(TEST_CAPS.cpus * 1_000_000_000),
+            memory_bytes,
+            memory_bytes + TEST_CAPS.swap_mb * 1024 * 1024,
+            TEST_CAPS.pids_limit,
+        )
 
         await asyncio.sleep(2)  # let KLEE explore so the halt has states to dump
 
@@ -233,7 +260,7 @@ async def test_docker_runner_cancel_halts_with_partial_results():
 
 
 async def test_docker_runner_pairs_div_err_with_failing_test_case():
-    runner = DockerKleeRunner()
+    runner = DockerKleeRunner(TEST_CAPS)
     result = await asyncio.wait_for(
         runner.execute(DIV_BY_ZERO_SOURCE, KleeFlags(max_time=10, max_memory=256), uuid4()),
         timeout=30,
@@ -265,7 +292,7 @@ int main() {
 
 
 async def test_docker_runner_bounds_a_klee_that_overruns_its_own_max_time():
-    runner = DockerKleeRunner()
+    runner = DockerKleeRunner(TEST_CAPS)
     job_id = uuid4()
     name = f"klee-job-{job_id}"
     try:
@@ -296,7 +323,7 @@ int main() {
 
 
 async def test_docker_runner_captures_per_path_output_for_posix_input():
-    runner = DockerKleeRunner()
+    runner = DockerKleeRunner(TEST_CAPS)
     result = await asyncio.wait_for(
         runner.execute(
             PER_PATH_POSIX_SOURCE,
@@ -331,7 +358,7 @@ int main() {
 
 @pytest.mark.parametrize("runtime", RUNTIMES)
 async def test_docker_runner_captures_per_path_output_for_make_symbolic(runtime):
-    runner = DockerKleeRunner(runtime=runtime)
+    runner = DockerKleeRunner(TEST_CAPS, runtime=runtime)
     result = await asyncio.wait_for(
         runner.execute(
             PER_PATH_MAKE_SYMBOLIC_SOURCE,

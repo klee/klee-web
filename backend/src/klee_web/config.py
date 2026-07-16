@@ -13,6 +13,10 @@ class Settings(BaseSettings):
     klee_fake_runner: bool = False
     klee_runtime: str | None = None
     worker_concurrency_max: Annotated[int, Field(ge=1)] = 4
+    runner_cpus: Annotated[float, Field(gt=0)] = 2
+    runner_memory_mb: Annotated[int, Field(gt=0)] = 3072
+    runner_swap_mb: Annotated[int, Field(ge=0)] = 0
+    runner_pids_limit: Annotated[int, Field(gt=0)] = 128
 
     @model_validator(mode="after")
     def _broker_requires_redis(self) -> Self:

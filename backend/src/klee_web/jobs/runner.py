@@ -3,6 +3,7 @@ import io
 import tarfile
 import tempfile
 from collections.abc import Awaitable, Callable
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Protocol
 from uuid import UUID
@@ -12,6 +13,14 @@ from klee_web.parsing.klee_output import parse_output_dir
 from klee_web.symbolic_input import render_posix_args
 
 IMAGE_TAG = "klee-web-runner"
+
+
+@dataclass(frozen=True)
+class RunnerCaps:
+    cpus: float
+    memory_mb: int
+    swap_mb: int
+    pids_limit: int
 
 
 def _container_name(job_id: UUID) -> str:
@@ -34,9 +43,30 @@ def resolve_runtime(configured: str | None, kvm_present: bool | None = None) -> 
 
 
 def build_run_args(
-    job_id: UUID, flags: KleeFlags, posix_args: str, runtime: str | None
+    job_id: UUID,
+    flags: KleeFlags,
+    posix_args: str,
+    runtime: str | None,
+    caps: RunnerCaps,
 ) -> list[str]:
-    args = ["docker", "run", "--rm", "-i", "--network", "none", "--name", _container_name(job_id)]
+    args = [
+        "docker",
+        "run",
+        "--rm",
+        "-i",
+        "--network",
+        "none",
+        "--name",
+        _container_name(job_id),
+        "--cpus",
+        f"{caps.cpus:g}",
+        "--memory",
+        f"{caps.memory_mb}m",
+        "--memory-swap",
+        f"{caps.memory_mb + caps.swap_mb}m",
+        "--pids-limit",
+        str(caps.pids_limit),
+    ]
     if runtime is not None:
         args += ["--runtime", runtime]
     args += [
@@ -126,7 +156,8 @@ class DockerKleeRunner:
     a serverless sandbox), not only runc.
     """
 
-    def __init__(self, runtime: str | None = None) -> None:
+    def __init__(self, caps: RunnerCaps, runtime: str | None = None) -> None:
+        self._caps = caps
         self._runtime = runtime
 
     async def execute(
@@ -143,7 +174,7 @@ class DockerKleeRunner:
         posix_args = render_posix_args(flags.sym_files, flags.sym_args, flags.sym_stdin)
         try:
             proc = await asyncio.create_subprocess_exec(
-                *build_run_args(job_id, flags, posix_args, self._runtime),
+                *build_run_args(job_id, flags, posix_args, self._runtime, self._caps),
                 stdin=asyncio.subprocess.PIPE,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,

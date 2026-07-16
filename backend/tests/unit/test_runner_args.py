@@ -1,7 +1,9 @@
 from uuid import uuid4
 
-from klee_web.jobs.runner import build_run_args, resolve_runtime
+from klee_web.jobs.runner import RunnerCaps, build_run_args, resolve_runtime
 from klee_web.models import KleeFlags
+
+CAPS = RunnerCaps(cpus=2, memory_mb=3072, swap_mb=0, pids_limit=128)
 
 
 def _value_after(args: list[str], flag: str) -> str | None:
@@ -11,24 +13,41 @@ def _value_after(args: list[str], flag: str) -> str | None:
 
 
 def test_build_run_args_always_disables_network() -> None:
-    args = build_run_args(uuid4(), KleeFlags(), "", runtime=None)
+    args = build_run_args(uuid4(), KleeFlags(), "", runtime=None, caps=CAPS)
     assert _value_after(args, "--network") == "none"
 
 
 def test_build_run_args_omits_runtime_when_none() -> None:
-    args = build_run_args(uuid4(), KleeFlags(), "", runtime=None)
+    args = build_run_args(uuid4(), KleeFlags(), "", runtime=None, caps=CAPS)
     assert "--runtime" not in args
 
 
 def test_build_run_args_includes_runtime_when_set() -> None:
-    args = build_run_args(uuid4(), KleeFlags(), "", runtime="runsc-kvm")
+    args = build_run_args(uuid4(), KleeFlags(), "", runtime="runsc-kvm", caps=CAPS)
     assert _value_after(args, "--runtime") == "runsc-kvm"
 
 
 def test_build_run_args_is_a_docker_run_for_the_image() -> None:
-    args = build_run_args(uuid4(), KleeFlags(), "", runtime="runsc")
+    args = build_run_args(uuid4(), KleeFlags(), "", runtime="runsc", caps=CAPS)
     assert args[:2] == ["docker", "run"]
     assert args[-1] == "klee-web-runner"
+
+
+def test_build_run_args_applies_runner_caps() -> None:
+    args = build_run_args(uuid4(), KleeFlags(), "", runtime=None, caps=CAPS)
+
+    assert _value_after(args, "--cpus") == "2"
+    assert _value_after(args, "--memory") == "3072m"
+    assert _value_after(args, "--memory-swap") == "3072m"
+    assert _value_after(args, "--pids-limit") == "128"
+
+
+def test_build_run_args_adds_swap_allowance_to_docker_total() -> None:
+    caps = RunnerCaps(cpus=1.5, memory_mb=3072, swap_mb=512, pids_limit=64)
+
+    args = build_run_args(uuid4(), KleeFlags(), "", runtime=None, caps=caps)
+
+    assert _value_after(args, "--memory-swap") == "3584m"
 
 
 def test_resolve_runtime_unset_is_runc() -> None:
