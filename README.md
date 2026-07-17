@@ -93,10 +93,29 @@ The targets above run the backend and frontend as host processes. To run the
 whole thing in containers behind the nginx edge, the production-like shape:
 
 ```bash
+make admin-password   # create or rotate the single admin credential
 make deploy         # nginx + API + worker + Redis, all in Docker
 make deploy-gvisor  # same, KLEE jobs sandboxed under gVisor (systrap)
 make deploy-kvm     # same, gVisor on the KVM platform where /dev/kvm exists
 ```
+
+`make admin-password` prompts without displaying the password. It protects the
+ignored credential with a mode `0700` parent directory, while the mode `0644`
+file remains readable inside nginx's isolated, read-only secret mount. The
+username is `admin`. Run the target again to rotate the credential. The
+`make deploy*` targets fail if the file is absent.
+
+On a deployment host, keep the credential outside the checkout and export its
+path before creating it and starting the stack. The directory must be writable
+and owned by the deployment user:
+
+```bash
+export ADMIN_HTPASSWD_FILE=/etc/klee-web/admin.htpasswd
+make admin-password
+make deploy-gvisor
+```
+
+The environment contains only the file path, not the password or bcrypt hash.
 
 nginx serves the built frontend and reverse-proxies `/api` over TLS on a single
 origin, Redis persists to a named volume (AOF, bounded by `maxmemory` with LRU

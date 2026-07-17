@@ -1,8 +1,9 @@
-.PHONY: up up-celery up-pool install runner deploy deploy-gvisor deploy-kvm
+.PHONY: up up-celery up-pool install runner admin-password deploy deploy-gvisor deploy-kvm
 
 WORKERS ?= 2
 WORKER_CONCURRENCY_MAX ?= 4
-export WORKER_CONCURRENCY_MAX
+ADMIN_HTPASSWD_FILE ?= $(CURDIR)/.secrets/admin.htpasswd
+export WORKER_CONCURRENCY_MAX ADMIN_HTPASSWD_FILE
 
 install:
 	cd backend && uv sync
@@ -42,6 +43,16 @@ deploy deploy-gvisor deploy-kvm: runner
 deploy-gvisor: KLEE_RUNTIME := runsc
 deploy-kvm:    KLEE_RUNTIME := runsc-kvm
 export KLEE_RUNTIME
+
+admin-password:
+	@mkdir -p "$(dir $(ADMIN_HTPASSWD_FILE))"
+	@chmod 700 "$(dir $(ADMIN_HTPASSWD_FILE))"
+	@docker run --rm -it \
+		--user "$$(id -u):$$(id -g)" \
+		--mount "type=bind,source=$(dir $(ADMIN_HTPASSWD_FILE)),target=/secrets" \
+		--env "OUTPUT_FILE=/secrets/$(notdir $(ADMIN_HTPASSWD_FILE))" \
+		httpd:2.4.68-alpine \
+		sh -c 'umask 077 && htpasswd -cB "$$OUTPUT_FILE" admin && chmod 644 "$$OUTPUT_FILE"'
 
 runner:
 	docker build -t klee-web-runner ./runner

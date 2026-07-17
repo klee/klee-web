@@ -132,6 +132,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Create the test admin credential
+        run: |
+          mkdir -p .secrets
+          chmod 700 .secrets
+          docker run --rm httpd:2.4.68-alpine \
+            htpasswd -nbB admin test-password > .secrets/admin.htpasswd
+          chmod 644 .secrets/admin.htpasswd
       - name: Bring up the edge (nginx pulls in api and redis via depends_on)
         run: docker compose up -d --build --wait nginx
       - name: HTTP redirects to HTTPS
@@ -140,6 +147,18 @@ jobs:
         run: curl -fsSk https://localhost/ | grep -q /assets/
       - name: The API is reachable and prefix-stripped under /api
         run: curl -fsSk https://localhost/api/openapi.json | grep -q openapi
+      - name: Admin routes require authentication
+        run: |
+          test "$(curl -sk -o /dev/null -w '%{http_code}' https://localhost/admin)" = 401
+          test "$(curl -sk -o /dev/null -w '%{http_code}' https://localhost/api/admin/stats)" = 401
+      - name: Admin routes accept the test credential
+        run: |
+          curl -fsSku admin:test-password https://localhost/admin | grep -q /assets/
+          curl -fsSku admin:test-password https://localhost/api/admin/stats > /dev/null
+      - name: Internal service ports bind only to loopback
+        run: |
+          test "$(docker compose port api 8000)" = "127.0.0.1:8000"
+          test "$(docker compose port redis 6379)" = "127.0.0.1:6379"
       - name: Tear down
         if: always()
         run: docker compose down

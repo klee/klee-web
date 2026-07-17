@@ -10,7 +10,7 @@ services:
       - "--maxmemory-policy"
       - "volatile-lru"
     ports:
-      - "6379:6379"
+      - "127.0.0.1:6379:6379"
     volumes:
       - redis-data:/data
     healthcheck:
@@ -23,7 +23,7 @@ services:
     build: ./backend
     image: klee-web-backend
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
     environment:
       REDIS_URL: redis://redis:6379/0
       CELERY_BROKER_URL: redis://redis:6379/1
@@ -74,9 +74,15 @@ services:
     ports:
       - "80:80"
       - "443:443"
+    secrets:
+      - admin_htpasswd
     depends_on:
       api:
         condition: service_healthy
 
 volumes:
   redis-data:
+
+secrets:
+  admin_htpasswd:
+    file: ${ADMIN_HTPASSWD_FILE:-./.secrets/admin.htpasswd}
