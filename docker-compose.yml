@@ -1,6 +1,12 @@
 services:
   redis:
     image: redis:7-alpine
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     command:
       - "redis-server"
       - "--appendonly"
@@ -22,6 +28,12 @@ services:
   api:
     build: ./backend
     image: klee-web-backend
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     ports:
       - "127.0.0.1:8000:8000"
     environment:
@@ -45,6 +57,12 @@ services:
   worker:
     build: ./backend
     image: klee-web-backend
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     command:
       - "celery"
       - "-A"
@@ -71,6 +89,12 @@ services:
 
   nginx:
     build: ./frontend
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
     ports:
       - "80:80"
       - "443:443"

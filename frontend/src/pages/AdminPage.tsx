@@ -97,9 +97,19 @@ export function AdminPage() {
               />
             ))}
             {telemetry.data && workers.length === 0 && (
-              <p className="rounded border border-amber-300 bg-amber-50 px-4 py-4 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-200">
-                No workers are responding.
-              </p>
+              <div className="rounded border border-amber-300 bg-amber-50 px-4 py-4 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-200">
+                <p className="font-medium">No workers are responding.</p>
+                <p className="mt-2">
+                  A terminated Worker should restart automatically. If this warning persists, check
+                  the deployment host from the application directory with{" "}
+                  <code className="font-mono text-xs">docker compose ps worker</code> and{" "}
+                  <code className="font-mono text-xs">docker compose logs worker</code>.
+                </p>
+                <p className="mt-2">
+                  If the container remains running but Celery does not respond, run{" "}
+                  <code className="font-mono text-xs">docker compose restart worker</code>.
+                </p>
+              </div>
             )}
           </div>
           {capacity.isError && (

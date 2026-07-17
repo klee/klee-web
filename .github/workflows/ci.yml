@@ -139,6 +139,17 @@ jobs:
           docker run --rm httpd:2.4.68-alpine \
             htpasswd -nbB admin test-password > .secrets/admin.htpasswd
           chmod 644 .secrets/admin.htpasswd
+      - name: Services have restart and log retention policies
+        run: |
+          config=$(docker compose config --format json)
+          for service in redis api worker nginx; do
+            jq -e --arg service "$service" '
+              .services[$service].restart == "unless-stopped" and
+              .services[$service].logging.driver == "json-file" and
+              .services[$service].logging.options["max-size"] == "10m" and
+              .services[$service].logging.options["max-file"] == "3"
+            ' <<< "$config"
+          done
       - name: Bring up the edge (nginx pulls in api and redis via depends_on)
         run: docker compose up -d --build --wait nginx
       - name: HTTP redirects to HTTPS
@@ -159,6 +170,25 @@ jobs:
         run: |
           test "$(docker compose port api 8000)" = "127.0.0.1:8000"
           test "$(docker compose port redis 6379)" = "127.0.0.1:6379"
+      - name: A terminated Worker restarts automatically
+        run: |
+          docker compose up -d worker
+          container_id=$(docker compose ps -q worker)
+          sleep 11
+          docker exec "$container_id" python -c 'import os, signal; os.kill(1, signal.SIGTERM)'
+          for _ in $(seq 1 20); do
+            restart_count=$(docker inspect --format '{{.RestartCount}}' "$container_id")
+            running=$(docker inspect --format '{{.State.Running}}' "$container_id")
+            if [ "$restart_count" -ge 1 ] && [ "$running" = true ]; then
+              if curl -fsSku admin:test-password https://localhost/api/admin/telemetry \
+                | jq -e '.workers | length > 0' > /dev/null; then
+                exit 0
+              fi
+            fi
+            sleep 1
+          done
+          docker inspect "$container_id"
+          exit 1
       - name: Tear down
         if: always()
         run: docker compose down

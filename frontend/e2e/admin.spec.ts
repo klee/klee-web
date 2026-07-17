@@ -10,6 +10,7 @@ test("admin opens separately, reads fleet state, and changes a worker maximum", 
   let requestedMaximum: number | null = null;
   let queueAvailable = true;
   let capacityError: string | null = null;
+  let workersRespond = true;
 
   await context.route("**/api/admin/telemetry", (route) =>
     route.fulfill({
@@ -17,15 +18,17 @@ test("admin opens separately, reads fleet state, and changes a worker maximum", 
       contentType: "application/json",
       body: JSON.stringify({
         max_worker_concurrency: 4,
-        workers: [
-          {
-            name: "worker1@host",
-            concurrency: 3,
-            max_concurrency: liveMaximum,
-            active: 2,
-            reserved: 1,
-          },
-        ],
+        workers: workersRespond
+          ? [
+              {
+                name: "worker1@host",
+                concurrency: 3,
+                max_concurrency: liveMaximum,
+                active: 2,
+                reserved: 1,
+              },
+            ]
+          : [],
         queue: queueAvailable ? { name: "klee-jobs", depth: 5 } : null,
       }),
     }),
@@ -96,4 +99,14 @@ test("admin opens separately, reads fleet state, and changes a worker maximum", 
   await capacity.fill("3");
   await adminPage.getByRole("button", { name: "Apply worker1@host capacity" }).click();
   await expect(adminPage.getByText(capacityError)).toBeVisible();
+
+  workersRespond = false;
+  await adminPage.reload();
+  await expect(adminPage.getByText("No workers are responding.")).toBeVisible();
+  await expect(
+    adminPage.getByText("A terminated Worker should restart automatically."),
+  ).toBeVisible();
+  await expect(adminPage.getByText("docker compose ps worker")).toBeVisible();
+  await expect(adminPage.getByText("docker compose logs worker")).toBeVisible();
+  await expect(adminPage.getByText("docker compose restart worker")).toBeVisible();
 });
