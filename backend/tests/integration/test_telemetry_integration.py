@@ -39,7 +39,6 @@ def worker(monkeypatch):
     """A real Celery worker in a background thread, consuming our queue against Redis."""
     monkeypatch.setenv("REDIS_URL", _STORE_URL)
     monkeypatch.setenv("CELERY_BROKER_URL", _BROKER_URL)
-    monkeypatch.setenv("KLEE_FAKE_RUNNER", "1")
     get_settings.cache_clear()
 
     from celery.contrib.testing.worker import start_worker

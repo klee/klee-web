@@ -28,16 +28,10 @@ def _build_store(settings: Settings) -> JobStore:
 
     from klee_web.jobs.store import RedisJobStore
 
-    assert settings.redis_url is not None  # the broker validator guarantees this in Celery mode
     return RedisJobStore(Redis.from_url(settings.redis_url))
 
 
 def _build_runner(settings: Settings) -> KleeRunner:
-    if settings.klee_fake_runner:
-        from klee_web.jobs.fake_data import get_sign_result
-        from klee_web.jobs.runner import FakeKleeRunner
-
-        return FakeKleeRunner(canned_result=get_sign_result())
     return DockerKleeRunner(
         caps=RunnerCaps(
             cpus=settings.runner_cpus,
@@ -55,7 +49,6 @@ def _build_cache(settings: Settings) -> ResultCache:
 
     from klee_web.jobs.cache import RedisResultCache
 
-    assert settings.redis_url is not None  # the broker validator guarantees this in Celery mode
     return RedisResultCache(Redis.from_url(settings.redis_url))
 
 
@@ -64,7 +57,6 @@ def _build_usage(settings: Settings) -> UsageStatsStore:
 
     from klee_web.jobs.usage import RedisUsageStatsStore
 
-    assert settings.redis_url is not None  # the broker validator guarantees this in Celery mode
     return RedisUsageStatsStore(Redis.from_url(settings.redis_url))
 
 

@@ -105,22 +105,35 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v6
-        with:
-          enable-cache: true
+      - name: Install gVisor (runsc) and register the runtime
+        run: |
+          set -euo pipefail
+          GVISOR_RELEASE=20260706   # keep in sync with the deploy host and integration-docker
+          ARCH=$(uname -m)
+          URL="https://storage.googleapis.com/gvisor/releases/release/${GVISOR_RELEASE}/${ARCH}"
+          wget -q "${URL}/runsc" "${URL}/runsc.sha512" \
+               "${URL}/containerd-shim-runsc-v1" "${URL}/containerd-shim-runsc-v1.sha512"
+          sha512sum -c runsc.sha512 -c containerd-shim-runsc-v1.sha512
+          chmod a+rx runsc containerd-shim-runsc-v1
+          sudo mv runsc containerd-shim-runsc-v1 /usr/local/bin
+          sudo runsc install
+          sudo systemctl restart docker
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: 'npm'
           cache-dependency-path: frontend/package-lock.json
-      - run: uv sync
-        working-directory: backend
       - run: npm ci
         working-directory: frontend
       - run: npx playwright install --with-deps chromium
         working-directory: frontend
       - run: npm run test:e2e
         working-directory: frontend
+        env:
+          KLEE_RUNTIME: runsc
+      - name: Verify e2e containers were removed
+        if: always()
+        run: test -z "$(docker ps --filter label=com.docker.compose.project=klee-web-e2e --quiet)"
       - uses: actions/upload-artifact@v4
         if: failure()
         with:

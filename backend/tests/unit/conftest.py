@@ -4,9 +4,14 @@ from httpx import ASGITransport, AsyncClient
 
 from klee_web.api.jobs import router as jobs_router
 from klee_web.deps import get_cache, get_dispatcher, get_job_store, get_usage_stats
-from klee_web.jobs.runner import FakeKleeRunner
 from klee_web.models import JobResult, SymbolicInput, TestCase
-from tests.fakes import FakeJobDispatcher, FakeJobStore, FakeResultCache, FakeUsageStatsStore
+from tests.fakes import (
+    FakeJobDispatcher,
+    FakeJobStore,
+    FakeKleeRunner,
+    FakeResultCache,
+    FakeUsageStatsStore,
+)
 
 
 @pytest.fixture

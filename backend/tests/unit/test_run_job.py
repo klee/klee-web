@@ -3,7 +3,7 @@ from uuid import UUID
 
 from klee_web.jobs.cache import cache_key
 from klee_web.jobs.run import run_job
-from klee_web.jobs.runner import FakeKleeRunner, KleeRunnerError
+from klee_web.jobs.runner import KleeRunnerError
 from klee_web.models import (
     HaltReason,
     Job,
@@ -15,6 +15,7 @@ from klee_web.models import (
     SymbolicInput,
     TestCase,
 )
+from tests.fakes import FakeKleeRunner
 
 SOURCE = "int main() { return 0; }"
 

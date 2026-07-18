@@ -1,9 +1,8 @@
 import { test, expect } from "@playwright/test";
 
-// The fake runner ignores flags, so the meaningful check is that enabling a spec in
-// the panel actually reaches the request. This drives the whole path: opening the
-// details panel, the enable toggle, the numeric field, and the submit body carrying
-// the structured sym_stdin object.
+// This test concerns request serialization rather than Runner output. It drives the
+// details panel, enable toggle, numeric field, and submit body carrying the structured
+// sym_stdin object.
 test("enabling symbolic stdin threads it into the submit request", async ({ page }) => {
   await page.goto("/");
 

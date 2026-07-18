@@ -114,45 +114,6 @@ class KleeRunner(Protocol):
     async def cancel(self, job_id: UUID) -> bool: ...
 
 
-class FakeKleeRunner:
-    """Test double. Returns a canned result, or raises a canned exception. Records calls."""
-
-    def __init__(
-        self,
-        canned_result: JobResult | None = None,
-        raise_exc: Exception | None = None,
-        cancel_returns: bool = True,
-    ) -> None:
-        self._canned_result = canned_result
-        self._raise_exc = raise_exc
-        self._cancel_returns = cancel_returns
-        self.calls: list[tuple[str, KleeFlags]] = []
-        self.cancel_calls: list[UUID] = []
-
-    async def execute(
-        self,
-        source: str,
-        flags: KleeFlags,
-        job_id: UUID,
-        on_progress: OnProgress | None = None,
-        on_parsing: OnParsing | None = None,
-    ) -> JobResult:
-        self.calls.append((source, flags))
-        if self._raise_exc is not None:
-            raise self._raise_exc
-        if self._canned_result is None:
-            raise RuntimeError("FakeKleeRunner needs either canned_result or raise_exc")
-        if on_progress is not None:
-            await on_progress(self._canned_result)
-        if on_parsing is not None:
-            await on_parsing()
-        return self._canned_result
-
-    async def cancel(self, job_id: UUID) -> bool:
-        self.cancel_calls.append(job_id)
-        return self._cancel_returns
-
-
 class DockerKleeRunner:
     """Runs the klee-web-runner container per job and parses its output into a JobResult.
 

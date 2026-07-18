@@ -6,9 +6,9 @@ from redis.asyncio import Redis
 
 from klee_web.config import get_settings
 from klee_web.jobs.dispatch import CeleryDispatcher
-from klee_web.jobs.fake_data import get_sign_result
 from klee_web.jobs.store import RedisJobStore
 from klee_web.models import Job, JobRequest, JobStatus
+from tests.fakes import FakeKleeRunner, get_sign_result
 
 _STORE_URL = os.environ.get("REDIS_URL", "redis://localhost:6379/0")
 _BROKER_URL = os.environ.get("CELERY_BROKER_URL", "redis://localhost:6379/1")
@@ -37,13 +37,18 @@ def worker(monkeypatch):
     """A real Celery worker in a background thread, consuming our queue against Redis."""
     monkeypatch.setenv("REDIS_URL", _STORE_URL)
     monkeypatch.setenv("CELERY_BROKER_URL", _BROKER_URL)
-    monkeypatch.setenv("KLEE_FAKE_RUNNER", "1")
     get_settings.cache_clear()
 
     from celery.contrib.testing.worker import start_worker
 
-    from klee_web.celery_app import app
+    from klee_web import celery_app
 
+    monkeypatch.setattr(
+        celery_app,
+        "_build_runner",
+        lambda settings: FakeKleeRunner(canned_result=get_sign_result()),
+    )
+    app = celery_app.app
     app.conf.broker_url = _BROKER_URL
     with start_worker(app, perform_ping_check=False):
         yield

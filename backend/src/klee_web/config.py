@@ -10,7 +10,6 @@ class Settings(BaseSettings):
 
     redis_url: str
     celery_broker_url: str
-    klee_fake_runner: bool = False
     klee_runtime: str | None = None
     worker_concurrency_max: Annotated[int, Field(ge=1)] = 4
     runner_cpus: Annotated[float, Field(gt=0)] = 2
