@@ -1,40 +1,11 @@
-import asyncio
 from typing import Protocol
 from uuid import UUID
 
-from klee_web.jobs.cache import ResultCache
-from klee_web.jobs.run import run_job
-from klee_web.jobs.runner import KleeRunner
-from klee_web.jobs.store import JobStore
-from klee_web.jobs.usage import UsageStatsStore
 from klee_web.models import JobRequest
 
 
 class JobDispatcher(Protocol):
     async def dispatch(self, job_id: UUID, request: JobRequest) -> None: ...
-
-
-# Strong references to in-flight background jobs. Without this, asyncio may
-# garbage-collect a task whose only reference was create_task's return value,
-# killing the job mid-execution. Tasks remove themselves on completion.
-_background_tasks: set[asyncio.Task[None]] = set()
-
-
-class InProcessDispatcher:
-    def __init__(
-        self, store: JobStore, runner: KleeRunner, cache: ResultCache, usage: UsageStatsStore
-    ) -> None:
-        self._store = store
-        self._runner = runner
-        self._cache = cache
-        self._usage = usage
-
-    async def dispatch(self, job_id: UUID, request: JobRequest) -> None:
-        task = asyncio.create_task(
-            run_job(job_id, request, self._store, self._runner, self._cache, self._usage)
-        )
-        _background_tasks.add(task)
-        task.add_done_callback(_background_tasks.discard)
 
 
 # Hard per-task ceiling above the job's own budget. The Celery supervisor enforces it, so
@@ -51,8 +22,3 @@ class CeleryDispatcher:
             args=(str(job_id), request.model_dump(mode="json")),
             time_limit=request.flags.max_time + _TASK_TIME_LIMIT_MARGIN,
         )
-
-
-async def drain() -> None:
-    """Await all in-flight in-process jobs (used by tests and graceful shutdown)."""
-    await asyncio.gather(*list(_background_tasks), return_exceptions=True)

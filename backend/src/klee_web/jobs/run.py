@@ -34,12 +34,10 @@ async def run_job(
     request: JobRequest,
     store: JobStore,
     runner: KleeRunner,
-    cache: ResultCache | None = None,
-    usage: UsageStatsStore | None = None,
+    cache: ResultCache,
+    usage: UsageStatsStore,
 ) -> None:
     async def record_outcome(outcome: JobOutcome, result: JobResult | None = None) -> None:
-        if usage is None:
-            return
         await usage.record_execution(
             outcome,
             test_cases=len(result.test_cases) if result is not None else 0,
@@ -80,7 +78,7 @@ async def run_job(
         if job is not None and job.cancel_requested:
             result.halt_reason = HaltReason.cancelled
         await store.set_result(job_id, result)
-        if cache is not None and result.halt_reason == HaltReason.completed:
+        if result.halt_reason == HaltReason.completed:
             await cache.set(cache_key(request), result)
         await record_outcome(outcome_of_result(result), result)
     except KleeRunnerError:

@@ -1,4 +1,3 @@
-import asyncio
 import hashlib
 import json
 from typing import Protocol
@@ -16,20 +15,6 @@ def cache_key(request: JobRequest) -> str:
 class ResultCache(Protocol):
     async def get(self, key: str) -> JobResult | None: ...
     async def set(self, key: str, result: JobResult) -> None: ...
-
-
-class InMemoryResultCache:
-    def __init__(self) -> None:
-        self._entries: dict[str, JobResult] = {}
-        self._lock = asyncio.Lock()
-
-    async def get(self, key: str) -> JobResult | None:
-        async with self._lock:
-            return self._entries.get(key)
-
-    async def set(self, key: str, result: JobResult) -> None:
-        async with self._lock:
-            self._entries[key] = result
 
 
 _CACHE_TTL_SECONDS = 24 * 60 * 60

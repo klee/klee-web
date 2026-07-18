@@ -37,11 +37,6 @@ class FleetControl(Protocol):
     async def set_max_concurrency(self, worker_name: str, maximum: int) -> None: ...
 
 
-class UnavailableFleetControl:
-    async def set_max_concurrency(self, worker_name: str, maximum: int) -> None:
-        raise WorkerUnavailable(worker_name)
-
-
 class CeleryFleetControl:
     def __init__(self, celery_app: Celery, maximum: int) -> None:
         self._app = celery_app
@@ -104,18 +99,6 @@ def build_worker_telemetry(
             )
         )
     return workers
-
-
-class NullFleetTelemetry:
-    def __init__(self, max_worker_concurrency: int) -> None:
-        self._max_worker_concurrency = max_worker_concurrency
-
-    async def snapshot(self) -> Telemetry:
-        return Telemetry(
-            max_worker_concurrency=self._max_worker_concurrency,
-            workers=[],
-            queue=None,
-        )
 
 
 class CeleryFleetTelemetry:

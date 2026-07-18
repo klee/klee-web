@@ -1,25 +1,39 @@
+from typing import Any
+
 import pytest
 from pydantic import ValidationError
 
 from klee_web.config import Settings
 
+REDIS_URL = "redis://localhost:6379/0"
+BROKER_URL = "redis://localhost:6379/1"
+
+
+def make_settings(**overrides: Any) -> Settings:
+    values: dict[str, Any] = {
+        "redis_url": REDIS_URL,
+        "celery_broker_url": BROKER_URL,
+    }
+    values.update(overrides)
+    return Settings(**values)
+
 
 def test_worker_concurrency_max_defaults_to_four():
-    assert Settings().worker_concurrency_max == 4
+    assert make_settings().worker_concurrency_max == 4
 
 
 def test_worker_concurrency_max_reads_environment(monkeypatch):
     monkeypatch.setenv("WORKER_CONCURRENCY_MAX", "8")
-    assert Settings().worker_concurrency_max == 8
+    assert make_settings().worker_concurrency_max == 8
 
 
 def test_worker_concurrency_max_must_be_positive():
     with pytest.raises(ValidationError):
-        Settings(worker_concurrency_max=0)
+        make_settings(worker_concurrency_max=0)
 
 
 def test_runner_caps_have_safe_defaults():
-    settings = Settings()
+    settings = make_settings()
 
     assert settings.runner_cpus == 2
     assert settings.runner_memory_mb == 3072
@@ -35,7 +49,7 @@ def test_runner_caps_read_environment(monkeypatch):
     monkeypatch.setenv("RUNNER_PIDS_LIMIT", "64")
     monkeypatch.setenv("RUNNER_STORAGE_MB", "1024")
 
-    settings = Settings()
+    settings = make_settings()
 
     assert settings.runner_cpus == 1.5
     assert settings.runner_memory_mb == 4096
@@ -56,22 +70,27 @@ def test_runner_caps_read_environment(monkeypatch):
 )
 def test_runner_caps_reject_invalid_values(field, value):
     with pytest.raises(ValidationError):
-        Settings(**{field: value})
+        make_settings(**{field: value})
 
 
-def test_celery_broker_without_redis_is_rejected():
-    with pytest.raises(ValidationError):
-        Settings(celery_broker_url="redis://localhost:6379/1", redis_url=None)
+def test_redis_url_is_required(monkeypatch):
+    monkeypatch.delenv("REDIS_URL")
+    with pytest.raises(ValidationError) as exc_info:
+        Settings(celery_broker_url=BROKER_URL, _env_file=None)  # type: ignore[call-arg]
+
+    assert exc_info.value.errors()[0]["loc"] == ("redis_url",)
 
 
-def test_celery_broker_with_redis_is_allowed():
-    settings = Settings(
-        celery_broker_url="redis://localhost:6379/1",
-        redis_url="redis://localhost:6379/0",
-    )
-    assert settings.celery_broker_url == "redis://localhost:6379/1"
+def test_celery_broker_url_is_required(monkeypatch):
+    monkeypatch.delenv("CELERY_BROKER_URL")
+    with pytest.raises(ValidationError) as exc_info:
+        Settings(redis_url=REDIS_URL, _env_file=None)  # type: ignore[call-arg]
+
+    assert exc_info.value.errors()[0]["loc"] == ("celery_broker_url",)
 
 
-def test_no_celery_broker_is_allowed():
-    settings = Settings(celery_broker_url=None, redis_url=None)
-    assert settings.celery_broker_url is None
+def test_redis_and_celery_urls_are_allowed():
+    settings = make_settings()
+
+    assert settings.redis_url == REDIS_URL
+    assert settings.celery_broker_url == BROKER_URL

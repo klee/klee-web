@@ -3,13 +3,10 @@ from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
 
 from klee_web.api.jobs import router as jobs_router
-from klee_web.deps import get_cache, get_job_store, get_runner, get_usage_stats
-from klee_web.jobs.cache import InMemoryResultCache
-from klee_web.jobs.dispatch import drain
+from klee_web.deps import get_cache, get_dispatcher, get_job_store, get_usage_stats
 from klee_web.jobs.runner import FakeKleeRunner
-from klee_web.jobs.store import InMemoryJobStore
-from klee_web.jobs.usage import InMemoryUsageStatsStore
 from klee_web.models import JobResult, SymbolicInput, TestCase
+from tests.fakes import FakeJobDispatcher, FakeJobStore, FakeResultCache, FakeUsageStatsStore
 
 
 @pytest.fixture
@@ -27,8 +24,8 @@ def sample_result() -> JobResult:
 
 
 @pytest.fixture
-def store() -> InMemoryJobStore:
-    return InMemoryJobStore()
+def store() -> FakeJobStore:
+    return FakeJobStore()
 
 
 @pytest.fixture
@@ -37,21 +34,26 @@ def runner(sample_result) -> FakeKleeRunner:
 
 
 @pytest.fixture
-def cache() -> InMemoryResultCache:
-    return InMemoryResultCache()
+def cache() -> FakeResultCache:
+    return FakeResultCache()
 
 
 @pytest.fixture
-def usage() -> InMemoryUsageStatsStore:
-    return InMemoryUsageStatsStore()
+def usage() -> FakeUsageStatsStore:
+    return FakeUsageStatsStore()
 
 
 @pytest.fixture
-def app(store, runner, cache, usage) -> FastAPI:
+def dispatcher() -> FakeJobDispatcher:
+    return FakeJobDispatcher()
+
+
+@pytest.fixture
+def app(store, cache, usage, dispatcher) -> FastAPI:
     app = FastAPI()
     app.include_router(jobs_router)
     app.dependency_overrides[get_job_store] = lambda: store
-    app.dependency_overrides[get_runner] = lambda: runner
+    app.dependency_overrides[get_dispatcher] = lambda: dispatcher
     app.dependency_overrides[get_cache] = lambda: cache
     app.dependency_overrides[get_usage_stats] = lambda: usage
     return app
@@ -61,10 +63,3 @@ def app(store, runner, cache, usage) -> FastAPI:
 async def client(app):
     async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as c:
         yield c
-    # Drain background job tasks so state from one test cannot bleed into the next.
-    await drain()
-
-
-@pytest.fixture
-def wait_for_jobs():
-    return drain

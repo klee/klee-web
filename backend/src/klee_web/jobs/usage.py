@@ -1,4 +1,3 @@
-import asyncio
 from typing import Protocol
 
 from redis.asyncio import Redis
@@ -21,36 +20,6 @@ class UsageStatsStore(Protocol):
     ) -> None: ...
     async def record_cache_hit(self) -> None: ...
     async def snapshot(self) -> UsageStats: ...
-
-
-class InMemoryUsageStatsStore:
-    def __init__(self) -> None:
-        self._outcomes: dict[JobOutcome, int] = {o: 0 for o in JobOutcome}
-        self._cache_hits = 0
-        self._test_cases = 0
-        self._instructions = 0
-        self._lock = asyncio.Lock()
-
-    async def record_execution(
-        self, outcome: JobOutcome, test_cases: int = 0, instructions: int = 0
-    ) -> None:
-        async with self._lock:
-            self._outcomes[outcome] += 1
-            self._test_cases += test_cases
-            self._instructions += instructions
-
-    async def record_cache_hit(self) -> None:
-        async with self._lock:
-            self._cache_hits += 1
-
-    async def snapshot(self) -> UsageStats:
-        async with self._lock:
-            return UsageStats(
-                outcomes=dict(self._outcomes),
-                cache_hits=self._cache_hits,
-                test_cases_generated=self._test_cases,
-                instructions_executed=self._instructions,
-            )
 
 
 class RedisUsageStatsStore:

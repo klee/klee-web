@@ -1,4 +1,4 @@
-from klee_web.jobs.telemetry import NullFleetTelemetry, build_worker_telemetry
+from klee_web.jobs.telemetry import build_worker_telemetry
 
 
 def test_none_inputs_produce_no_workers() -> None:
@@ -50,9 +50,3 @@ def test_autoscaler_values_override_the_stale_pool_concurrency() -> None:
 
     assert worker.concurrency == 3
     assert worker.max_concurrency == 4
-
-
-async def test_null_telemetry_reports_deployment_maximum() -> None:
-    snapshot = await NullFleetTelemetry(max_worker_concurrency=4).snapshot()
-
-    assert snapshot.max_worker_concurrency == 4

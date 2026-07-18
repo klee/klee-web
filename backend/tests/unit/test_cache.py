@@ -1,8 +1,9 @@
 import fakeredis
 import pytest
 
-from klee_web.jobs.cache import InMemoryResultCache, RedisResultCache, cache_key
+from klee_web.jobs.cache import RedisResultCache, cache_key
 from klee_web.models import JobRequest, JobResult, KleeFlags, QueryFormat
+from tests.fakes import FakeResultCache
 
 SOURCE = "int main() { return 0; }"
 
@@ -49,10 +50,10 @@ def test_cache_key_is_hex_sha256():
     assert all(c in "0123456789abcdef" for c in key)
 
 
-@pytest.fixture(params=["memory", "redis"])
+@pytest.fixture(params=["fake", "redis"])
 async def cache(request):
-    if request.param == "memory":
-        yield InMemoryResultCache()
+    if request.param == "fake":
+        yield FakeResultCache()
         return
     client = fakeredis.FakeAsyncRedis(server=fakeredis.FakeServer())
     yield RedisResultCache(client)

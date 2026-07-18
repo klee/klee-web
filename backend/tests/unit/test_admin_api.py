@@ -9,8 +9,8 @@ from klee_web.jobs.telemetry import (
     WorkerControlRejected,
     WorkerUnavailable,
 )
-from klee_web.jobs.usage import InMemoryUsageStatsStore
 from klee_web.models import JobOutcome, QueueTelemetry, Telemetry, UsageStats, WorkerTelemetry
+from tests.fakes import FakeUsageStatsStore
 
 
 class FakeFleetTelemetry:
@@ -71,7 +71,7 @@ async def test_telemetry_returns_workers_and_queue() -> None:
     }
 
 
-async def test_telemetry_empty_fleet_in_process() -> None:
+async def test_telemetry_empty_fleet() -> None:
     async with make_client(Telemetry(max_worker_concurrency=4, workers=[], queue=None)) as client:
         response = await client.get("/admin/telemetry")
     assert response.status_code == 200
@@ -93,7 +93,7 @@ async def test_telemetry_reports_dead_fleet_with_backlog() -> None:
     assert body["queue"]["depth"] == 5
 
 
-def make_stats_client(usage: InMemoryUsageStatsStore) -> AsyncClient:
+def make_stats_client(usage: FakeUsageStatsStore) -> AsyncClient:
     app = FastAPI()
     app.include_router(admin_router)
     app.dependency_overrides[get_usage_stats] = lambda: usage
@@ -101,7 +101,7 @@ def make_stats_client(usage: InMemoryUsageStatsStore) -> AsyncClient:
 
 
 async def test_stats_returns_the_usage_snapshot() -> None:
-    usage = InMemoryUsageStatsStore()
+    usage = FakeUsageStatsStore()
     await usage.record_execution(JobOutcome.completed, test_cases=4, instructions=900)
     await usage.record_execution(JobOutcome.max_time)
     await usage.record_cache_hit()
@@ -120,7 +120,7 @@ async def test_stats_returns_the_usage_snapshot() -> None:
 
 
 async def test_stats_empty_snapshot_is_zero_filled() -> None:
-    async with make_stats_client(InMemoryUsageStatsStore()) as client:
+    async with make_stats_client(FakeUsageStatsStore()) as client:
         response = await client.get("/admin/stats")
     assert response.status_code == 200
     body = response.json()

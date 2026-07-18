@@ -143,7 +143,7 @@ class QueueTelemetry(BaseModel):
 class Telemetry(BaseModel):
     max_worker_concurrency: int
     workers: list[WorkerTelemetry]
-    queue: QueueTelemetry | None = None  # None: no queue (in-process) or unreadable
+    queue: QueueTelemetry | None = None  # None when the broker queue depth is unreadable.
 
 
 class WorkerCapacityUpdate(BaseModel):

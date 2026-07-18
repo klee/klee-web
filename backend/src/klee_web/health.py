@@ -11,11 +11,6 @@ class Readiness(Protocol):
     async def is_ready(self) -> bool: ...
 
 
-class AlwaysReady:
-    async def is_ready(self) -> bool:
-        return True
-
-
 class RedisReadiness:
     def __init__(self, client: Redis) -> None:
         self._client = client

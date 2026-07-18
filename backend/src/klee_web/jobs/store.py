@@ -1,4 +1,3 @@
-import asyncio
 from datetime import UTC, datetime
 from typing import Protocol, cast
 from uuid import UUID
@@ -19,51 +18,6 @@ class JobStore(Protocol):
     async def set_partial_result(self, job_id: UUID, result: JobResult) -> None: ...
     async def set_result(self, job_id: UUID, result: JobResult) -> None: ...
     async def request_cancel(self, job_id: UUID) -> None: ...
-
-
-class InMemoryJobStore:
-    def __init__(self) -> None:
-        self._jobs: dict[UUID, Job] = {}
-        self._lock = asyncio.Lock()
-
-    async def create(self, job: Job) -> None:
-        async with self._lock:
-            self._jobs[job.id] = job
-
-    async def get(self, job_id: UUID) -> Job | None:
-        async with self._lock:
-            return self._jobs.get(job_id)
-
-    async def update_status(self, job_id: UUID, status: JobStatus) -> None:
-        async with self._lock:
-            job = self._jobs.get(job_id)
-            if job is None:
-                raise JobNotFound(job_id)
-            job.status = status
-            if status == JobStatus.running:
-                job.started_at = datetime.now(UTC)
-
-    async def set_partial_result(self, job_id: UUID, result: JobResult) -> None:
-        async with self._lock:
-            job = self._jobs.get(job_id)
-            if job is None:
-                raise JobNotFound(job_id)
-            job.result = result
-
-    async def set_result(self, job_id: UUID, result: JobResult) -> None:
-        async with self._lock:
-            job = self._jobs.get(job_id)
-            if job is None:
-                raise JobNotFound(job_id)
-            job.result = result
-            job.status = JobStatus.done
-
-    async def request_cancel(self, job_id: UUID) -> None:
-        async with self._lock:
-            job = self._jobs.get(job_id)
-            if job is None:
-                raise JobNotFound(job_id)
-            job.cancel_requested = True
 
 
 _JOB_TTL_SECONDS = 24 * 60 * 60
