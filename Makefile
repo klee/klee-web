@@ -1,48 +1,24 @@
-.PHONY: up up-celery up-pool install runner admin-password deploy deploy-gvisor deploy-kvm
+.PHONY: install runner admin-password deploy logs down
 
-WORKERS ?= 2
 WORKER_CONCURRENCY_MAX ?= 4
+WORKER_REPLICAS ?= 1
+KLEE_RUNTIME ?= $(if $(wildcard /dev/kvm),runsc-kvm,runsc)
 ADMIN_HTPASSWD_FILE ?= $(CURDIR)/.secrets/admin.htpasswd
-export WORKER_CONCURRENCY_MAX ADMIN_HTPASSWD_FILE
+export WORKER_CONCURRENCY_MAX KLEE_RUNTIME ADMIN_HTPASSWD_FILE
 
 install:
 	cd backend && uv sync
 	cd frontend && npm install
 	command -v pre-commit >/dev/null 2>&1 && pre-commit install --hook-type pre-commit --hook-type pre-push || echo "pre-commit not on PATH; see README 'Pre-commit hooks', then run: pre-commit install --hook-type pre-commit --hook-type pre-push"
 
-up: runner
-	@trap 'kill 0' EXIT INT TERM; \
-	(cd backend && exec uv run uvicorn klee_web.main:app --port 8000 --reload) & \
-	(cd frontend && exec npm run dev) & \
-	wait
+deploy: runner
+	docker compose up -d --build --wait --scale worker=$(WORKER_REPLICAS)
 
-up-celery: runner
-	docker compose up -d --wait redis
-	@trap 'trap - EXIT INT TERM; docker compose down; kill 0' EXIT INT TERM; \
-	export REDIS_URL=redis://localhost:6379/0 CELERY_BROKER_URL=redis://localhost:6379/1; \
-	(cd backend && exec uv run uvicorn klee_web.main:app --port 8000 --reload) & \
-	(cd backend && exec uv run celery -A klee_web.celery_app worker -Q klee-jobs --autoscale=$(WORKER_CONCURRENCY_MAX),1 --loglevel=info) & \
-	(cd frontend && exec npm run dev) & \
-	wait
+logs:
+	docker compose logs -f
 
-up-pool: runner
-	docker compose up -d --wait redis
-	@trap 'trap - EXIT INT TERM; docker compose down; kill 0' EXIT INT TERM; \
-	export REDIS_URL=redis://localhost:6379/0 CELERY_BROKER_URL=redis://localhost:6379/1; \
-	(cd backend && exec uv run uvicorn klee_web.main:app --port 8000 --reload) & \
-	for i in $$(seq 1 $(WORKERS)); do \
-		(cd backend && exec uv run celery -A klee_web.celery_app worker -Q klee-jobs --autoscale=$(WORKER_CONCURRENCY_MAX),1 --hostname=worker$$i@%h --loglevel=info) & \
-	done; \
-	(cd frontend && exec npm run dev) & \
-	wait
-
-deploy deploy-gvisor deploy-kvm: runner
-	@trap 'trap - EXIT INT TERM; docker compose down' EXIT INT TERM; \
-	docker compose up --build
-
-deploy-gvisor: KLEE_RUNTIME := runsc
-deploy-kvm:    KLEE_RUNTIME := runsc-kvm
-export KLEE_RUNTIME
+down:
+	docker compose down
 
 admin-password:
 	@mkdir -p "$(dir $(ADMIN_HTPASSWD_FILE))"
