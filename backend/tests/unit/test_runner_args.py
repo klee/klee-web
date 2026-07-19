@@ -33,6 +33,14 @@ def test_build_run_args_is_a_docker_run_for_the_image() -> None:
     assert args[-1] == "klee-web-runner"
 
 
+def test_build_run_args_uses_configured_image() -> None:
+    image = "ghcr.io/finnleh/klee-web-runner@sha256:" + "a" * 64
+
+    args = build_run_args(uuid4(), KleeFlags(), "", runtime="runsc", caps=CAPS, image=image)
+
+    assert args[-1] == image
+
+
 def test_build_run_args_applies_runner_caps() -> None:
     args = build_run_args(uuid4(), KleeFlags(), "", runtime=None, caps=CAPS)
 

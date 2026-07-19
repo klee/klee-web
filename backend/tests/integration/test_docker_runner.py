@@ -5,7 +5,12 @@ from uuid import uuid4
 
 import pytest
 
-from klee_web.jobs.runner import IMAGE_TAG, DockerKleeRunner, KleeRunnerError, RunnerCaps
+from klee_web.jobs.runner import (
+    DEFAULT_RUNNER_IMAGE,
+    DockerKleeRunner,
+    KleeRunnerError,
+    RunnerCaps,
+)
 from klee_web.models import HaltReason, KleeFlags
 from klee_web.symbolic_input import SymStdin
 
@@ -22,7 +27,7 @@ def _runner_environment_ready() -> bool:
     if shutil.which("docker") is None:
         return False
     result = subprocess.run(
-        ["docker", "image", "inspect", IMAGE_TAG],
+        ["docker", "image", "inspect", DEFAULT_RUNNER_IMAGE],
         capture_output=True,
     )
     return result.returncode == 0
@@ -32,7 +37,7 @@ pytestmark = [
     pytest.mark.requires_docker,
     pytest.mark.skipif(
         not _runner_environment_ready(),
-        reason=f"docker CLI or {IMAGE_TAG} image not available",
+        reason=f"docker CLI or {DEFAULT_RUNNER_IMAGE} image not available",
     ),
 ]
 

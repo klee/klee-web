@@ -41,6 +41,7 @@ def _build_runner(settings: Settings) -> KleeRunner:
             storage_mb=settings.runner_storage_mb,
         ),
         runtime=resolve_runtime(settings.klee_runtime),
+        image=settings.runner_image,
     )
 
 

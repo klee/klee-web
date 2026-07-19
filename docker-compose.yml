@@ -76,6 +76,7 @@ services:
       REDIS_URL: redis://redis:6379/0
       CELERY_BROKER_URL: redis://redis:6379/1
       KLEE_RUNTIME: ${KLEE_RUNTIME:-}
+      RUNNER_IMAGE: ${RUNNER_IMAGE:-klee-web-runner}
       RUNNER_CPUS: ${RUNNER_CPUS:-2}
       RUNNER_MEMORY_MB: ${RUNNER_MEMORY_MB:-3072}
       RUNNER_SWAP_MB: ${RUNNER_SWAP_MB:-0}

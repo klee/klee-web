@@ -7,6 +7,7 @@ from klee_web.config import Settings
 
 REDIS_URL = "redis://localhost:6379/0"
 BROKER_URL = "redis://localhost:6379/1"
+RUNNER_IMAGE = "ghcr.io/finnleh/klee-web-runner@sha256:" + "a" * 64
 
 
 def make_settings(**overrides: Any) -> Settings:
@@ -71,6 +72,21 @@ def test_runner_caps_read_environment(monkeypatch):
 def test_runner_caps_reject_invalid_values(field, value):
     with pytest.raises(ValidationError):
         make_settings(**{field: value})
+
+
+def test_runner_image_defaults_to_local_image():
+    assert make_settings().runner_image == "klee-web-runner"
+
+
+def test_runner_image_reads_environment(monkeypatch):
+    monkeypatch.setenv("RUNNER_IMAGE", RUNNER_IMAGE)
+
+    assert make_settings().runner_image == RUNNER_IMAGE
+
+
+def test_runner_image_must_not_be_empty():
+    with pytest.raises(ValidationError):
+        make_settings(runner_image="")
 
 
 def test_redis_url_is_required(monkeypatch):
