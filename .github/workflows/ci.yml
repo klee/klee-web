@@ -160,6 +160,22 @@ jobs:
               .services[$service].logging.options["max-file"] == "3"
             ' <<< "$config"
           done
+      - name: Services accept registry image references
+        env:
+          BACKEND_IMAGE: registry.example/klee-web-backend@sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+          FRONTEND_IMAGE: registry.example/klee-web-frontend@sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+          RUNNER_IMAGE: registry.example/klee-web-runner@sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
+        run: |
+          config=$(docker compose config --format json)
+          jq -e \
+            --arg backend "$BACKEND_IMAGE" \
+            --arg frontend "$FRONTEND_IMAGE" \
+            --arg runner "$RUNNER_IMAGE" '
+              .services.api.image == $backend and
+              .services.worker.image == $backend and
+              .services.nginx.image == $frontend and
+              .services.worker.environment.RUNNER_IMAGE == $runner
+            ' <<< "$config"
       - name: Bring up the edge (nginx pulls in api and redis via depends_on)
         run: docker compose up -d --build --wait nginx
       - name: HTTP redirects to HTTPS
