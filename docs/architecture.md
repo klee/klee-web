@@ -2,7 +2,7 @@
 
 How KLEE Web fits together. This is the map for a new contributor: what the pieces are and how a job flows through them. The ADRs in [`adr/`](adr/) record why each decision was made. The [top-level README](../README.md) covers how to run it. This document is the middle layer, the how-it-connects.
 
-The system takes C source from a browser, runs KLEE on it inside a Docker container, and returns the generated test cases. The whole design follows one principle: each stage adds capability behind stable interfaces, it never rewrites the last (ADR-0001). So the same request flow holds whether the job runs in the API process (Stage 1) or on a separate Celery worker (Stage 2). Only the wiring behind the interfaces changes.
+The system takes C source from a browser, runs KLEE inside a gVisor container, and returns the generated test cases. Stable HTTP and Protocol boundaries carried the system from the Stage 1 monolith to the Stage 2 split without changing the frontend contract. The current system supports one full-application topology through Compose (ADR-0024).
 
 ## The big picture
 
@@ -11,7 +11,7 @@ flowchart LR
     FE["Frontend<br/>React + Monaco"]
     EDGE["nginx edge<br/>TLS, rate limit, one origin"]
     API["Backend API<br/>FastAPI: jobs + health + admin"]
-    DISP["JobDispatcher"]
+    DISP["CeleryDispatcher"]
     W["run_job<br/>(worker core)"]
     RUN["KleeRunner"]
     C["KLEE container<br/>klee/klee:v3.2, gVisor runtime"]
@@ -30,8 +30,7 @@ flowchart LR
     API --> DISP
     API -->|"/admin/telemetry"| TEL
     API -->|"/admin/workers/.../capacity"| CTRL
-    DISP -->|"in-process"| W
-    DISP -->|"split: enqueue"| BROKER
+    DISP -->|"enqueue"| BROKER
     BROKER --> W
     TEL -.->|"inspect + LLEN"| BROKER
     CTRL -.->|"autoscale"| BROKER
@@ -42,7 +41,7 @@ flowchart LR
     W --> USAGE
 ```
 
-The API is thin: it validates the request, checks the cache, and hands the job to a dispatcher. The dispatcher decides where the real work runs. The runner is the only part that touches Docker and KLEE. The store, cache, and usage counters are shared state that both the API and the worker read and write. In Stage 3 the frontend and API sit behind an nginx edge (TLS, rate limiting, one origin), the runner container runs under a gVisor runtime, and the same FastAPI process also serves the health probes and admin operations (telemetry from Celery `inspect` plus a broker `LLEN`, usage from the counters, and worker capacity through Celery remote control).
+The API is thin: it validates the request, checks the cache, and hands each miss to `CeleryDispatcher`. A Worker consumes the task and is the only application service that touches Docker and KLEE. Redis holds the store, cache, usage counters, and broker state shared by the API and Worker. The frontend and API sit behind an nginx edge (TLS, rate limiting, one origin). The same FastAPI process serves health probes and admin operations: telemetry from Celery `inspect` plus a broker `LLEN`, usage from Redis counters, and Worker capacity through Celery remote control.
 
 ## Components
 
@@ -52,19 +51,19 @@ Each unit has one job, is reached through an interface, and can be swapped witho
 |--|--|--|--|
 | **Frontend** (`frontend/`) | Monaco editor for C input, results panel. Submits a job and polls for the result (every 1s). | Open the app, type C, click Run. | The backend HTTP API only. |
 | **Backend API** (`api/jobs.py`) | Three endpoints: `POST /jobs`, `GET /jobs/{id}`, `POST /jobs/{id}/cancel`. Validates, reads the cache, dispatches. | The frontend calls it. Takes the seams via FastAPI `Depends`. | `JobStore`, `JobDispatcher`, `ResultCache`, `UsageStatsStore`. |
-| **Ops API** (`api/health.py`, `api/admin.py`) | `GET /health` (liveness), `GET /ready` (readiness), admin telemetry and usage reads, and per-worker maximum-capacity writes. | nginx/compose poll health; the admin UI reads telemetry and stats and changes worker capacity. `/admin` and `/api/admin/*` are gated at the edge before any public deploy. | `Readiness`, `FleetTelemetry`, `FleetControl`, `UsageStatsStore`. |
-| **JobStore** (`jobs/store.py`, `Protocol`) | Holds each `Job` (status, result, cancel flag). | `create`, `get`, `set_result`, `request_cancel`, ... | Nothing (in-memory) or Redis. |
+| **Ops API** (`api/health.py`, `api/admin.py`) | `GET /health` (liveness), `GET /ready` (readiness), admin telemetry and usage reads, and per-worker maximum-capacity writes. | nginx and Compose poll health. The admin UI reads telemetry and stats and changes worker capacity. `/admin` and `/api/admin/*` are gated at the edge. | `Readiness`, `FleetTelemetry`, `FleetControl`, `UsageStatsStore`. |
+| **JobStore** (`jobs/store.py`, `Protocol`) | Holds each `Job` (status, result, cancel flag). | `create`, `get`, `set_result`, `request_cancel`, ... | Redis. |
 | **KleeRunner** (`jobs/runner.py`, `Protocol`) | Runs one KLEE job in a container and parses the output into a `JobResult`. | `execute(source, flags, job_id, ...)`, `cancel(job_id)`. | Docker and the runner image. |
-| **ResultCache** (`jobs/cache.py`, `Protocol`) | Caches finished results keyed by a hash of the submission (source + flags). | `get(key)`, `set(key, result)`. | Nothing (in-memory) or Redis. |
-| **JobDispatcher** (`jobs/dispatch.py`, `Protocol`) | Decides where `run_job` runs: this process, or a Celery worker. | `dispatch(job_id, request)`. | The store/runner/cache (in-process) or the broker (Celery). |
-| **run_job** (`jobs/run.py`) | The FastAPI-free core of a run: drive status transitions, call the runner, watch for cancel, write the result, populate the cache, record the outcome. | Called by whichever dispatcher is wired. | `JobStore`, `KleeRunner`, `ResultCache`, `UsageStatsStore`. |
-| **Readiness** (`health.py`, `Protocol`) | Reports whether the service can serve (pings Redis in the split). | `is_ready()`. | Nothing (`AlwaysReady`) or Redis. |
-| **FleetTelemetry** (`jobs/telemetry.py`, `Protocol`) | Live fleet view: worker pool sizes, active/reserved jobs, queue depth (Celery `inspect` + a broker `LLEN`). | `snapshot()`. | Empty (`NullFleetTelemetry`, in-process) or Celery + the broker. |
-| **FleetControl** (`jobs/telemetry.py`, `Protocol`) | Changes one worker's autoscaler maximum, bounded by the deployment setting. | `set_max_concurrency(worker_name, maximum)`. | Unavailable in-process or Celery remote control. |
-| **UsageStatsStore** (`jobs/usage.py`, `Protocol`) | Cumulative counters: outcomes per kind, cache hits, aggregate KLEE totals. | `record_execution`, `record_cache_hit`, `snapshot`. | Nothing (in-memory) or Redis `INCR`. |
+| **ResultCache** (`jobs/cache.py`, `Protocol`) | Caches finished results keyed by a hash of the submission (source + flags). | `get(key)`, `set(key, result)`. | Redis. |
+| **JobDispatcher** (`jobs/dispatch.py`, `Protocol`) | Enqueues a complete Job request for Worker execution. | `dispatch(job_id, request)`. | Celery + Redis broker. |
+| **run_job** (`jobs/run.py`) | The FastAPI-free core of a run: drive status transitions, call the Runner, watch for cancel, write the result, populate the cache, record the outcome. | Called by the Celery task. | `JobStore`, `KleeRunner`, `ResultCache`, `UsageStatsStore`. |
+| **Readiness** (`health.py`, `Protocol`) | Reports whether the service can serve by pinging Redis. | `is_ready()`. | Redis. |
+| **FleetTelemetry** (`jobs/telemetry.py`, `Protocol`) | Live fleet view: Worker pool sizes, active/reserved Jobs, queue depth (Celery `inspect` + a broker `LLEN`). | `snapshot()`. | Celery + Redis broker. |
+| **FleetControl** (`jobs/telemetry.py`, `Protocol`) | Changes one Worker's autoscaler maximum, bounded by the deployment setting. | `set_max_concurrency(worker_name, maximum)`. | Celery remote control. |
+| **UsageStatsStore** (`jobs/usage.py`, `Protocol`) | Cumulative counters: outcomes per kind, cache hits, aggregate KLEE totals. | `record_execution`, `record_cache_hit`, `snapshot`. | Redis `INCR`. |
 | **Runner image** (`runner/`) | The Docker image (based on `klee/klee:v3.2`) and `entrypoint.py`: compile C to LLVM bitcode with clang, run KLEE (`--kdalloc=false`), replay each test case through the fork-per-ktest zygote for per-path output, capture output (ADR-0020, ADR-0022). | Built by `make runner`. One container per job, launched under the `KLEE_RUNTIME` sandbox with no network, a read-only root, and bounded temporary storage at `/work` (ADR-0023). | KLEE, clang, Docker. |
-| **Broker** (`celery_app.py`) | The queue between the API and the workers in the split deployment. Carries the `run_klee_job` task. | Only present when `CELERY_BROKER_URL` is set. | Redis. |
-| **Settings** (`config.py`) | Reads env vars and selects which implementation each seam gets, plus the sandbox runtime, Runner Caps, and Worker-capacity bound. | `REDIS_URL`, `CELERY_BROKER_URL`, `KLEE_FAKE_RUNNER`, `KLEE_RUNTIME`, `RUNNER_*`, `WORKER_CONCURRENCY_MAX`. | pydantic-settings. |
+| **Broker** (`celery_app.py`) | The queue between the API and Workers. Carries the `run_klee_job` task. | `CeleryDispatcher` publishes and Workers consume. | Redis. |
+| **Settings** (`config.py`) | Validates infrastructure URLs, sandbox runtime, Runner Caps, and Worker-capacity bound. | Required `REDIS_URL` and `CELERY_BROKER_URL`, plus `KLEE_RUNTIME`, `RUNNER_*`, `WORKER_CONCURRENCY_MAX`. | pydantic-settings. |
 
 ## The request lifecycle
 
@@ -75,6 +74,7 @@ sequenceDiagram
     participant CACHE as ResultCache
     participant USAGE as UsageStatsStore
     participant DISP as Dispatcher
+    participant BROKER as Redis + Celery
     participant W as run_job
     participant RUN as KleeRunner
     participant STORE as JobStore
@@ -89,7 +89,8 @@ sequenceDiagram
         API->>STORE: create(pending job)
         API->>DISP: dispatch(job_id, request)
         API-->>FE: 202 {job_id}
-        DISP->>W: run_job (in-process task or Celery task)
+        DISP->>BROKER: enqueue run_klee_job
+        BROKER->>W: Worker consumes task
         W->>STORE: status = running
         W->>RUN: execute(source, flags)
         RUN-->>W: JobResult
@@ -103,50 +104,45 @@ sequenceDiagram
     end
 ```
 
-The contract is async-shaped from Stage 1 (ADR-0007): `POST /jobs` returns a `job_id` immediately, the frontend polls `GET /jobs/{id}`. Even when Stage 1 runs KLEE in the API process, the contract pretends it does not, so Stage 2 can move the runner onto a worker without touching the endpoints or the frontend.
+The contract has been async-shaped since Stage 1 (ADR-0007): `POST /jobs` returns a `job_id` immediately, and the frontend polls `GET /jobs/{id}`. Stage 1 used the same contract before execution moved onto a Worker. That early boundary is why the current queue topology required no endpoint or frontend rewrite.
 
 Two paths worth calling out:
 
 - **Cache hit.** An identical resubmission (same source and flags) short-circuits: the API stores a job already `done` with the cached result and never touches the queue (ADR-0017).
 - **Cancel.** `POST /jobs/{id}/cancel` is an API-side eager flip: the endpoint writes the terminal `cancelled` result into the store itself, so a job resolves even if no worker is alive to act on it. A running worker's watcher also sees the flag and signals the container to dump whatever partial results KLEE has so far (ADR-0013, ADR-0018).
 
-## The swap seams
+## The Protocol seams
 
-The `Protocol`s are the additive spine. The endpoints take them via `Depends` and never learn which implementation is wired. `Settings` picks the implementation from one env var each, so moving between stages is a config change, not a rewrite. This is also what makes the portability of the system measurable: the redeploy delta is confined to these seams.
+The `Protocol`s separate HTTP and core Job logic from infrastructure. FastAPI endpoints receive them through `Depends`, while `run_job` receives them as ordinary arguments. Production has one implementation per seam. Tests inject deterministic fakes directly without shipping those fakes in the application package.
 
-| Seam | Default (Stage 1) | Split (Stage 2) | Selected by |
-|--|--|--|--|
-| `JobStore` | `InMemoryJobStore` | `RedisJobStore` | `REDIS_URL` |
-| `ResultCache` | `InMemoryResultCache` | `RedisResultCache` | `REDIS_URL` |
-| `JobDispatcher` | `InProcessDispatcher` | `CeleryDispatcher` | `CELERY_BROKER_URL` |
-| `KleeRunner` | `DockerKleeRunner` | `DockerKleeRunner` (moves onto the worker) | `KLEE_FAKE_RUNNER` swaps in `FakeKleeRunner` for tests and CI |
-| `Readiness` | `AlwaysReady` | `RedisReadiness` | `REDIS_URL` |
-| `UsageStatsStore` | `InMemoryUsageStatsStore` | `RedisUsageStatsStore` | `REDIS_URL` |
-| `FleetTelemetry` | `NullFleetTelemetry` | `CeleryFleetTelemetry` | `CELERY_BROKER_URL` |
-| `FleetControl` | `UnavailableFleetControl` | `CeleryFleetControl` | `CELERY_BROKER_URL` |
+| Seam | Production implementation | Test implementation |
+|--|--|--|
+| `JobStore` | `RedisJobStore` | `FakeJobStore` |
+| `ResultCache` | `RedisResultCache` | `FakeResultCache` |
+| `JobDispatcher` | `CeleryDispatcher` | `FakeJobDispatcher` |
+| `KleeRunner` | `DockerKleeRunner` in the Worker | `FakeKleeRunner` |
+| `Readiness` | `RedisReadiness` | Focused test stubs |
+| `UsageStatsStore` | `RedisUsageStatsStore` | `FakeUsageStatsStore` |
+| `FleetTelemetry` | `CeleryFleetTelemetry` | Focused test stubs |
+| `FleetControl` | `CeleryFleetControl` | Focused test stubs |
 
-With no env vars set, everything runs in one process against in-memory state. Set `REDIS_URL` and the store and cache move to Redis. Add `CELERY_BROKER_URL` and dispatch enqueues to a worker instead of running in-process. The validator in `config.py` enforces the one real constraint: a Celery worker cannot share the in-memory store, so `CELERY_BROKER_URL` requires `REDIS_URL`.
+`REDIS_URL` and `CELERY_BROKER_URL` are required. FastAPI validates them during startup, before it serves traffic. The API construction seam builds Redis and Celery services. The Worker construction seam additionally builds `DockerKleeRunner`.
 
-## Deployment shapes
+## Deployment shape
 
-The same code runs in several shapes, chosen by which seams are wired and whether the pieces run as host processes or as containers.
+Compose is the one full-application topology for local verification, browser CI, and deployment:
 
-Host-process shapes (uvicorn, the worker, and Vite run directly on the host, with Redis in a container when needed):
+- **`make deploy`** builds the Runner, backend, and frontend images, then starts nginx, FastAPI, Redis, and one Celery Worker in detached mode.
+- **`make deploy WORKER_REPLICAS=2`** scales the Worker service. `WORKER_CONCURRENCY_MAX` independently bounds each Worker's autoscaler.
+- **`make logs`** follows all service logs without owning their lifecycle.
+- **`make down`** removes the service containers and network while preserving the Redis named volume.
 
-- **`make up`**: one process. In-process dispatcher, in-memory store and cache, real Docker runner, no Redis. This is Stage 1.
-- **`make up-celery`**: the API plus one Celery worker plus Redis (store on db 0, broker on db 1). The split from Stage 2.
-- **`make up-pool`**: the same, but `WORKERS` worker processes (default 2) against the shared broker.
+Make selects `runsc-kvm` when the host exposes `/dev/kvm` and `runsc` otherwise. Supported deployments use that gVisor selection. `runc` remains available only as a comparative integration-test control. The Worker launches each Job as a sibling Runner container through the host Docker socket. nginx serves the built frontend and reverse-proxies `/api` over TLS. Redis persists through AOF on a named volume, bounded by `maxmemory` with `volatile-lru` eviction.
 
-Containerized stack (everything in Docker via `docker compose`, the Stage 3 production-like shape):
-
-- **`make deploy`**: the nginx edge, the API, a Celery worker, and Redis, all as containers, built and run together. nginx serves the built frontend and reverse-proxies `/api` (single origin, TLS), Redis persists (AOF on a named volume, bounded by `maxmemory`/`volatile-lru`), and the worker spawns sibling KLEE containers over the host Docker socket. The KLEE containers run under `runc`.
-- **`make deploy-gvisor`**: the same stack, but the KLEE containers run under gVisor's systrap platform (`KLEE_RUNTIME=runsc`).
-- **`make deploy-kvm`**: the same, on gVisor's faster KVM platform (`KLEE_RUNTIME=runsc-kvm`), where `/dev/kvm` exists.
-
-What Stage 3 adds around the seams: the nginx edge (TLS, rate limiting) and the gVisor runtime swap both sit outside the seams, the runtime being one `--runtime` flag with zero application change. Read-only observability (health and readiness probes, fleet telemetry, usage stats) adds the three seams noted above, and Redis gains persistence so job and stats state survive a restart. The admin UI and Worker capacity control are in place. Edge auth on `/admin` and `/api/admin/*` remains before public deployment.
+Provider-specific deployment work belongs around this topology rather than inside an application-mode selector. Terraform, image references, host provisioning, network addresses, and gVisor installation form the redeployment delta measured by the portability study.
 
 ## Where to look next
 
 - **Why a decision was made:** the ADRs in [`adr/`](adr/), one per major choice.
-- **How to run it locally:** the [top-level README](../README.md), and [`backend/README.md`](../backend/README.md) for the Celery split and worker-pool topology.
-- **The live API contract:** the OpenAPI surface at `/docs` when the backend is running.
+- **How to run it locally:** the [top-level README](../README.md), and [`backend/README.md`](../backend/README.md) for Worker and failure details.
+- **The live API contract:** Swagger UI at `https://localhost/api/docs` when the stack is running. `/api` is the nginx URL prefix and is stripped before FastAPI receives `/docs`.

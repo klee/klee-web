@@ -9,19 +9,23 @@ engine. Its purpose is to remove the local setup barrier around LLVM, STP, KLEE,
 and related dependencies: users write C in the browser and receive generated
 test cases back from KLEE.
 
-The project is currently a Stage 1 synchronous monolith:
+The project is in Stage 3, hardening and portability:
 
 - `frontend/`: React, TypeScript, Vite, Monaco editor, and the results UI.
 - `backend/`: FastAPI and Pydantic API for job submission, status, cancellation,
   and result retrieval.
-- `runner/`: Docker image and entrypoint that actually invokes KLEE.
+- Redis: Job state, result cache, usage counters, and Celery broker.
+- Celery Workers: consume Jobs and launch per-Job Runner containers.
+- `runner/`: Docker image and entrypoint that invokes KLEE under gVisor.
+- nginx: TLS edge, built frontend, API proxy, rate limits, and admin auth.
 - `docs/adr/`: architecture decisions that should guide non-trivial changes.
-- `Makefile`: local orchestration for dependency install, runner build, and dev
-  servers.
+- `Makefile`: dependency install, credential, deployment, logs, and teardown.
 
-Local development uses `make up`, which builds the `klee-web-runner` image and
-starts the backend on `localhost:8000` plus the frontend on `localhost:5173`.
-The backend OpenAPI docs are at `localhost:8000/docs`.
+The full application has one Compose topology (ADR-0024). On a clean checkout,
+`make admin-password` creates the required local credential. `make deploy`
+starts the stack detached, `make logs` follows it, and `make down` stops it.
+The app is at `https://localhost`. The backend OpenAPI docs are at
+`https://localhost/api/docs` and directly at `http://localhost:8000/docs`.
 
 The frontend flow is end-to-end: a Monaco editor starts with demo C code, the
 top bar exposes KLEE flags such as `max_time` and `max_memory`, Run submits to
@@ -53,6 +57,8 @@ Prefer the established stack and conventions:
 
 - Python changes should fit the existing FastAPI/Pydantic style.
 - Frontend changes should fit the existing React component and hook structure.
+- Production uses Redis and Celery implementations only. Deterministic fakes
+  belong under `backend/tests/` and are injected directly.
 - Runner changes should preserve the Docker/KLEE boundary unless the issue
   explicitly asks for runner behavior.
 - User-facing changes should keep the app usable for someone who may not know

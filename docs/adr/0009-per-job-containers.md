@@ -9,6 +9,8 @@
 > change, no application code" no longer holds: gVisor needs `--kdalloc=false`, and the
 > sandbox pillar has since moved to Firecracker.
 
+> **Correction, 2026-07-09.** ADR-0022 chose gVisor rather than Firecracker. The per-Job container lifetime remains unchanged, and gVisor requires `--kdalloc=false` plus the replay zygote recorded there.
+
 ## Context
 
 `DockerKleeRunner.execute` could either spin up a fresh container per job (`docker run --rm` each time) or maintain a single long-lived container that accepts work over some channel and runs KLEE many times. Both end up shelling out to KLEE; the difference is the container lifetime.

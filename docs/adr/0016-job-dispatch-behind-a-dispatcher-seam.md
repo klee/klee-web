@@ -2,6 +2,8 @@
 
 **Status:** Accepted, 2026-06-24
 
+> **Amendment, 2026-07-18:** ADR-0024 retires `InProcessDispatcher`. The `JobDispatcher` Protocol remains, with Celery as its only production implementation.
+
 ## Context
 
 Stage 1 runs a job in the API process: `POST /jobs` creates the job and schedules an asyncio background task that runs KLEE and writes the result. Stage 2 introduces the split, a separate worker process runs KLEE while the API keeps serving polls. ADR-0001 promised this hoist would not touch the endpoints or the frontend.

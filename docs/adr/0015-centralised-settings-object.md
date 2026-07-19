@@ -2,6 +2,8 @@
 
 **Status:** Accepted, 2026-06-23
 
+> **Amendment, 2026-07-18:** ADR-0024 makes the Redis and Celery URLs required and removes the production fake-Runner selector. The central `Settings` object remains.
+
 ## Context
 
 Stage 2 reads configuration from the environment. Stage 1 had one such value, `KLEE_FAKE_RUNNER`. Stage 2 adds `REDIS_URL`, and the queue work will add a broker URL, a result-cache TTL, and worker limits. The reads so far are inline `os.environ.get` calls in `deps.py`.

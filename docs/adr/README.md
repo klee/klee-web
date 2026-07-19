@@ -18,6 +18,8 @@ Keep them short. One page is enough for almost every decision. If it needs more,
 
 Sequential, four-digit, never reused. If an ADR is superseded, the new one references the old one and the old one's status flips to `Superseded by NNNN`. Old ADRs stay in the repo as history.
 
+If a later ADR changes only part of a decision, the original stays `Accepted`. Add a short amendment notice below its status and show the amendment in the index.
+
 ## When to write one
 
 Write an ADR when:
@@ -36,26 +38,27 @@ Don't write ADRs for:
 
 | # | Title | Status |
 |---|-------|--------|
-| 0001 | Stage-based additive architecture | Accepted |
-| 0002 | JobStore protocol surface | Accepted |
+| 0001 | Stage-based additive architecture | Accepted (amended by ADR-0024) |
+| 0002 | JobStore protocol surface | Accepted (amended by ADR-0013, ADR-0014, and ADR-0024) |
 | 0003 | Src-layout for the backend Python package | Accepted |
 | 0004 | Monaco for the in-browser editor | Accepted |
-| 0005 | Narrow KleeFlags schema for Stage 1 | Accepted |
+| 0005 | Narrow KleeFlags schema for Stage 1 | Accepted (amended by ADR-0012 and ADR-0019) |
 | 0006 | Frontend tooling stack | Accepted |
 | 0007 | POST /jobs returns JobCreated, not full Job | Accepted |
 | 0008 | KleeRunner protocol surface | Accepted |
-| 0009 | Per-job containers, not a long-lived runner process | Accepted (transport superseded by 0021) |
+| 0009 | Per-job containers, not a long-lived runner process | Accepted (amended by ADR-0021 and ADR-0022) |
 | 0010 | Frontend data layer (openapi-typescript + openapi-fetch + React Query) | Accepted |
 | 0011 | Frontend layered architecture (Types / API client / Hooks / Components) | Accepted |
 | 0012 | Add query_format to the flag schema | Accepted |
-| 0013 | Cancel as a user-triggered halt | Accepted |
-| 0014 | RedisJobStore on Redis hashes | Accepted |
-| 0015 | Centralised configuration via a Settings object | Accepted |
-| 0016 | Job dispatch behind a JobDispatcher seam | Accepted |
-| 0017 | Result cache keyed on the submission | Accepted |
+| 0013 | Cancel as a user-triggered halt | Accepted (amended in place) |
+| 0014 | RedisJobStore on Redis hashes | Accepted (amended by ADR-0024) |
+| 0015 | Centralised configuration via a Settings object | Accepted (amended by ADR-0024) |
+| 0016 | Job dispatch behind a JobDispatcher seam | Accepted (amended by ADR-0024) |
+| 0017 | Result cache keyed on the submission | Accepted (amended by ADR-0024) |
 | 0018 | Minimal failsafes: at-most-once delivery with cancel recovery | Accepted |
 | 0019 | Allowlisted free-text KLEE flags | Accepted |
-| 0020 | Native per-path replay for program output | Accepted (mechanism superseded by 0022) |
+| 0020 | Native per-path replay for program output | Accepted (amended by ADR-0022) |
 | 0021 | Stream transport: source on stdin, output as a tar on stdout | Accepted |
 | 0022 | Stage 3 sandbox: gVisor with a fork-per-ktest replay zygote | Accepted |
 | 0023 | Bounded tmpfs for Runner storage | Accepted |
+| 0024 | One full-application topology | Accepted |

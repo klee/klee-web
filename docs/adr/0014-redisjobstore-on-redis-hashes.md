@@ -2,6 +2,8 @@
 
 **Status:** Accepted, 2026-06-21
 
+> **Amendment, 2026-07-18:** ADR-0024 makes `RedisJobStore` the only production implementation and removes the `REDIS_URL` selector. The Redis hash model and atomicity decisions remain.
+
 ## Context
 
 Stage 2 moves job state out of the API process so a worker process can write status and results while the API keeps serving polls. This is the storage swap ADR-0001 planned and the one ADR-0002's `JobStore` Protocol was shaped for. The in-memory store's `asyncio.Lock` does not span processes, so the Redis implementation has to provide its own safety.

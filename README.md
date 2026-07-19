@@ -12,7 +12,7 @@ KLEE today requires users to build LLVM, STP, and a chain of other dependencies 
 
 **Stage 3: hardening and portability.** Stages 1 and 2 are done: the synchronous monolith (React frontend, FastAPI backend, Docker runner), then the split (Celery workers, a Redis broker and result cache, a worker pool). Stage 3 adds the production edge (nginx, TLS, rate limiting), stronger sandboxing (gVisor), observability, and an admin UI. The edge, the gVisor sandbox, and read-only observability (health probes, fleet telemetry, usage stats) are already in place. It also answers the thesis portability question: redeploy the stack across providers and count what has to change.
 
-The whole stack still runs locally. `make up` starts the in-process monolith with no Redis. `make up-celery` and `make up-pool` start the Celery split. `make deploy` and its `deploy-gvisor` / `deploy-kvm` variants bring the whole stack up in containers behind the nginx edge. All are described below.
+The whole stack runs locally through the same Compose topology used for deployment. `make deploy` starts nginx, the API, Redis, and the Celery Worker fleet. `make logs` follows them, and `make down` stops them.
 
 ## Layout
 
@@ -23,14 +23,12 @@ klee-web/
 ├── runner/         Docker image and entrypoint that actually runs KLEE.
 ├── bot/            Label-gated issue agent automation (see below).
 ├── docs/           architecture.md overview, and the ADRs in docs/adr/.
-└── Makefile        make up / up-celery / up-pool for host-process dev, make deploy* for the containerized stack.
+└── Makefile        install, credential, Runner build, deployment, logs, and teardown commands.
 ```
 
 ## Running locally
 
-Requires [`uv`](https://docs.astral.sh/uv/) and [`node`](https://nodejs.org/)
-on the host. `uv` runs and provisions the Python backend; `node` (with its
-bundled `npm`) provides the frontend toolchain, Vite included.
+The full stack requires Docker with Compose, GNU Make, and a registered gVisor runtime (`runsc`, plus `runsc-kvm` where `/dev/kvm` is available). Host-side development checks additionally use [`uv`](https://docs.astral.sh/uv/) and [`node`](https://nodejs.org/).
 
 Install the project dependencies once after cloning:
 
@@ -38,21 +36,16 @@ Install the project dependencies once after cloning:
 make install
 ```
 
-This runs `uv sync` for the backend and `npm install` for the frontend (the
-latter is what puts Vite in `frontend/node_modules`). It also installs the git
-hooks if `pre-commit` is on your PATH (see Pre-commit hooks below). Then start
-both dev servers:
+This runs `uv sync` for the backend and `npm install` for the frontend. It also installs the git hooks if `pre-commit` is on your PATH (see Pre-commit hooks below). Create the local admin credential once, then start the stack:
 
 ```bash
-make up
+make admin-password
+make deploy
 ```
 
-`make up` builds the `klee-web-runner` Docker image (idempotent), then starts
-uvicorn (`localhost:8000`, `--reload`) and the Vite dev server
-(`localhost:5173`) as background processes. Both hot-reload on file changes.
-Ctrl+C stops both.
+`make deploy` builds the Runner, backend, and frontend images, starts the Compose services in detached mode, waits until every service is running and the defined Redis and API health checks pass, then returns control to the terminal. It selects `runsc-kvm` when `/dev/kvm` exists and `runsc` otherwise.
 
-OpenAPI surface at <http://localhost:8000/docs>. App at <http://localhost:5173>.
+The self-signed local certificate produces a browser warning. App at <https://localhost>. OpenAPI surface at <https://localhost/api/docs>.
 
 The frontend is functional end-to-end. The page loads with a demo C program in
 a Monaco editor with C autocomplete for KLEE intrinsics. A collapsible left
@@ -74,36 +67,23 @@ the current source byte count, and the pinned KLEE version. Theme (system /
 light / dark) and results-position (right / below) settings persist across
 reloads via the settings popover.
 
-### Stage 2: the Celery split
+### Deployment controls
 
-Stage 2 is in progress. To run the split locally, where the API enqueues jobs
-to a separate Celery worker over Redis instead of running them in-process:
-
-```bash
-make up-celery     # API + one worker + Redis + frontend
-make up-pool       # same, but a pool of workers (WORKERS=2 by default)
-```
-
-See [`backend/README.md`](backend/README.md) for what each target brings up, the
-worker-pool topology, and the manual smokes.
-
-### Stage 3: the containerized stack
-
-The targets above run the backend and frontend as host processes. To run the
-whole thing in containers behind the nginx edge, the production-like shape:
+The deployment starts one Worker by default. Replica count and each Worker's autoscaler ceiling are independent controls:
 
 ```bash
-make admin-password   # create or rotate the single admin credential
-make deploy         # nginx + API + worker + Redis, all in Docker
-make deploy-gvisor  # same, KLEE jobs sandboxed under gVisor (systrap)
-make deploy-kvm     # same, gVisor on the KVM platform where /dev/kvm exists
+make deploy WORKER_REPLICAS=2 WORKER_CONCURRENCY_MAX=4
+make logs
+make down
 ```
+
+With two replicas and a maximum of four processes per Worker, at most eight Runner containers execute concurrently. `make logs` follows all services. `Ctrl+C` stops following logs but leaves the deployment running. `make down` explicitly tears it down while preserving the Redis named volume.
 
 `make admin-password` prompts without displaying the password. It protects the
 ignored credential with a mode `0700` parent directory, while the mode `0644`
 file remains readable inside nginx's isolated, read-only secret mount. The
 username is `admin`. Run the target again to rotate the credential. The
-`make deploy*` targets fail if the file is absent.
+`make deploy` fails if the file is absent.
 
 On a deployment host, keep the credential outside the checkout and export its
 path before creating it and starting the stack. The directory must be writable
@@ -112,7 +92,7 @@ and owned by the deployment user:
 ```bash
 export ADMIN_HTPASSWD_FILE=/etc/klee-web/admin.htpasswd
 make admin-password
-make deploy-gvisor
+make deploy
 ```
 
 The environment contains only the file path, not the password or bcrypt hash.
@@ -120,8 +100,8 @@ The environment contains only the file path, not the password or bcrypt hash.
 nginx serves the built frontend and reverse-proxies `/api` over TLS on a single
 origin, Redis persists to a named volume (AOF, bounded by `maxmemory` with LRU
 eviction), and the worker spawns each KLEE job as a sibling container under the
-selected runtime (`runc`, `runsc`, or `runsc-kvm`). See
-[`docs/architecture.md`](docs/architecture.md) for all the deployment shapes.
+selected gVisor runtime (`runsc` or `runsc-kvm`). See
+[`docs/architecture.md`](docs/architecture.md) for the deployment shape.
 
 ## Regenerating the API contract
 
@@ -136,8 +116,7 @@ endpoint, a changed shape), regenerate the types:
 cd frontend && npm run gen:types
 ```
 
-The script reads the live `/openapi.json`, so the backend must already be
-running (`make up`, or uvicorn on `localhost:8000`). Commit the updated
+The script reads the live `/openapi.json`, so the Compose backend must already be running through `make deploy`. Commit the updated
 `api.ts` alongside the backend change. A stale `api.ts` surfaces as a frontend
 type error against the new contract, which is the point: drift fails at compile
 time instead of silently.
@@ -160,7 +139,7 @@ pre-commit install --hook-type pre-commit --hook-type pre-push
 
 On `git commit`, the commit-stage hooks run ruff (backend), eslint (frontend), and whitespace / end-of-file checks. The eslint hook needs `frontend/node_modules`, so run `npm install` in `frontend/` once before the first commit. CI runs these same hooks (`pre-commit run --all-files`), so they are enforced on every pull request even if you never install the local hooks.
 
-On `git push`, the pre-push hook runs the Playwright e2e against the real KLEE container, but only when the push touches `frontend/`, `backend/`, or `runner/`. It needs Docker and the `klee-web-runner` image (`make runner` builds it). To skip it in a pinch, push with `--no-verify`.
+On `git push`, the pre-push hook runs Playwright through an isolated Compose stack and a real KLEE container under gVisor, but only when the push touches `frontend/`, `backend/`, or `runner/`. It needs Docker, a registered gVisor runtime, and free ports 80 and 443. The hook builds its images, creates a temporary admin credential, and tears the stack down afterward. To skip it in a pinch, push with `--no-verify`.
 
 The pre-push hook is local and optional. Without it, or with `--no-verify`, the push still succeeds. The same test runs as a required CI check on the pull request, so a broken contract cannot be merged either way. The hook just gives faster, real-KLEE feedback before you push.
 

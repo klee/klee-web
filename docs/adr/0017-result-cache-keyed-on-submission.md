@@ -2,6 +2,8 @@
 
 **Status:** Accepted, 2026-06-25
 
+> **Amendment, 2026-07-18:** ADR-0024 retires `InMemoryResultCache`. The cache-key and API short-circuit decisions remain.
+
 ## Context
 
 Stage 2 caches results so an identical resubmission does not run KLEE again. The brief calls the key a "program hash", but the program text alone is the wrong key. A submission is source plus flags, and the flags change the result: `query_format=kquery` adds a path constraint per test case, `max_time` and `max_memory` bound exploration. A source-only key would let a `query_format=none` run satisfy a later `kquery` submission and return results missing the constraints the user asked for.

@@ -2,6 +2,8 @@
 
 **Status:** Accepted, 2026-05-18
 
+> **Amendment, 2026-07-18:** ADR-0024 clarifies that additive staging protected the API and Protocol boundaries during migration. It does not require permanent support for every earlier runtime topology.
+
 ## Context
 
 KLEE Web is delivered in three stages with a hard schedule:
