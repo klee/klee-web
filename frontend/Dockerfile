@@ -1,5 +1,5 @@
 # Build stage: compile the SPA to static assets in dist/.
-FROM node:20-bookworm-slim AS build
+FROM node:24-bookworm-slim AS build
 WORKDIR /app
 
 # Deps-only layer: cached until the lockfile changes. .npmrc carries the
