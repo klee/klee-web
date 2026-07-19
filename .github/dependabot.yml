@@ -3,6 +3,7 @@ version: 2
 updates:
   - package-ecosystem: uv
     directory: /backend
+    versioning-strategy: increase-if-necessary
     schedule:
       interval: weekly
       day: monday
@@ -36,6 +37,13 @@ updates:
         update-types:
           - minor
           - patch
+    ignore:
+      - dependency-name: typescript
+        update-types:
+          - version-update:semver-major
+      - dependency-name: "@types/node"
+        update-types:
+          - version-update:semver-major
 
   - package-ecosystem: docker
     directories:
@@ -59,6 +67,9 @@ updates:
           - patch
     ignore:
       - dependency-name: klee/klee
+      - dependency-name: node
+        update-types:
+          - version-update:semver-major
 
   - package-ecosystem: docker-compose
     directory: /
