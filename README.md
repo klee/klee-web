@@ -45,7 +45,9 @@ make deploy
 
 `make deploy` builds the Runner, backend, and frontend images, starts the Compose services in detached mode, waits until every service is running and the defined Redis and API health checks pass, then returns control to the terminal. It selects `runsc-kvm` when `/dev/kvm` exists and `runsc` otherwise.
 
-The local defaults name these images `klee-web-runner`, `klee-web-backend`, and `klee-web-frontend`. `make deploy` remains the local build path. Registry-backed deployment tooling supplies `RUNNER_IMAGE`, `BACKEND_IMAGE`, and `FRONTEND_IMAGE`, pulls those references, and starts the same Compose file with `--no-build`. Image publication, pulling, and host bootstrap remain separate deployment operations.
+The local defaults name these images `klee-web-runner`, `klee-web-backend`, and `klee-web-frontend`. `make deploy` remains the local build path. Registry-backed deployment tooling supplies `RUNNER_IMAGE`, `BACKEND_IMAGE`, and `FRONTEND_IMAGE`, pulls those references, and starts the same Compose file with `--no-build`.
+
+After CI succeeds on `main`, the `Publish images` workflow builds `linux/amd64` frontend, backend, and Runner images under `ghcr.io/finnleh/`. Each build receives an immutable `sha-<full-commit>` tag. Once all three exist, the workflow updates their moving `main` tags sequentially. Publishing a stable GitHub Release adds its `vMAJOR.MINOR.PATCH` tag to that commit's existing images without rebuilding them. There is no `latest` tag. GitHub creates personal-account packages as private, so their owner makes each package public once after its first publication.
 
 The self-signed local certificate produces a browser warning. App at <https://localhost>. OpenAPI surface at <https://localhost/api/docs>.
 
@@ -140,7 +142,7 @@ them yourself:
 pre-commit install --hook-type pre-commit --hook-type pre-push
 ```
 
-On `git commit`, the commit-stage hooks run ruff (backend), eslint (frontend), and whitespace / end-of-file checks. The eslint hook needs `frontend/node_modules`, so run `npm install` in `frontend/` once before the first commit. CI runs the pre-commit hooks across all files and runs mypy separately in the backend job, so the same checks are enforced on every pull request even if you never install the local hooks.
+On `git commit`, the commit-stage hooks run ruff (backend), eslint (frontend), actionlint (GitHub Actions), and whitespace / end-of-file checks. The eslint hook needs `frontend/node_modules`, so run `npm install` in `frontend/` once before the first commit. CI runs the pre-commit hooks across all files and runs mypy separately in the backend job, so the same checks are enforced on every pull request even if you never install the local hooks.
 
 On `git push`, the pre-push hook runs Playwright through an isolated Compose stack and a real KLEE container under gVisor, but only when the push touches `frontend/`, `backend/`, or `runner/`. It needs Docker, a registered gVisor runtime, and free ports 80 and 443. The hook builds its images, creates a temporary admin credential, and tears the stack down afterward. To skip it in a pinch, push with `--no-verify`.
 

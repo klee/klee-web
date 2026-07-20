@@ -1,0 +1,169 @@
+name: Publish images
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  release:
+    types: [published]
+
+jobs:
+  publish-commit-images:
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_branch == 'main'
+    runs-on: ubuntu-latest
+    concurrency:
+      group: publish-commit-${{ github.event.workflow_run.head_sha }}-${{ matrix.package }}
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      matrix:
+        include:
+          - package: klee-web-frontend
+            context: ./frontend
+          - package: klee-web-backend
+            context: ./backend
+          - package: klee-web-runner
+            context: ./runner
+    env:
+      IMAGE: ghcr.io/finnleh/${{ matrix.package }}
+      COMMIT_TAG: sha-${{ github.event.workflow_run.head_sha }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+      - uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/setup-buildx-action@v4
+      - name: Check for an existing commit image
+        id: commit-image
+        run: |
+          if docker buildx imagetools inspect "$IMAGE:$COMMIT_TAG" > /dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Build and publish the commit image
+        if: steps.commit-image.outputs.exists != 'true'
+        uses: docker/build-push-action@v7
+        with:
+          context: ${{ matrix.context }}
+          platforms: linux/amd64
+          push: true
+          tags: ${{ env.IMAGE }}:${{ env.COMMIT_TAG }}
+          labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.event.workflow_run.head_sha }}
+            org.opencontainers.image.title=${{ matrix.package }}
+          provenance: mode=max
+
+  promote-main:
+    needs: publish-commit-images
+    runs-on: ubuntu-latest
+    concurrency:
+      group: promote-main
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      packages: write
+    env:
+      COMMIT_SHA: ${{ github.event.workflow_run.head_sha }}
+      COMMIT_TAG: sha-${{ github.event.workflow_run.head_sha }}
+      PACKAGES: klee-web-frontend klee-web-backend klee-web-runner
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+      - uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/setup-buildx-action@v4
+      - name: Check that the tested commit is still main
+        id: current-main
+        run: |
+          current_main=$(git ls-remote origin refs/heads/main | cut -f1)
+          if [ "$current_main" = "$COMMIT_SHA" ]; then
+            echo "promote=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "promote=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Verify the complete commit image set
+        if: steps.current-main.outputs.promote == 'true'
+        run: |
+          for package in $PACKAGES; do
+            docker buildx imagetools inspect "ghcr.io/finnleh/$package:$COMMIT_TAG" > /dev/null
+          done
+      - name: Point the image set at main
+        if: steps.current-main.outputs.promote == 'true'
+        run: |
+          for package in $PACKAGES; do
+            docker buildx imagetools create \
+              --tag "ghcr.io/finnleh/$package:main" \
+              "ghcr.io/finnleh/$package:$COMMIT_TAG"
+          done
+
+  publish-release-tags:
+    if: ${{ github.event_name == 'release' && !github.event.release.prerelease }}
+    runs-on: ubuntu-latest
+    concurrency:
+      group: release-${{ github.event.release.tag_name }}
+      cancel-in-progress: false
+    permissions:
+      contents: read
+      packages: write
+    env:
+      PACKAGES: klee-web-frontend klee-web-backend klee-web-runner
+      RELEASE_TAG: ${{ github.event.release.tag_name }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.release.tag_name }}
+          fetch-depth: 0
+      - name: Resolve the stable release commit
+        id: release
+        run: |
+          if [[ ! "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Release tag must use stable semantic version form vMAJOR.MINOR.PATCH" >&2
+            exit 1
+          fi
+          echo "commit=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+      - uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/setup-buildx-action@v4
+      - name: Verify the released commit image set
+        env:
+          COMMIT_TAG: sha-${{ steps.release.outputs.commit }}
+        run: |
+          missing=()
+          for package in $PACKAGES; do
+            if ! docker buildx imagetools inspect \
+              "ghcr.io/finnleh/$package:$COMMIT_TAG" > /dev/null 2>&1; then
+              missing+=("$package")
+            fi
+          done
+          if [ "${#missing[@]}" -ne 0 ]; then
+            echo "::error::Cannot publish $RELEASE_TAG. Missing commit images: ${missing[*]}. Wait for the Publish images workflow to finish, then re-run this job."
+            exit 1
+          fi
+      - name: Publish the stable image tags
+        env:
+          COMMIT_TAG: sha-${{ steps.release.outputs.commit }}
+        run: |
+          for package in $PACKAGES; do
+            docker buildx imagetools create \
+              --tag "ghcr.io/finnleh/$package:$RELEASE_TAG" \
+              "ghcr.io/finnleh/$package:$COMMIT_TAG"
+          done

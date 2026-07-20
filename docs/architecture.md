@@ -139,6 +139,8 @@ Compose is the one full-application topology for local verification, browser CI,
 
 Compose defaults to the local `klee-web-backend`, `klee-web-frontend`, and `klee-web-runner` image names. `make deploy` builds that local path. Registry-backed deployment tooling can supply tags or digests through `BACKEND_IMAGE`, `FRONTEND_IMAGE`, and `RUNNER_IMAGE`, pull them, and start the same services with `docker compose up --no-build`.
 
+After a successful `main` CI run, the `Publish images` workflow builds the three `linux/amd64` images in GHCR under immutable `sha-<full-commit>` tags. It verifies the complete commit image set before updating the three moving `main` tags sequentially. Publishing a stable GitHub Release adds its `vMAJOR.MINOR.PATCH` tag to those existing manifests without rebuilding. No `latest` tag is published.
+
 Make selects `runsc-kvm` when the host exposes `/dev/kvm` and `runsc` otherwise. Supported deployments use that gVisor selection. `runc` remains available only as a comparative integration-test control. The Worker launches each Job as a sibling Runner container through the host Docker socket. nginx serves the built frontend and reverse-proxies `/api` over TLS. Redis persists through AOF on a named volume, bounded by `maxmemory` with `volatile-lru` eviction.
 
 Provider-specific deployment work belongs around this topology rather than inside an application-mode selector. Terraform, image references, host provisioning, network addresses, and gVisor installation form the redeployment delta measured by the portability study.
