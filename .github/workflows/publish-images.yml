@@ -1,22 +1,20 @@
 name: Publish images
 
 on:
-  workflow_run:
-    workflows: [CI]
-    types: [completed]
-    branches: [main]
+  workflow_call:
+    inputs:
+      commit_sha:
+        required: true
+        type: string
   release:
     types: [published]
 
 jobs:
   publish-commit-images:
-    if: >-
-      github.event.workflow_run.conclusion == 'success' &&
-      github.event.workflow_run.event == 'push' &&
-      github.event.workflow_run.head_branch == 'main'
+    if: ${{ inputs.commit_sha != '' }}
     runs-on: ubuntu-latest
     concurrency:
-      group: publish-commit-${{ github.event.workflow_run.head_sha }}-${{ matrix.package }}
+      group: publish-commit-${{ inputs.commit_sha }}-${{ matrix.package }}
       cancel-in-progress: false
     permissions:
       attestations: write
@@ -34,11 +32,11 @@ jobs:
             context: ./runner
     env:
       IMAGE: ghcr.io/finnleh/${{ matrix.package }}
-      COMMIT_TAG: sha-${{ github.event.workflow_run.head_sha }}
+      COMMIT_TAG: sha-${{ inputs.commit_sha }}
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: ${{ github.event.workflow_run.head_sha }}
+          ref: ${{ inputs.commit_sha }}
       - uses: docker/login-action@v4
         with:
           registry: ghcr.io
@@ -64,7 +62,7 @@ jobs:
           tags: ${{ env.IMAGE }}:${{ env.COMMIT_TAG }}
           labels: |
             org.opencontainers.image.source=https://github.com/${{ github.repository }}
-            org.opencontainers.image.revision=${{ github.event.workflow_run.head_sha }}
+            org.opencontainers.image.revision=${{ inputs.commit_sha }}
             org.opencontainers.image.title=${{ matrix.package }}
           provenance: mode=max,version=v1
       - name: Resolve the commit image digest
@@ -78,21 +76,11 @@ jobs:
             digest=$(docker buildx imagetools inspect "$IMAGE:$COMMIT_TAG" --format '{{.Manifest.Digest}}')
           fi
           echo "digest=$digest" >> "$GITHUB_OUTPUT"
-      - name: Export detailed image provenance
-        env:
-          IMAGE_DIGEST: ${{ steps.image.outputs.digest }}
-          PROVENANCE_PATH: ${{ runner.temp }}/build-provenance.json
-        run: |
-          docker buildx imagetools inspect \
-            "$IMAGE@$IMAGE_DIGEST" \
-            --format '{{json .Provenance.SLSA}}' > "$PROVENANCE_PATH"
       - name: Generate signed image attestation
         uses: actions/attest@v4
         with:
           subject-name: ${{ env.IMAGE }}
           subject-digest: ${{ steps.image.outputs.digest }}
-          predicate-type: https://slsa.dev/provenance/v1
-          predicate-path: ${{ runner.temp }}/build-provenance.json
           push-to-registry: true
           create-storage-record: false
 
@@ -106,13 +94,13 @@ jobs:
       contents: read
       packages: write
     env:
-      COMMIT_SHA: ${{ github.event.workflow_run.head_sha }}
-      COMMIT_TAG: sha-${{ github.event.workflow_run.head_sha }}
+      COMMIT_SHA: ${{ inputs.commit_sha }}
+      COMMIT_TAG: sha-${{ inputs.commit_sha }}
       PACKAGES: klee-web-frontend klee-web-backend klee-web-runner
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: ${{ github.event.workflow_run.head_sha }}
+          ref: ${{ inputs.commit_sha }}
       - uses: docker/login-action@v4
         with:
           registry: ghcr.io

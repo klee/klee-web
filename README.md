@@ -47,7 +47,7 @@ make deploy
 
 The local defaults name these images `klee-web-runner`, `klee-web-backend`, and `klee-web-frontend`. `make deploy` remains the local build path. Registry-backed deployment tooling supplies `RUNNER_IMAGE`, `BACKEND_IMAGE`, and `FRONTEND_IMAGE`, pulls those references, and starts the same Compose file with `--no-build`.
 
-After CI succeeds on `main`, the `Publish images` workflow builds `linux/amd64` frontend, backend, and Runner images under `ghcr.io/finnleh/`. Each build receives an immutable `sha-<full-commit>` tag. Once all three exist, the workflow updates their moving `main` tags sequentially. Publishing a stable GitHub Release adds its `vMAJOR.MINOR.PATCH` tag to that commit's existing images without rebuilding them. There is no `latest` tag. GitHub creates personal-account packages as private, so their owner makes each package public once after its first publication.
+After all six checks pass in a `main` CI run, CI calls the reusable `Publish images` workflow. It builds `linux/amd64` frontend, backend, and Runner images under `ghcr.io/finnleh/`. Each image receives an immutable `sha-<full-commit>` tag and a GitHub/Sigstore-signed provenance attestation. Once all three exist, the workflow updates their moving `main` tags sequentially. Publishing a stable GitHub Release first verifies all three attestations, then adds its `vMAJOR.MINOR.PATCH` tag to that commit's existing images without rebuilding them. There is no `latest` tag. The packages are public.
 
 The self-signed local certificate produces a browser warning. App at <https://localhost>. OpenAPI surface at <https://localhost/api/docs>.
 
