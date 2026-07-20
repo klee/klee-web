@@ -30,8 +30,8 @@ The app is at `https://localhost`. The backend OpenAPI docs are at
 The frontend flow is end-to-end: a Monaco editor starts with demo C code, the
 top bar exposes KLEE flags such as `max_time` and `max_memory`, Run submits to
 the backend, and the results panel polls job status. Important visible states
-include pending, running with live stats, done with test cases, compile errors,
-timeouts, and cancellation.
+include pending, running with elapsed time against the submitted limit, done
+with test cases, compile errors, timeouts, and cancellation.
 
 Backend models emit the OpenAPI contract. If a backend change alters endpoint
 paths, request models, response models, or field names, regenerate and commit

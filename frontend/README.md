@@ -1,18 +1,22 @@
 # frontend/
 
-React + TypeScript single-page app. Editor for C source, an examples/history sidebar, and a results pane.
+React + TypeScript single-page app. Editor for C source, an examples/history sidebar, a results pane, and an authenticated fleet-administration route.
 
 ## Contents
 
 - `package.json`: React 19, TypeScript, Vite, Tailwind v4, React Query, React Router, Monaco editor, openapi-fetch, openapi-typescript
 - `.npmrc`: `legacy-peer-deps=true` so clones do not trip on openapi-typescript's stale `typescript: ^5.x` peer-dep range while we are on TS 6
 - `vite.config.ts`: build / dev server config, plus the Vitest `test` block scoped to `src/**/*.test.ts`
+- `Dockerfile`: Node 24 build stage followed by the nginx image that serves the compiled SPA
+- `nginx.conf`: HTTPS edge, static assets, `/api` proxy, rate limits, and Basic Auth for `/admin` and `/api/admin/*`
+- `playwright.config.ts` and `e2e/`: browser tests against an isolated Compose stack, including the real gVisor Runner path
 - `tsconfig.json`: strict TypeScript
 - `index.html`: entry HTML
 - `src/main.tsx`: React mount point, wraps `<App />` in `QueryClientProvider`
-- `src/App.tsx`: route index (`SettingsProvider` + `BrowserRouter` + `Route` at `/`)
+- `src/App.tsx`: route index inside `SettingsProvider` and `BrowserRouter`, with the workspace at `/` and fleet administration at `/admin`
 - `src/api/client.ts`: typed `apiClient` over openapi-fetch. Also exports `BASE_URL` for callers that need the backend origin outside the typed routes (e.g., the status bar pinging `/health`)
 - `src/api/jobs.ts`: `submitJob`, `getJob`, `cancelJob`, the `JobNotFoundError` and `RequestFailedError` error types, and re-exported schema aliases
+- `src/api/admin.ts`: typed fleet telemetry, usage-statistics, and Worker-capacity calls used by the admin route
 - `src/types/api.ts`: types generated from the backend OpenAPI spec, committed
 - `src/hooks/useSubmitJob.ts`: React Query mutation over `submitJob`
 - `src/hooks/useJob.ts`: React Query polling query over `getJob`, 1000 ms cadence, stops on terminal status and treats a 404 as terminal with no retry
@@ -34,10 +38,11 @@ React + TypeScript single-page app. Editor for C source, an examples/history sid
 - `src/components/SymbolicInputPanel.tsx`: collapsible panel below the top bar. Per-spec toggles for symbolic stdin / files / args with bounded numeric fields, editing the nested `sym_stdin` / `sym_files` / `sym_args` objects on `KleeFlags`
 - `src/components/Editor.tsx`: `@monaco-editor/react` wrapper. C language, controlled `value` / `onChange`, `resolvedTheme` mapped to `klee-dark` / `vs-light`, and registers the `kleeCompletions` provider on mount
 - `src/components/Sidebar.tsx`: left panel with Examples and History tabs. Examples opens a bundled program, History lists per-browser runs with restore / delete / clear and a status glyph. Collapsible
-- `src/components/Results.tsx`: dispatches first on submit or poll error kind (expired / submit-rejected / unreachable), then on job status (pending / running / parsing / done / compile-error / failed). Running surfaces a live stat grid. DoneView holds tab state (Test cases / Stats), a `HaltBadge`, per-variable type dropdowns, and page navigation over the test cases
+- `src/components/Results.tsx`: dispatches first on submit or poll error kind (expired / submit-rejected / unreachable), then on job status (pending / running / parsing / done / compile-error / failed). Running shows elapsed time against the submitted limit. DoneView holds tab state (Test cases / Stats), a `HaltBadge`, per-variable type dropdowns, and page navigation over the test cases
 - `src/components/SettingsPopover.tsx`: panel of segmented controls over `useSettings()` (theme, accent colour, font size, results position). Pure presentational
 - `src/components/StatusBar.tsx`: bottom strip with backend-connected indicator (polls `/health` every 5 s via React Query, two-state connected/disconnected derived from `data` + `isError`), source byte count, and pinned KLEE version
-- `src/pages/HomePage.tsx`: composes Workspace at route `/`. Owns `source`, `flags`, `jobId`, and the errors-first toggle. Wires the sidebar via `useHistory` (load example, restore run, delete / clear), `handleRun` posts via `useSubmitJob` and adds a history entry, `handleCancel` goes via `useCancelJob`, and `useJob(jobId)` inside `Results` drives the polling
+- `src/pages/HomePage.tsx`: composes Workspace at route `/`. Owns `source`, `flags`, `jobId`, and the errors-first toggle. Wires the sidebar via `useHistory` (load example, restore run, delete / clear), `handleRun` posts via `useSubmitJob` and adds a history entry, and `handleCancel` goes via `useCancelJob`. `HomePage` and `Results` subscribe to the same `useJob(jobId)` query for controls, history, and rendering
+- `src/pages/AdminPage.tsx`: polls fleet telemetry and cumulative usage every five seconds, shows queue and Worker state, and changes a Worker's live autoscaler maximum within the deployment limit. nginx protects the route and its API calls with Basic Auth
 
 ## Editor
 

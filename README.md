@@ -10,7 +10,7 @@ KLEE today requires users to build LLVM, STP, and a chain of other dependencies 
 
 ## Current stage
 
-**Stage 3: hardening and portability.** Stages 1 and 2 are done: the synchronous monolith (React frontend, FastAPI backend, Docker runner), then the split (Celery workers, a Redis broker and result cache, a worker pool). Stage 3 adds the production edge (nginx, TLS, rate limiting), stronger sandboxing (gVisor), observability, and an admin UI. The edge, the gVisor sandbox, and read-only observability (health probes, fleet telemetry, usage stats) are already in place. It also answers the thesis portability question: redeploy the stack across providers and count what has to change.
+**Stage 3: hardening and portability.** Stages 1 and 2 are done: the synchronous monolith (React frontend, FastAPI backend, Docker runner), then the split (Celery workers, a Redis broker and result cache, a worker pool). Stage 3 adds the production edge (nginx, TLS, rate limiting), stronger sandboxing (gVisor), observability, and an admin UI. The edge, the gVisor sandbox, fleet telemetry, usage statistics, and authenticated per-Worker capacity control are already in place. It also answers the thesis portability question: redeploy the stack across providers and count what has to change.
 
 The whole stack runs locally through the same Compose topology used for deployment. `make deploy` starts nginx, the API, Redis, and the Celery Worker fleet. `make logs` follows them, and `make down` stops them.
 
@@ -45,6 +45,8 @@ make deploy
 
 `make deploy` builds the Runner, backend, and frontend images, starts the Compose services in detached mode, waits until every service is running and the defined Redis and API health checks pass, then returns control to the terminal. It selects `runsc-kvm` when `/dev/kvm` exists and `runsc` otherwise.
 
+The local defaults name these images `klee-web-runner`, `klee-web-backend`, and `klee-web-frontend`. `make deploy` remains the local build path. Registry-backed deployment tooling supplies `RUNNER_IMAGE`, `BACKEND_IMAGE`, and `FRONTEND_IMAGE`, pulls those references, and starts the same Compose file with `--no-build`. Image publication, pulling, and host bootstrap remain separate deployment operations.
+
 The self-signed local certificate produces a browser warning. App at <https://localhost>. OpenAPI surface at <https://localhost/api/docs>.
 
 The frontend is functional end-to-end. The page loads with a demo C program in
@@ -56,8 +58,7 @@ against an allowlist, a settings cog, and a Run button that becomes a Cancel
 button while a job is in flight. A collapsible panel below the bar toggles
 KLEE's POSIX-runtime symbolic input (symbolic stdin, args, and files). Run
 posts to the backend and the results panel polls and renders pending, running
-(with a curated live-stats grid: instructions, active states, full branches,
-wall time), parsing, done (test cases plus program-output, messages, and
+(with elapsed time against the submitted limit), parsing, done (test cases plus program-output, messages, and
 warnings collapsibles), and compile-error states. Each test case's symbolic
 inputs can be re-decoded per variable through a type dropdown. A timeout reads
 as an amber `Stopped at max time` badge under the tab bar, a user cancel reads
@@ -66,6 +67,8 @@ status bar shows a backend-connected indicator (5 s poll of `/health`),
 the current source byte count, and the pinned KLEE version. Theme (system /
 light / dark) and results-position (right / below) settings persist across
 reloads via the settings popover.
+
+The Basic Auth-protected `/admin` route shows fleet telemetry and cumulative usage, and changes each Worker's live autoscaler maximum within the deployment bound.
 
 ### Deployment controls
 
@@ -98,7 +101,7 @@ make deploy
 The environment contains only the file path, not the password or bcrypt hash.
 
 nginx serves the built frontend and reverse-proxies `/api` over TLS on a single
-origin, Redis persists to a named volume (AOF, bounded by `maxmemory` with LRU
+origin, Redis persists to a named volume (AOF, bounded by `maxmemory` with `volatile-lru`
 eviction), and the worker spawns each KLEE job as a sibling container under the
 selected gVisor runtime (`runsc` or `runsc-kvm`). See
 [`docs/architecture.md`](docs/architecture.md) for the deployment shape.
@@ -137,7 +140,7 @@ them yourself:
 pre-commit install --hook-type pre-commit --hook-type pre-push
 ```
 
-On `git commit`, the commit-stage hooks run ruff (backend), eslint (frontend), and whitespace / end-of-file checks. The eslint hook needs `frontend/node_modules`, so run `npm install` in `frontend/` once before the first commit. CI runs these same hooks (`pre-commit run --all-files`), so they are enforced on every pull request even if you never install the local hooks.
+On `git commit`, the commit-stage hooks run ruff (backend), eslint (frontend), and whitespace / end-of-file checks. The eslint hook needs `frontend/node_modules`, so run `npm install` in `frontend/` once before the first commit. CI runs the pre-commit hooks across all files and runs mypy separately in the backend job, so the same checks are enforced on every pull request even if you never install the local hooks.
 
 On `git push`, the pre-push hook runs Playwright through an isolated Compose stack and a real KLEE container under gVisor, but only when the push touches `frontend/`, `backend/`, or `runner/`. It needs Docker, a registered gVisor runtime, and free ports 80 and 443. The hook builds its images, creates a temporary admin credential, and tears the stack down afterward. To skip it in a pinch, push with `--no-verify`.
 

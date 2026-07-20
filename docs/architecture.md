@@ -51,7 +51,7 @@ Each unit has one job, is reached through an interface, and can be swapped witho
 |--|--|--|--|
 | **Frontend** (`frontend/`) | Monaco editor for C input, results panel. Submits a job and polls for the result (every 1s). | Open the app, type C, click Run. | The backend HTTP API only. |
 | **Backend API** (`api/jobs.py`) | Three endpoints: `POST /jobs`, `GET /jobs/{id}`, `POST /jobs/{id}/cancel`. Validates, reads the cache, dispatches. | The frontend calls it. Takes the seams via FastAPI `Depends`. | `JobStore`, `JobDispatcher`, `ResultCache`, `UsageStatsStore`. |
-| **Ops API** (`api/health.py`, `api/admin.py`) | `GET /health` (liveness), `GET /ready` (readiness), admin telemetry and usage reads, and per-worker maximum-capacity writes. | nginx and Compose poll health. The admin UI reads telemetry and stats and changes worker capacity. `/admin` and `/api/admin/*` are gated at the edge. | `Readiness`, `FleetTelemetry`, `FleetControl`, `UsageStatsStore`. |
+| **Ops API** (`api/health.py`, `api/admin.py`) | `GET /health` (liveness), `GET /ready` (readiness), admin telemetry and usage reads, and per-worker maximum-capacity writes. | Compose polls readiness and the browser polls liveness. The admin UI reads telemetry and stats and changes worker capacity. nginx gates `/admin` and `/api/admin/*` at the edge. | `Readiness`, `FleetTelemetry`, `FleetControl`, `UsageStatsStore`. |
 | **JobStore** (`jobs/store.py`, `Protocol`) | Holds each `Job` (status, result, cancel flag). | `create`, `get`, `set_result`, `request_cancel`, ... | Redis. |
 | **KleeRunner** (`jobs/runner.py`, `Protocol`) | Runs one KLEE job in a container and parses the output into a `JobResult`. | `execute(source, flags, job_id, ...)`, `cancel(job_id)`. | Docker and the runner image. |
 | **ResultCache** (`jobs/cache.py`, `Protocol`) | Caches finished results keyed by a hash of the submission (source + flags). | `get(key)`, `set(key, result)`. | Redis. |
@@ -61,9 +61,9 @@ Each unit has one job, is reached through an interface, and can be swapped witho
 | **FleetTelemetry** (`jobs/telemetry.py`, `Protocol`) | Live fleet view: Worker pool sizes, active/reserved Jobs, queue depth (Celery `inspect` + a broker `LLEN`). | `snapshot()`. | Celery + Redis broker. |
 | **FleetControl** (`jobs/telemetry.py`, `Protocol`) | Changes one Worker's autoscaler maximum, bounded by the deployment setting. | `set_max_concurrency(worker_name, maximum)`. | Celery remote control. |
 | **UsageStatsStore** (`jobs/usage.py`, `Protocol`) | Cumulative counters: outcomes per kind, cache hits, aggregate KLEE totals. | `record_execution`, `record_cache_hit`, `snapshot`. | Redis `INCR`. |
-| **Runner image** (`runner/`) | The Docker image (based on `klee/klee:v3.2`) and `entrypoint.py`: compile C to LLVM bitcode with clang, run KLEE (`--kdalloc=false`), replay each test case through the fork-per-ktest zygote for per-path output, capture output (ADR-0020, ADR-0022). | Built by `make runner`. One container per job, launched under the `KLEE_RUNTIME` sandbox with no network, a read-only root, and bounded temporary storage at `/work` (ADR-0023). | KLEE, clang, Docker. |
+| **Runner image** (`runner/`) | The Docker image (based on `klee/klee:v3.2`) and `entrypoint.py`: compile C to LLVM bitcode with clang, run KLEE (`--kdalloc=false`), replay each test case through the fork-per-ktest zygote for per-path output, capture output (ADR-0020, ADR-0022). | Built locally by `make runner` or selected through `RUNNER_IMAGE`. One container per job, launched under the `KLEE_RUNTIME` sandbox with no network, a read-only root, and bounded temporary storage at `/work` (ADR-0023). | KLEE, clang, Docker. |
 | **Broker** (`celery_app.py`) | The queue between the API and Workers. Carries the `run_klee_job` task. | `CeleryDispatcher` publishes and Workers consume. | Redis. |
-| **Settings** (`config.py`) | Validates infrastructure URLs, sandbox runtime, Runner Caps, and Worker-capacity bound. | Required `REDIS_URL` and `CELERY_BROKER_URL`, plus `KLEE_RUNTIME`, `RUNNER_*`, `WORKER_CONCURRENCY_MAX`. | pydantic-settings. |
+| **Settings** (`config.py`) | Validates infrastructure URLs, Runner image, sandbox runtime, Runner Caps, and Worker-capacity bound. | Required `REDIS_URL` and `CELERY_BROKER_URL`. `RUNNER_IMAGE`, `KLEE_RUNTIME`, the Runner Caps, and `WORKER_CONCURRENCY_MAX` have deployment defaults. | pydantic-settings. |
 
 ## The request lifecycle
 
@@ -109,7 +109,7 @@ The contract has been async-shaped since Stage 1 (ADR-0007): `POST /jobs` return
 Two paths worth calling out:
 
 - **Cache hit.** An identical resubmission (same source and flags) short-circuits: the API stores a job already `done` with the cached result and never touches the queue (ADR-0017).
-- **Cancel.** `POST /jobs/{id}/cancel` is an API-side eager flip: the endpoint writes the terminal `cancelled` result into the store itself, so a job resolves even if no worker is alive to act on it. A running worker's watcher also sees the flag and signals the container to dump whatever partial results KLEE has so far (ADR-0013, ADR-0018).
+- **Cancel.** `POST /jobs/{id}/cancel` is an API-side eager flip: the endpoint writes the terminal `cancelled` result into the store itself, so a job resolves even if no worker is alive to act on it. A running worker's watcher also signals the container so KLEE can halt and flush the output available at termination. Stream transport does not deliver incremental results while the container is still running (ADR-0013, ADR-0018, ADR-0021).
 
 ## The Protocol seams
 
@@ -136,6 +136,8 @@ Compose is the one full-application topology for local verification, browser CI,
 - **`make deploy WORKER_REPLICAS=2`** scales the Worker service. `WORKER_CONCURRENCY_MAX` independently bounds each Worker's autoscaler.
 - **`make logs`** follows all service logs without owning their lifecycle.
 - **`make down`** removes the service containers and network while preserving the Redis named volume.
+
+Compose defaults to the local `klee-web-backend`, `klee-web-frontend`, and `klee-web-runner` image names. `make deploy` builds that local path. Registry-backed deployment tooling can supply tags or digests through `BACKEND_IMAGE`, `FRONTEND_IMAGE`, and `RUNNER_IMAGE`, pull them, and start the same services with `docker compose up --no-build`.
 
 Make selects `runsc-kvm` when the host exposes `/dev/kvm` and `runsc` otherwise. Supported deployments use that gVisor selection. `runc` remains available only as a comparative integration-test control. The Worker launches each Job as a sibling Runner container through the host Docker socket. nginx serves the built frontend and reverse-proxies `/api` over TLS. Redis persists through AOF on a named volume, bounded by `maxmemory` with `volatile-lru` eviction.
 

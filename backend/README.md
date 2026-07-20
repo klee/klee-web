@@ -8,7 +8,7 @@ FastAPI service. Receives Job submissions, enqueues them through Celery, and ret
 - `src/klee_web/main.py`: FastAPI app
 - `src/klee_web/api/jobs.py`: `POST /jobs`, `GET /jobs/{id}`, `POST /jobs/{id}/cancel`. POST returns `202` with a `job_id`, serving a cached result on a matching submission or else creating the job and handing it to the dispatcher. GET polls the store. Cancel flips the job terminal (ADR-0013)
 - `src/klee_web/api/health.py`: `GET /health` (liveness, always `up`) and `GET /ready` (readiness, pings Redis, `200` or `503`). Infra callers poll readiness, browser clients poll liveness
-- `src/klee_web/api/admin.py`: `GET /admin/telemetry` (fleet), `GET /admin/stats` (usage), and `PATCH /admin/workers/{name}/capacity` (live per-worker maximum). Gated at the nginx edge before any public deploy
+- `src/klee_web/api/admin.py`: `GET /admin/telemetry` (fleet), `GET /admin/stats` (usage), and `PATCH /admin/workers/{name}/capacity` (live per-worker maximum). Gated at the nginx edge by Basic Auth
 - `src/klee_web/health.py`: `Readiness` protocol + `RedisReadiness`, the Redis readiness check behind `/ready`
 - `src/klee_web/models.py`: Pydantic schemas (`JobRequest`, `Job`, `JobCreated`, `JobResult`, `JobStatus`, `HaltReason`, `JobOutcome`, `KleeFlags`, `QueryFormat`, `TestCase`, `SymbolicInput`) plus the ops models (`Telemetry`, `WorkerTelemetry`, `QueueTelemetry`, `UsageStats`). `Job.outcome` is a computed field from `outcome_of_job` / `outcome_of_result`, the single terminal-outcome classifier the frontend also reads
 - `src/klee_web/symbolic_input.py`: the `SymStdin` / `SymFiles` / `SymArgs` sub-models carried on `KleeFlags`, plus `render_posix_args`, which renders them into the `--sym-*` POSIX-runtime args passed to the runner after the bitcode
@@ -16,7 +16,7 @@ FastAPI service. Receives Job submissions, enqueues them through Celery, and ret
 - `src/klee_web/jobs/dispatch.py`: `JobDispatcher` protocol + `CeleryDispatcher`, which enqueues the complete `JobRequest` (ADR-0016, amended by ADR-0024)
 - `src/klee_web/jobs/run.py`: `run_job`, the Worker job body: mark running, run KLEE, write the result, cache a completed run, record the outcome, and watch for a cancel
 - `src/klee_web/jobs/store.py`: `JobStore` protocol + `RedisJobStore`. `set_partial_result` writes mid-flight progress, `set_result` flips status to `done`, `request_cancel` sets the cancel flag
-- `src/klee_web/jobs/runner.py`: `KleeRunner` protocol + `DockerKleeRunner`. Stream-only transport: source in on the container's stdin, the whole output dir back as a tar on stdout, no bind mount (ADR-0021). Supported deployments pick `runsc` or `runsc-kvm`. `runc` remains an integration-test control. Every run disables the network, makes the root read-only, and mounts bounded temporary storage at `/work`
+- `src/klee_web/jobs/runner.py`: `KleeRunner` protocol + `DockerKleeRunner`. Stream-only transport: source in on the container's stdin, the whole output dir back as a tar on stdout, no bind mount (ADR-0021). `RUNNER_IMAGE` selects the image reference and defaults to the local `klee-web-runner` image. Supported deployments pick `runsc` or `runsc-kvm`. `runc` remains an integration-test control. Every run disables the network, makes the root read-only, and mounts bounded temporary storage at `/work`
 - `src/klee_web/jobs/cache.py`: `ResultCache` protocol + `RedisResultCache`, keyed on the submission (ADR-0017, amended by ADR-0024)
 - `src/klee_web/jobs/telemetry.py`: `FleetTelemetry` for worker pool sizes, active/reserved jobs, and queue depth, plus `FleetControl` for changing a worker's autoscaler maximum through Celery remote control
 - `src/klee_web/jobs/usage.py`: `UsageStatsStore` protocol + `RedisUsageStatsStore` (`INCR` counters for outcomes, cache hits, and aggregate KLEE totals), read at `/admin/stats`
@@ -25,7 +25,7 @@ FastAPI service. Receives Job submissions, enqueues them through Celery, and ret
 - `src/klee_web/parsing/ktest.py`: vendored KLEE ktest reader (NCSA, trimmed to `KTest.fromfile`)
 - `src/klee_web/deps.py`: API dependency providers (`get_job_store`, `get_cache`, `get_dispatcher`, `get_readiness`, `get_telemetry`, `get_fleet_control`, `get_usage_stats`)
 - `tests/unit/`: handler, dispatch, run-job, store, cache, model, config, and parser tests (parser golden fixtures: `happy_path`, `compile_error`, `runtime_error`, `max_time`)
-- `tests/integration/`: real-Docker runner, Redis store and cache, and the Celery worker end to end
+- `tests/integration/`: real-Docker Runner, Redis store, cache, usage, readiness and telemetry, plus the Celery Worker end to end
 
 ## Why the protocols remain
 
@@ -39,7 +39,7 @@ From the repository root:
 make deploy
 ```
 
-Compose starts Redis, the API, a Celery Worker, and nginx with the built frontend. `REDIS_URL` (store, cache, and stats on db 0) and `CELERY_BROKER_URL` (broker on db 1) are required settings supplied by Compose. The API enqueues every cache miss. The Worker runs KLEE and writes through the shared Redis services. Use `make logs` to follow the detached stack and `make down` to stop it.
+Compose starts Redis, the API, a Celery Worker, and nginx with the built frontend. `REDIS_URL` (store, cache, and stats on db 0) and `CELERY_BROKER_URL` (broker on db 1) are required settings supplied by Compose. `RUNNER_IMAGE` defaults to `klee-web-runner` and can select a registry tag or digest for the Worker. The API enqueues every cache miss. The Worker runs KLEE and writes through the shared Redis services. Use `make logs` to follow the detached stack and `make down` to stop it.
 
 ### Manual worker smoke
 

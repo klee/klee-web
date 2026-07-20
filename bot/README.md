@@ -19,6 +19,8 @@ to real issues:
   PAT if you want bot-created pull requests to run CI without GitHub's
   `GITHUB_TOKEN` approval behavior.
 
+The workflow grants `contents: write`, `issues: write`, and `pull-requests: write`. Checkout and the dispatcher use `AGENT_GITHUB_TOKEN` when configured, otherwise they use the workflow's `GITHUB_TOKEN`.
+
 Example command shape:
 
 ```sh
@@ -72,8 +74,8 @@ opencode models deepseek --refresh
 2. A maintainer reviews it and applies `agent:ready`.
 3. The workflow creates labels if needed, claims the issue with
    `agent:working`, and creates an `agent/issue-...` branch.
-4. The configured agent command runs against the generated prompt.
-5. The dispatcher runs:
+4. The workflow installs the locked backend and frontend dependencies, then the configured agent command runs against the generated prompt.
+5. The dispatcher runs its focused checks:
 
    ```sh
    cd backend && uv run pytest tests/unit
@@ -85,5 +87,6 @@ opencode models deepseek --refresh
 7. If the agent fails, checks fail, or no files changed, it comments with the
    failure and labels the issue `agent:blocked`.
 
-Use the workflow's manual `dry_run` input to inspect the generated prompt without
-running the agent.
+The draft PR still has to pass the repository's full required CI before merge. The issue-agent checks do not replace Docker integration, Playwright, lint, formatting, or type checking.
+
+Use the workflow's manual `dry_run` input to generate the prompt and post it as an issue comment without running the agent.

@@ -42,7 +42,7 @@ Don't write ADRs for:
 | 0002 | JobStore protocol surface | Accepted (amended by ADR-0013, ADR-0014, and ADR-0024) |
 | 0003 | Src-layout for the backend Python package | Accepted |
 | 0004 | Monaco for the in-browser editor | Accepted |
-| 0005 | Narrow KleeFlags schema for Stage 1 | Accepted (amended by ADR-0012 and ADR-0019) |
+| 0005 | Narrow KleeFlags schema for Stage 1 | Accepted (amended by ADR-0012, ADR-0019, and ADR-0020) |
 | 0006 | Frontend tooling stack | Accepted |
 | 0007 | POST /jobs returns JobCreated, not full Job | Accepted |
 | 0008 | KleeRunner protocol surface | Accepted |

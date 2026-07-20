@@ -2,7 +2,7 @@
 
 **Status:** Accepted, 2026-05-19
 
-> **Amendment:** ADR-0012 added the typed `query_format` field. ADR-0019 later added allowlisted free-text flags and revised this ADR's absolute no-free-text property. The narrow typed schema remains for common options.
+> **Amendment:** ADR-0012 added the typed `query_format` field. ADR-0019 later added allowlisted free-text flags and revised this ADR's absolute no-free-text property. ADR-0020 raised the `max_time` ceiling to 600 seconds when native replay joined the same execution budget. The narrow typed schema remains for common options.
 
 ## Context
 

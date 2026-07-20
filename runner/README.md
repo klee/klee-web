@@ -9,12 +9,15 @@ Docker image and entrypoint that actually runs KLEE on user-submitted C code. To
 - `replay_driver.c`: fork-per-ktest replay zygote (ADR-0022). Linked once per job with the user's program and KLEE's own replay-setup objects, then forked per test case, so replay pays no per-test process creation or dynamic linking
 - `replay_nosleep.c`: `LD_PRELOAD` stub that no-ops sleeps during replay (ADR-0020)
 
-## Why a separate image per job, not a long-lived process
+The Worker selects this image through `RUNNER_IMAGE`, which defaults to the locally built `klee-web-runner` name and also accepts a registry tag or digest. Docker caches one image on each Worker host and creates a fresh container from it for every Job.
 
-Per-job containers give cgroup isolation, fixed CPU, memory, swap, and PID Caps, a read-only root, bounded temporary storage on `/work`, and trivial cleanup with `docker rm`. A long-lived KLEE process accumulates state: leaked fds, fragmented memory, half-cleaned tmp dirs. Per-job means every run starts from a known clean state. See `../docs/adr/0008-kleerunner-protocol-surface.md` and `../docs/adr/0009-per-job-containers.md`.
+## Why a separate container per job, not a long-lived process
+
+Per-job containers give cgroup isolation, fixed CPU, memory, swap, and PID Caps, a read-only root, bounded temporary storage on `/work`, and automatic cleanup through Docker's `--rm` flag. A long-lived KLEE process accumulates state: leaked fds, fragmented memory, half-cleaned tmp dirs. Per-job means every run starts from a known clean state. See `../docs/adr/0008-kleerunner-protocol-surface.md` and `../docs/adr/0009-per-job-containers.md`.
 
 ## Known working invocation (reference)
 
 - `clang -I /home/klee/klee_src/include -emit-llvm -c -g -O0 input.c -o code.bc`
 - `klee --libc=uclibc --posix-runtime --external-calls=concrete --kdalloc=false --max-time=60 --max-memory=512 --output-dir=/tmp/klee-out code.bc`
-- Output dir contains `messages.txt`, `warnings.txt`, `info`, `*.ktest`, `*.err`, `run.stats` (SQLite3 in KLEE 3.x). On compile failure the entrypoint writes `compile_error.txt` instead and exits 0; the backend distinguishes a user compile failure from a runner crash via that file.
+
+The backend may add `--write-kqueries`, allowlisted extra flags, and structured POSIX arguments. The output directory contains KLEE's `messages.txt`, `warnings.txt`, `info`, `*.ktest`, optional `*.err`, and `run.stats` (SQLite3 in KLEE 3.x). The entrypoint adds whole-run `program_output.txt`, an optional `host_timeout` marker, and optional per-path `*.stdout` files from replay. KQuery output adds `*.kquery` path constraints. On compile failure the entrypoint writes `compile_error.txt` instead and exits 0. The backend distinguishes a user compile failure from a Runner crash through that file.
