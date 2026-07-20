@@ -19,7 +19,9 @@ jobs:
       group: publish-commit-${{ github.event.workflow_run.head_sha }}-${{ matrix.package }}
       cancel-in-progress: false
     permissions:
+      attestations: write
       contents: read
+      id-token: write
       packages: write
     strategy:
       matrix:
@@ -52,6 +54,7 @@ jobs:
             echo "exists=false" >> "$GITHUB_OUTPUT"
           fi
       - name: Build and publish the commit image
+        id: push
         if: steps.commit-image.outputs.exists != 'true'
         uses: docker/build-push-action@v7
         with:
@@ -63,7 +66,35 @@ jobs:
             org.opencontainers.image.source=https://github.com/${{ github.repository }}
             org.opencontainers.image.revision=${{ github.event.workflow_run.head_sha }}
             org.opencontainers.image.title=${{ matrix.package }}
-          provenance: mode=max
+          provenance: mode=max,version=v1
+      - name: Resolve the commit image digest
+        id: image
+        env:
+          BUILT_DIGEST: ${{ steps.push.outputs.digest }}
+        run: |
+          if [ -n "$BUILT_DIGEST" ]; then
+            digest="$BUILT_DIGEST"
+          else
+            digest=$(docker buildx imagetools inspect "$IMAGE:$COMMIT_TAG" --format '{{.Manifest.Digest}}')
+          fi
+          echo "digest=$digest" >> "$GITHUB_OUTPUT"
+      - name: Export detailed image provenance
+        env:
+          IMAGE_DIGEST: ${{ steps.image.outputs.digest }}
+          PROVENANCE_PATH: ${{ runner.temp }}/build-provenance.json
+        run: |
+          docker buildx imagetools inspect \
+            "$IMAGE@$IMAGE_DIGEST" \
+            --format '{{json .Provenance.SLSA}}' > "$PROVENANCE_PATH"
+      - name: Generate signed image attestation
+        uses: actions/attest@v4
+        with:
+          subject-name: ${{ env.IMAGE }}
+          subject-digest: ${{ steps.image.outputs.digest }}
+          predicate-type: https://slsa.dev/provenance/v1
+          predicate-path: ${{ runner.temp }}/build-provenance.json
+          push-to-registry: true
+          create-storage-record: false
 
   promote-main:
     needs: publish-commit-images
@@ -146,16 +177,26 @@ jobs:
       - name: Verify the released commit image set
         env:
           COMMIT_TAG: sha-${{ steps.release.outputs.commit }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           missing=()
+          unattested=()
           for package in $PACKAGES; do
-            if ! docker buildx imagetools inspect \
-              "ghcr.io/finnleh/$package:$COMMIT_TAG" > /dev/null 2>&1; then
+            image="ghcr.io/finnleh/$package:$COMMIT_TAG"
+            if ! docker buildx imagetools inspect "$image" > /dev/null 2>&1; then
               missing+=("$package")
+            elif ! gh attestation verify "oci://$image" \
+              --repo "$GITHUB_REPOSITORY" --bundle-from-oci > /dev/null 2>&1; then
+              unattested+=("$package")
             fi
           done
           if [ "${#missing[@]}" -ne 0 ]; then
             echo "::error::Cannot publish $RELEASE_TAG. Missing commit images: ${missing[*]}. Wait for the Publish images workflow to finish, then re-run this job."
+          fi
+          if [ "${#unattested[@]}" -ne 0 ]; then
+            echo "::error::Cannot publish $RELEASE_TAG. Unverified image attestations: ${unattested[*]}."
+          fi
+          if [ "${#missing[@]}" -ne 0 ] || [ "${#unattested[@]}" -ne 0 ]; then
             exit 1
           fi
       - name: Publish the stable image tags
