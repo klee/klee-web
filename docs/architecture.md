@@ -130,20 +130,29 @@ The `Protocol`s separate HTTP and core Job logic from infrastructure. FastAPI en
 
 ## Deployment shape
 
-Compose is the one full-application topology for local verification, browser CI, and deployment:
+Compose is the one full-application topology for local verification, browser CI, and deployment. Four layers adapt that topology without adding application modes:
+
+- **`docker-compose.yml`** is the runtime topology. It names images, services, health checks, persistence, resource limits, and restart behavior without containing build contexts.
+- **`docker-compose.override.yml`** restores the backend and frontend build contexts automatically for local use.
+- **`deploy/`** is the provider-neutral VM lifecycle. It adds production certificate mounts, installs pinned Docker and gVisor releases, probes the sandbox runtimes, pulls exact images, and installs the systemd unit.
+- **`infra/aws/`** is a provider root. It creates AWS networking and compute resources, then renders the shared lifecycle with an AWS-specific TLS adapter.
+
+Local operation uses the automatic build override:
 
 - **`make deploy`** builds the Runner, backend, and frontend images, then starts nginx, FastAPI, Redis, and one Celery Worker in detached mode.
 - **`make deploy WORKER_REPLICAS=2`** scales the Worker service. `WORKER_CONCURRENCY_MAX` independently bounds each Worker's autoscaler.
 - **`make logs`** follows all service logs without owning their lifecycle.
 - **`make down`** removes the service containers and network while preserving the Redis named volume.
 
-Compose defaults to the local `klee-web-backend`, `klee-web-frontend`, and `klee-web-runner` image names. `make deploy` builds that local path. Registry-backed deployment tooling can supply tags or digests through `BACKEND_IMAGE`, `FRONTEND_IMAGE`, and `RUNNER_IMAGE`, pull them, and start the same services with `docker compose up --no-build`.
+Compose defaults to the local `klee-web-backend`, `klee-web-frontend`, and `klee-web-runner` image names. Registry-backed VM deployment instead supplies immutable digests through `BACKEND_IMAGE`, `FRONTEND_IMAGE`, and `RUNNER_IMAGE`. The pull helper validates those references before systemd starts the same services with `docker compose up --no-build`.
+
+Cloud-init prepares a VM but does not start KLEE Web. The administrator helper first creates the Basic Auth hash, then enables and starts the systemd unit. systemd reconciles the Compose project on start and reload, restores it after reboot, and preserves the Redis named volume when stopping the service.
 
 After all six checks pass in a `main` CI run, CI calls the reusable `Publish images` workflow. It builds the three `linux/amd64` images in GHCR under immutable `sha-<full-commit>` tags and signs their provenance with GitHub's Sigstore identity. Main CI runs complete independently, but only the commit that remains the tip of `main` can update the three moving `main` tags. Publishing a stable GitHub Release verifies all three attestations before adding its `vMAJOR.MINOR.PATCH` tag to those existing manifests without rebuilding. No `latest` tag is published.
 
-Make selects `runsc-kvm` when the host exposes `/dev/kvm` and `runsc` otherwise. Supported deployments use that gVisor selection. `runc` remains available only as a comparative integration-test control. The Worker launches each Job as a sibling Runner container through the host Docker socket. nginx serves the built frontend and reverse-proxies `/api` over TLS. Redis persists through AOF on a named volume, bounded by `maxmemory` with `volatile-lru` eviction.
+Make selects `runsc-kvm` locally when the host exposes `/dev/kvm` and `runsc` otherwise. VM bootstrap is stricter. It requires a successful systrap container first, then selects `runsc-kvm` only after a separate KVM container succeeds. `runc` remains available only as a comparative integration-test control. The Worker launches each Job as a sibling Runner container through the host Docker socket. nginx serves the built frontend and reverse-proxies `/api` over TLS. Redis persists through AOF on a named volume, bounded by `maxmemory` with `volatile-lru` eviction.
 
-Provider-specific deployment work belongs around this topology rather than inside an application-mode selector. Terraform, image references, host provisioning, network addresses, and gVisor installation form the redeployment delta measured by the portability study.
+Provider-specific deployment work belongs around this topology rather than inside an application-mode selector. Terraform resources and TLS acquisition vary by provider. Compose, exact image selection, host preparation, sandbox probing, activation, and service operation remain shared.
 
 ## Where to look next
 

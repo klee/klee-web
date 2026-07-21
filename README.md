@@ -22,6 +22,8 @@ klee-web/
 ├── frontend/       React + TypeScript + Vite. Editor and results UI.
 ├── runner/         Docker image and entrypoint that actually runs KLEE.
 ├── bot/            Label-gated issue agent automation (see below).
+├── deploy/         Provider-neutral VM bootstrap and service lifecycle.
+├── infra/          Provider-specific infrastructure roots.
 ├── docs/           architecture.md overview, and the ADRs in docs/adr/.
 └── Makefile        install, credential, Runner build, deployment, logs, and teardown commands.
 ```
@@ -72,7 +74,7 @@ reloads via the settings popover.
 
 The Basic Auth-protected `/admin` route shows fleet telemetry and cumulative usage, and changes each Worker's live autoscaler maximum within the deployment bound.
 
-### Deployment controls
+### Local deployment controls
 
 The deployment starts one Worker by default. Replica count and each Worker's autoscaler ceiling are independent controls:
 
@@ -90,23 +92,24 @@ file remains readable inside nginx's isolated, read-only secret mount. The
 username is `admin`. Run the target again to rotate the credential. The
 `make deploy` fails if the file is absent.
 
-On a deployment host, keep the credential outside the checkout and export its
-path before creating it and starting the stack. The directory must be writable
-and owned by the deployment user:
-
-```bash
-export ADMIN_HTPASSWD_FILE=/etc/klee-web/admin.htpasswd
-make admin-password
-make deploy
-```
-
-The environment contains only the file path, not the password or bcrypt hash.
-
 nginx serves the built frontend and reverse-proxies `/api` over TLS on a single
 origin, Redis persists to a named volume (AOF, bounded by `maxmemory` with `volatile-lru`
 eviction), and the worker spawns each KLEE job as a sibling container under the
 selected gVisor runtime (`runsc` or `runsc-kvm`). See
 [`docs/architecture.md`](docs/architecture.md) for the deployment shape.
+
+## Deploying to a VM
+
+`deploy/` defines the provider-neutral host lifecycle. A provider root renders
+the shared Compose files, exact image references, bootstrap scripts, and
+systemd unit into cloud-init. Host preparation installs Docker and gVisor,
+probes the available sandbox runtimes, pulls the exact images, and provisions
+TLS. It deliberately leaves KLEE Web stopped until an administrator creates the
+Basic Auth password interactively with `/opt/klee-web/set-admin-password.sh`.
+
+`infra/aws/` is the first provider root. It provisions the network and EC2 host
+around that shared lifecycle. See the [AWS deployment guide](docs/deployment/aws.md)
+for planning, activation, upgrade, rollback, and teardown.
 
 ## Regenerating the API contract
 
