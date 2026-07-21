@@ -28,7 +28,10 @@ done
 
 # Export deployment values for Compose interpolation and the Runner pull.
 set -a
+# These cloud-init files are unavailable during static analysis.
+# shellcheck disable=SC1090
 . "$DEPLOYMENT_ENV"
+# shellcheck disable=SC1090
 . "$RUNTIME_ENV"
 set +a
 

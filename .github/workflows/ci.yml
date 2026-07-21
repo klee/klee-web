@@ -56,6 +56,33 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+      - uses: hashicorp/setup-terraform@v4.0.1
+        with:
+          terraform_version: 1.15.8
+          terraform_wrapper: false
+      - name: Validate Terraform deployment
+        run: |
+          terraform fmt -check -recursive infra
+          terraform -chdir=infra/aws init -backend=false -input=false -lockfile=readonly
+          terraform -chdir=infra/aws validate -no-color
+      - name: Lint deployment shell
+        run: |
+          docker run --rm \
+            --volume "$PWD:/mnt:ro" \
+            --workdir /mnt \
+            koalaman/shellcheck:v0.11.0@sha256:61862eba1fcf09a484ebcc6feea46f1782532571a34ed51fedf90dd25f925a8d \
+            deploy/bootstrap-host.sh \
+            deploy/pull-images.sh \
+            deploy/set-admin-password.sh \
+            infra/aws/provision-tls.sh.tftpl
+      - name: Validate production service configuration
+        env:
+          TLS_CERTIFICATE_FILE: /tmp/klee-web-cert.pem
+          TLS_PRIVATE_KEY_FILE: /tmp/klee-web-key.pem
+          WORKER_REPLICAS: '1'
+        run: |
+          docker compose -f docker-compose.yml -f deploy/compose.production.yml config --quiet
+          systemd-analyze verify deploy/klee-web.service
       - uses: actions/setup-python@v7
         with:
           python-version: '3.x'

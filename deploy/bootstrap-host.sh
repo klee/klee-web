@@ -17,6 +17,8 @@ if [[ ! -r /etc/os-release ]]; then
   exit 1
 fi
 
+# This standard host file is outside the repository seen by ShellCheck.
+# shellcheck disable=SC1091
 . /etc/os-release
 os_id=${ID:-}
 os_codename=${VERSION_CODENAME:-}

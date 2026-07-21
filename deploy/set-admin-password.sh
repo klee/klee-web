@@ -15,6 +15,7 @@ if [[ ! -f $DEPLOYMENT_ENV ]]; then
 fi
 
 # This script reads TLS paths itself. systemd loads the same file independently.
+# shellcheck disable=SC1090
 . "$DEPLOYMENT_ENV"
 : "${TLS_CERTIFICATE_FILE:?TLS_CERTIFICATE_FILE must be set}"
 : "${TLS_PRIVATE_KEY_FILE:?TLS_PRIVATE_KEY_FILE must be set}"
