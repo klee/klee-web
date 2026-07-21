@@ -1,0 +1,61 @@
+#cloud-config
+
+# Base64 keeps YAML from reinterpreting shell and Compose syntax in embedded files.
+write_files:
+  - path: /opt/klee-web/docker-compose.yml
+    owner: root:root
+    permissions: "0644"
+    encoding: b64
+    content: ${docker_compose_b64}
+
+  - path: /opt/klee-web/compose.production.yml
+    owner: root:root
+    permissions: "0644"
+    encoding: b64
+    content: ${compose_production_b64}
+
+  - path: /opt/klee-web/bootstrap-host.sh
+    owner: root:root
+    permissions: "0755"
+    encoding: b64
+    content: ${bootstrap_host_b64}
+
+  - path: /opt/klee-web/pull-images.sh
+    owner: root:root
+    permissions: "0755"
+    encoding: b64
+    content: ${pull_images_b64}
+
+  - path: /opt/klee-web/set-admin-password.sh
+    owner: root:root
+    permissions: "0755"
+    encoding: b64
+    content: ${set_admin_password_b64}
+
+  # The provider root supplies TLS logic through this shared host interface.
+  - path: /opt/klee-web/provision-tls.sh
+    owner: root:root
+    permissions: "0700"
+    encoding: b64
+    content: ${provision_tls_b64}
+
+  - path: /etc/klee-web/deployment.env
+    owner: root:root
+    permissions: "0644"
+    encoding: b64
+    content: ${deployment_env_b64}
+
+  - path: /etc/systemd/system/klee-web.service
+    owner: root:root
+    permissions: "0644"
+    encoding: b64
+    content: ${klee_web_service_b64}
+
+# Preparation is automatic. The admin helper starts the app after a human sets its password.
+runcmd:
+  - ["/opt/klee-web/bootstrap-host.sh"]
+  - ["/opt/klee-web/pull-images.sh"]
+  - ["/opt/klee-web/provision-tls.sh"]
+  - ["systemctl", "daemon-reload"]
+
+final_message: KLEE Web host preparation completed in $UPTIME seconds

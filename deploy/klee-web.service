@@ -1,0 +1,27 @@
+[Unit]
+Description=KLEE Web Compose deployment
+Requires=docker.service
+After=docker.service network-online.target
+Wants=network-online.target
+ConditionPathExists=/etc/klee-web/admin.htpasswd
+
+[Service]
+# Compose exits after detached startup. Docker keeps the containers running.
+Type=oneshot
+RemainAfterExit=yes
+WorkingDirectory=/opt/klee-web
+# Desired deployment state and observed host runtime are separate inputs.
+EnvironmentFile=/etc/klee-web/deployment.env
+EnvironmentFile=/etc/klee-web/runtime.env
+# Start and reload reconcile desired state. Stop removes containers but keeps named volumes.
+ExecStartPre=/usr/bin/docker compose --project-name klee-web -f docker-compose.yml -f compose.production.yml config --quiet
+ExecStart=/usr/bin/docker compose --project-name klee-web -f docker-compose.yml -f compose.production.yml up -d --no-build --wait --wait-timeout 600
+ExecReload=/usr/bin/docker compose --project-name klee-web -f docker-compose.yml -f compose.production.yml up -d --no-build --wait --wait-timeout 600
+ExecStop=/usr/bin/docker compose --project-name klee-web -f docker-compose.yml -f compose.production.yml down --timeout 675
+# systemd's deadline sits above Compose's 10-minute readiness and 675-second stop limits.
+TimeoutStartSec=12min
+TimeoutStopSec=12min
+
+[Install]
+# systemctl enable links this unit into normal server boot.
+WantedBy=multi-user.target
