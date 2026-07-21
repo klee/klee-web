@@ -82,7 +82,7 @@ jobs:
       - name: Install gVisor (runsc) and register the runtime
         run: |
           set -euo pipefail
-          GVISOR_RELEASE=20260706   # keep in sync with the runsc version installed on the deploy host
+          GVISOR_RELEASE=20260714   # keep in sync with the runsc version installed on the deploy host
           ARCH=$(uname -m)
           URL="https://storage.googleapis.com/gvisor/releases/release/${GVISOR_RELEASE}/${ARCH}"
           wget -q "${URL}/runsc" "${URL}/runsc.sha512" \
@@ -105,7 +105,7 @@ jobs:
       - name: Install gVisor (runsc) and register the runtime
         run: |
           set -euo pipefail
-          GVISOR_RELEASE=20260706   # keep in sync with the deploy host and integration-docker
+          GVISOR_RELEASE=20260714   # keep in sync with the deploy host and integration-docker
           ARCH=$(uname -m)
           URL="https://storage.googleapis.com/gvisor/releases/release/${GVISOR_RELEASE}/${ARCH}"
           wget -q "${URL}/runsc" "${URL}/runsc.sha512" \
