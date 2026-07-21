@@ -4,7 +4,7 @@ WORKER_CONCURRENCY_MAX ?= 4
 WORKER_REPLICAS ?= 1
 KLEE_RUNTIME ?= $(if $(wildcard /dev/kvm),runsc-kvm,runsc)
 ADMIN_HTPASSWD_FILE ?= $(CURDIR)/.secrets/admin.htpasswd
-export WORKER_CONCURRENCY_MAX KLEE_RUNTIME ADMIN_HTPASSWD_FILE
+export WORKER_CONCURRENCY_MAX WORKER_REPLICAS KLEE_RUNTIME ADMIN_HTPASSWD_FILE
 
 install:
 	cd backend && uv sync
@@ -12,7 +12,7 @@ install:
 	command -v pre-commit >/dev/null 2>&1 && pre-commit install --hook-type pre-commit --hook-type pre-push || echo "pre-commit not on PATH; see README 'Pre-commit hooks', then run: pre-commit install --hook-type pre-commit --hook-type pre-push"
 
 deploy: runner
-	docker compose up -d --build --wait --scale worker=$(WORKER_REPLICAS)
+	docker compose up -d --build --wait
 
 logs:
 	docker compose logs -f

@@ -1,0 +1,10 @@
+# Compose loads this override automatically for local builds. VM deployment names files explicitly.
+services:
+  api:
+    build: ./backend
+
+  worker:
+    build: ./backend
+
+  nginx:
+    build: ./frontend
