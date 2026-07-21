@@ -3,7 +3,7 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 ADMIN_HTPASSWD_FILE="$(mktemp)"
-COMPOSE_FILE="$ROOT_DIR/docker-compose.yml:$ROOT_DIR/frontend/e2e/docker-compose.yml"
+COMPOSE_FILE="$ROOT_DIR/docker-compose.yml:$ROOT_DIR/docker-compose.override.yml:$ROOT_DIR/frontend/e2e/docker-compose.yml"
 COMPOSE_PROJECT_NAME="klee-web-e2e"
 export ADMIN_HTPASSWD_FILE COMPOSE_FILE COMPOSE_PROJECT_NAME
 
