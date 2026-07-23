@@ -22,7 +22,7 @@ The read sits in `POST /jobs` before dispatch, the write in `run_job` after a co
 
 A `ResultCache` Protocol with `get` and `set` carries `InMemoryResultCache` and `RedisResultCache`, and `get_cache` selects on `REDIS_URL`, the same shape as `get_job_store` (ADR-0014). The in-memory cache is the zero-config default, so the in-process path caches too.
 
-The TTL is a flat 24h, set on write and never refreshed on read. A fixed lifetime is deliberate, because it is also the only invalidation. A runner-image change would otherwise serve old results forever, and a TTL refreshed on every hit would keep a popular stale entry alive against exactly that. It covers the common case, a user resubmitting within a session, and bounds how long a stale entry can outlive an image bump.
+The TTL is a 24h maximum. On a write (`set`) it is set to 24h, and every successful `get` (cache hit) renews it back to the full 24h via an atomic Redis `GETEX`. This sliding-expiry prevents frequently-reused results from expiring while less useful entries remain cached. A cache miss issues `GETEX` on a nonexistent key, which returns nil without creating the key or writing expiry metadata. The 24h maximum still bounds how long a stale entry can survive a runner-image bump.
 
 ## Consequences
 

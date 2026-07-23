@@ -82,3 +82,35 @@ async def test_distinct_keys_coexist(cache, sample_result):
     await cache.set("k2", other)
     assert await cache.get("k1") == sample_result
     assert await cache.get("k2") == other
+
+
+async def test_get_refreshes_ttl_on_hit(sample_result):
+    client = fakeredis.FakeAsyncRedis(server=fakeredis.FakeServer())
+    cache = RedisResultCache(client)
+    await cache.set("k", sample_result)
+
+    initial_ttl = await client.ttl("cache:k")
+    assert 0 < initial_ttl <= 24 * 60 * 60
+
+    await client.expire("cache:k", 60)
+
+    ttl_before_get = await client.ttl("cache:k")
+    assert 0 < ttl_before_get <= 60
+
+    result = await cache.get("k")
+    assert result == sample_result
+
+    ttl_after_get = await client.ttl("cache:k")
+    assert 60 < ttl_after_get <= 24 * 60 * 60
+
+    await client.aclose()
+
+
+async def test_get_miss_does_not_create_key():
+    client = fakeredis.FakeAsyncRedis(server=fakeredis.FakeServer())
+    cache = RedisResultCache(client)
+
+    assert await cache.get("absent") is None
+    assert not await client.exists("cache:absent")
+
+    await client.aclose()

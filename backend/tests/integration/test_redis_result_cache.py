@@ -70,3 +70,34 @@ async def test_set_applies_bounded_ttl(cache, sample_result):
     finally:
         await client.aclose()
     assert 0 < ttl <= _CACHE_TTL_SECONDS
+
+
+async def test_get_refreshes_ttl_on_hit(cache, sample_result):
+    client = Redis.from_url(_REDIS_URL)
+    try:
+        await cache.set("k", sample_result)
+        await client.expire("cache:k", 60)
+        ttl_before = await client.ttl("cache:k")
+        assert 0 < ttl_before <= 60
+
+        result = await cache.get("k")
+        assert result == sample_result
+
+        ttl_after = await client.ttl("cache:k")
+        assert 60 < ttl_after <= _CACHE_TTL_SECONDS
+
+        second_result = await cache.get("k")
+        assert second_result == sample_result
+        ttl_second = await client.ttl("cache:k")
+        assert 60 < ttl_second <= _CACHE_TTL_SECONDS
+    finally:
+        await client.aclose()
+
+
+async def test_get_miss_does_not_create_key(cache):
+    assert await cache.get("absent") is None
+    client = Redis.from_url(_REDIS_URL)
+    try:
+        assert not await client.exists("cache:absent")
+    finally:
+        await client.aclose()
