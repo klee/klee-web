@@ -1,0 +1,79 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Terraform replaces this placeholder before Bash runs.
+# shellcheck disable=SC2016
+readonly EXPECTED_PUBLIC_IP='${public_ip}'
+readonly CERTBOT_IMAGE='docker.io/certbot/certbot@sha256:34ee91d2f43008eb78a007d22f23ed4b2eaa9a454cb27ca2c042b49527a695b4'
+readonly CERTIFICATE_NAME='klee-web-ip'
+readonly LETSENCRYPT_DIRECTORY='/etc/letsencrypt'
+readonly TLS_DIRECTORY='/etc/klee-web/tls'
+
+if ((EUID != 0)); then
+  printf 'provision-tls.sh must run as root\n' >&2
+  exit 1
+fi
+
+install_certificate() {
+  local source_directory="$LETSENCRYPT_DIRECTORY/live/$CERTIFICATE_NAME"
+
+  # Certbot rotates symlinks. Compose receives stable files with nginx-safe modes.
+  install -d -m 0700 "$TLS_DIRECTORY"
+  install -m 0644 "$source_directory/fullchain.pem" "$TLS_DIRECTORY/fullchain.pem"
+  install -m 0600 "$source_directory/privkey.pem" "$TLS_DIRECTORY/privkey.pem"
+}
+
+# Resolve the exact digest once, then forbid either container run from pulling a tag.
+docker image pull "$CERTBOT_IMAGE"
+
+certificate_directory="$LETSENCRYPT_DIRECTORY/live/$CERTIFICATE_NAME"
+if [[ -f $certificate_directory/fullchain.pem && -f $certificate_directory/privkey.pem ]]; then
+  install_certificate
+  printf 'Reused the existing certificate for %s\n' "$EXPECTED_PUBLIC_IP"
+  exit 0
+fi
+
+# Public IP attachment can lag first boot. Wait until external egress uses the address.
+observed_public_ip=
+for ((attempt = 1; attempt <= 60; attempt++)); do
+  observed_public_ip=$(
+    curl -fsS --max-time 5 https://api.ipify.org || true
+  )
+  observed_public_ip=$(tr -d '[:space:]' <<<"$observed_public_ip")
+
+  if [[ $observed_public_ip == "$EXPECTED_PUBLIC_IP" ]]; then
+    break
+  fi
+
+  sleep 5
+done
+
+if [[ $observed_public_ip != "$EXPECTED_PUBLIC_IP" ]]; then
+  if [[ -z $observed_public_ip ]]; then
+    observed_public_ip='no public IPv4 address'
+  fi
+  printf 'Expected Azure public IP %s, but external lookup reported %s\n' \
+    "$EXPECTED_PUBLIC_IP" "$observed_public_ip" >&2
+  exit 1
+fi
+
+install -d -m 0700 "$LETSENCRYPT_DIRECTORY"
+# KLEE Web is still stopped, so Certbot can own port 80 for this HTTP-01 challenge.
+docker run --rm --pull=never \
+  --publish 80:80 \
+  --volume "$LETSENCRYPT_DIRECTORY:/etc/letsencrypt" \
+  "$CERTBOT_IMAGE" \
+  certonly \
+  --non-interactive \
+  --agree-tos \
+  --register-unsafely-without-email \
+  --preferred-profile shortlived \
+  --standalone \
+  --ip-address "$EXPECTED_PUBLIC_IP" \
+  --cert-name "$CERTIFICATE_NAME"
+
+install_certificate
+# Certbot needs a writable config directory for its lock while printing identity and expiry.
+docker run --rm --pull=never \
+  --volume "$LETSENCRYPT_DIRECTORY:/etc/letsencrypt" \
+  "$CERTBOT_IMAGE" certificates
