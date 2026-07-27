@@ -43,6 +43,26 @@ flowchart LR
 
 The API is thin: it validates the request, checks the cache, and hands each miss to `CeleryDispatcher`. A Worker consumes the task and is the only application service that touches Docker and KLEE. Redis holds the store, cache, usage counters, and broker state shared by the API and Worker. The frontend and API sit behind an nginx edge (TLS, rate limiting, one origin). The same FastAPI process serves health probes and admin operations: telemetry from Celery `inspect` plus a broker `LLEN`, usage from Redis counters, and Worker capacity through Celery remote control.
 
+## Deployment placement
+
+The runtime architecture above has two VM placements through the same Compose
+service definitions. Local development and the single-VM deployment start
+Redis, FastAPI, nginx, and the Worker together. The role-separated deployment
+starts Redis, FastAPI, and nginx on one web/state VM, then starts one Worker on
+each private execution VM.
+
+Each remote Worker receives private `REDIS_URL` and `CELERY_BROKER_URL` values
+for the web/state VM. Its Docker socket and gVisor runtime remain local, so a Job
+never depends on a shared host filesystem or remote Docker daemon. Redis owns
+the only persistent application volume on the web/state VM. Adding a Worker
+therefore adds stateless execution capacity without moving or duplicating Job
+state.
+
+The placement separates execution failures from the public and persistent host,
+but it is not high availability. nginx, FastAPI, and Redis remain single points
+of failure. A Worker that dies after acknowledging a Job can still strand that
+Job until the user cancels and resubmits it.
+
 ## Components
 
 Each unit has one job, is reached through an interface, and can be swapped without the others knowing. The units marked `Protocol` are the swap seams (see below).

@@ -102,14 +102,18 @@ selected gVisor runtime (`runsc` or `runsc-kvm`). See
 
 `deploy/` defines the provider-neutral host lifecycle. A provider root renders
 the shared Compose files, exact image references, bootstrap scripts, and
-systemd unit into cloud-init. Host preparation installs Docker and gVisor,
-probes the available sandbox runtimes, pulls the exact images, and provisions
-TLS. It deliberately leaves KLEE Web stopped until an administrator creates the
-Basic Auth password interactively with `/opt/klee-web/set-admin-password.sh`.
+systemd unit into cloud-init. A missing `DEPLOYMENT_ROLE` retains the complete
+single-VM topology. The `web` role owns nginx, FastAPI, Redis, TLS, and the
+administrator credential. The `worker` role owns one Celery Worker, its local
+Docker daemon, gVisor, and transient Runner containers. Every host installs
+Docker. Only execution hosts install and probe gVisor.
 
-`infra/aws/` is the first provider root. It provisions the network and EC2 host
-around that shared lifecycle. See the [AWS deployment guide](docs/deployment/aws.md)
-for planning, activation, upgrade, rollback, and teardown.
+`infra/aws/` provisions the complete topology on one EC2 host. The independent
+`infra/aws-multi-vm/` root provisions one public web/state VM and one or two
+private Worker VMs around the same deployment lifecycle. See the
+[single-VM AWS guide](docs/deployment/aws.md) and
+[role-separated AWS guide](docs/deployment/aws-multi-vm.md) for planning,
+activation, operation, rollback, and teardown.
 
 ## Regenerating the API contract
 
