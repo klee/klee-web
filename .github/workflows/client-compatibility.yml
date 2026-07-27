@@ -1,0 +1,89 @@
+name: Client compatibility evidence
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: client-compatibility-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  client-matrix:
+    if: github.head_ref == 'test/client-compatibility-matrix'
+    name: ${{ matrix.os }} / ${{ matrix.project }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-24.04
+            project: chrome
+            browser_install: none
+            linux_deps: chromium
+          - os: windows-2025
+            project: chrome
+            browser_install: none
+            linux_deps: none
+          - os: macos-15
+            project: chrome
+            browser_install: none
+            linux_deps: none
+          - os: ubuntu-24.04
+            project: firefox
+            browser_install: firefox
+            linux_deps: firefox
+          - os: windows-2025
+            project: edge
+            browser_install: none
+            linux_deps: none
+          - os: macos-15
+            project: webkit
+            browser_install: webkit
+            linux_deps: none
+    env:
+      PLAYWRIGHT_BASE_URL: ${{ vars.CLIENT_MATRIX_BASE_URL }}
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "24"
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+      - name: Require HTTPS evidence endpoint
+        shell: bash
+        run: |
+          test -n "$PLAYWRIGHT_BASE_URL"
+          case "$PLAYWRIGHT_BASE_URL" in
+            https://*) ;;
+            *) exit 1 ;;
+          esac
+      - run: npm ci
+      - name: Install Linux browser dependencies
+        if: runner.os == 'Linux'
+        run: npx playwright install-deps ${{ matrix.linux_deps }}
+      - name: Install Playwright browser
+        if: matrix.browser_install != 'none'
+        run: npx playwright install ${{ matrix.browser_install }}
+      - name: Run client compatibility checks
+        run: >-
+          npx playwright test
+          --config=playwright.client.config.ts
+          --project=${{ matrix.project }}
+      - name: Upload client evidence
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: client-${{ matrix.os }}-${{ matrix.project }}
+          path: |
+            frontend/playwright-client-report
+            frontend/client-test-results
+          if-no-files-found: warn
+          retention-days: 7
