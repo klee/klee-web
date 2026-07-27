@@ -4,11 +4,7 @@ set -euo pipefail
 readonly DEPLOYMENT_ENV=/etc/klee-web/deployment.env
 readonly RUNTIME_ENV=/etc/klee-web/runtime.env
 readonly DEPLOYMENT_DIRECTORY=/opt/klee-web
-readonly -a COMPOSE_OPTIONS=(
-  --project-name klee-web
-  -f "$DEPLOYMENT_DIRECTORY/docker-compose.yml"
-  -f "$DEPLOYMENT_DIRECTORY/compose.production.yml"
-)
+readonly COMPOSE_DEPLOYMENT="$DEPLOYMENT_DIRECTORY/compose-deployment.sh"
 
 if ((EUID != 0)); then
   printf 'pull-images.sh must run as root\n' >&2
@@ -18,8 +14,7 @@ fi
 for required_file in \
   "$DEPLOYMENT_ENV" \
   "$RUNTIME_ENV" \
-  "$DEPLOYMENT_DIRECTORY/docker-compose.yml" \
-  "$DEPLOYMENT_DIRECTORY/compose.production.yml"; do
+  "$COMPOSE_DEPLOYMENT"; do
   if [[ ! -f $required_file ]]; then
     printf 'Required deployment file is missing: %s\n' "$required_file" >&2
     exit 1
@@ -35,12 +30,26 @@ set -a
 . "$RUNTIME_ENV"
 set +a
 
-: "${BACKEND_IMAGE:?BACKEND_IMAGE must be set}"
-: "${FRONTEND_IMAGE:?FRONTEND_IMAGE must be set}"
-: "${RUNNER_IMAGE:?RUNNER_IMAGE must be set}"
+readonly deployment_role=${DEPLOYMENT_ROLE:-single}
+case "$deployment_role" in
+  single)
+    image_variables=(BACKEND_IMAGE FRONTEND_IMAGE RUNNER_IMAGE)
+    ;;
+  web)
+    image_variables=(BACKEND_IMAGE FRONTEND_IMAGE)
+    ;;
+  worker)
+    image_variables=(BACKEND_IMAGE RUNNER_IMAGE)
+    ;;
+  *)
+    printf 'Unsupported DEPLOYMENT_ROLE: %s\n' "$deployment_role" >&2
+    exit 1
+    ;;
+esac
 
 # ${!image_variable} reads the variable whose name is held in image_variable.
-for image_variable in BACKEND_IMAGE FRONTEND_IMAGE RUNNER_IMAGE; do
+for image_variable in "${image_variables[@]}"; do
+  : "${!image_variable:?$image_variable must be set}"
   if [[ ! ${!image_variable} =~ @sha256:[0-9a-f]{64}$ ]]; then
     printf '%s must use an immutable SHA-256 digest\n' "$image_variable" >&2
     exit 1
@@ -48,14 +57,16 @@ for image_variable in BACKEND_IMAGE FRONTEND_IMAGE RUNNER_IMAGE; do
 done
 
 # Catch interpolation or merge errors before downloading large layers.
-docker compose "${COMPOSE_OPTIONS[@]}" config --quiet
+"$COMPOSE_DEPLOYMENT" config
 printf 'Compose service images:\n'
-docker compose "${COMPOSE_OPTIONS[@]}" config --images
+"$COMPOSE_DEPLOYMENT" images
 
 started_at=$(date +%s)
 printf 'Image pull started at %s\n' "$(date --iso-8601=seconds)"
 # Compose pulls service images. Runner is dynamic and must be pulled separately.
-docker compose "${COMPOSE_OPTIONS[@]}" pull
-docker image pull "$RUNNER_IMAGE"
+"$COMPOSE_DEPLOYMENT" pull
+if [[ $deployment_role != web ]]; then
+  docker image pull "$RUNNER_IMAGE"
+fi
 finished_at=$(date +%s)
 printf 'Image pull completed in %s seconds\n' "$((finished_at - started_at))"

@@ -16,7 +16,7 @@ services:
       - "--maxmemory-policy"
       - "volatile-lru"
     ports:
-      - "127.0.0.1:6379:6379"
+      - "${REDIS_BIND_ADDRESS:-127.0.0.1}:6379:6379"
     volumes:
       - redis-data:/data
     healthcheck:
@@ -36,8 +36,8 @@ services:
     ports:
       - "127.0.0.1:8000:8000"
     environment:
-      REDIS_URL: redis://redis:6379/0
-      CELERY_BROKER_URL: redis://redis:6379/1
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+      CELERY_BROKER_URL: ${CELERY_BROKER_URL:-redis://redis:6379/1}
       WORKER_CONCURRENCY_MAX: ${WORKER_CONCURRENCY_MAX:-4}
     depends_on:
       redis:
@@ -72,11 +72,12 @@ services:
       - "worker"
       - "-Q"
       - "klee-jobs"
+      - "--hostname=${WORKER_NAME:-celery@%h}"
       - "--autoscale=${WORKER_CONCURRENCY_MAX:-4},1"
       - "--loglevel=info"
     environment:
-      REDIS_URL: redis://redis:6379/0
-      CELERY_BROKER_URL: redis://redis:6379/1
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
+      CELERY_BROKER_URL: ${CELERY_BROKER_URL:-redis://redis:6379/1}
       KLEE_RUNTIME: ${KLEE_RUNTIME:-}
       RUNNER_IMAGE: ${RUNNER_IMAGE:-klee-web-runner}
       RUNNER_CPUS: ${RUNNER_CPUS:-2}

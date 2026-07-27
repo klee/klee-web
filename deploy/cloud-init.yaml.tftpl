@@ -14,11 +14,23 @@ write_files:
     encoding: b64
     content: ${compose_production_b64}
 
+  - path: /opt/klee-web/compose.worker.yml
+    owner: root:root
+    permissions: "0644"
+    encoding: b64
+    content: ${compose_worker_b64}
+
   - path: /opt/klee-web/bootstrap-host.sh
     owner: root:root
     permissions: "0755"
     encoding: b64
     content: ${bootstrap_host_b64}
+
+  - path: /opt/klee-web/compose-deployment.sh
+    owner: root:root
+    permissions: "0755"
+    encoding: b64
+    content: ${compose_deployment_b64}
 
   - path: /opt/klee-web/pull-images.sh
     owner: root:root
@@ -32,12 +44,14 @@ write_files:
     encoding: b64
     content: ${set_admin_password_b64}
 
+%{ if provision_tls_b64 != "" }
   # The provider root supplies TLS logic through this shared host interface.
   - path: /opt/klee-web/provision-tls.sh
     owner: root:root
     permissions: "0700"
     encoding: b64
     content: ${provision_tls_b64}
+%{ endif }
 
   - path: /etc/klee-web/deployment.env
     owner: root:root
@@ -55,7 +69,6 @@ write_files:
 runcmd:
   - ["/opt/klee-web/bootstrap-host.sh"]
   - ["/opt/klee-web/pull-images.sh"]
-  - ["/opt/klee-web/provision-tls.sh"]
-  - ["systemctl", "daemon-reload"]
+  - ["/opt/klee-web/compose-deployment.sh", "prepare"]
 
 final_message: KLEE Web host preparation completed in $UPTIME seconds

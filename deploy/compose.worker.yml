@@ -1,0 +1,3 @@
+services:
+  worker:
+    depends_on: !reset {}
