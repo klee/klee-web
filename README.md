@@ -108,12 +108,14 @@ administrator credential. The `worker` role owns one Celery Worker, its local
 Docker daemon, gVisor, and transient Runner containers. Every host installs
 Docker. Only execution hosts install and probe gVisor.
 
-`infra/aws/` provisions the complete topology on one EC2 host. The independent
-`infra/aws-multi-vm/` root provisions one public web/state VM and one or two
-private Worker VMs around the same deployment lifecycle. See the
-[single-VM AWS guide](docs/deployment/aws.md) and
-[role-separated AWS guide](docs/deployment/aws-multi-vm.md) for planning,
-activation, operation, rollback, and teardown.
+`infra/aws/` and `infra/azure/` are independent single-VM provider roots. Each
+provisions one provider network and VM around the shared lifecycle while
+retaining its own TLS adapter. The independent `infra/aws-multi-vm/` root
+provisions one public web/state VM and one or two private Worker VMs. See the
+[single-VM AWS guide](docs/deployment/aws.md),
+[role-separated AWS guide](docs/deployment/aws-multi-vm.md), and
+[Azure deployment guide](docs/deployment/azure.md) for planning, activation,
+operation, rollback, and teardown.
 
 ## Regenerating the API contract
 

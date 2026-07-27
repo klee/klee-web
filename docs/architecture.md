@@ -155,7 +155,7 @@ Compose is the one full-application topology for local verification, browser CI,
 - **`docker-compose.yml`** is the runtime topology. It names images, services, health checks, persistence, resource limits, and restart behavior without containing build contexts.
 - **`docker-compose.override.yml`** restores the backend and frontend build contexts automatically for local use.
 - **`deploy/`** is the provider-neutral VM lifecycle. It adds production certificate mounts, installs pinned Docker and gVisor releases, probes the sandbox runtimes, pulls exact images, and installs the systemd unit.
-- **`infra/aws/`** is a provider root. It creates AWS networking and compute resources, then renders the shared lifecycle with an AWS-specific TLS adapter.
+- **`infra/aws/` and `infra/azure/`** are independent provider roots. Each creates its provider's networking and compute resources, then renders the shared lifecycle with a provider-specific TLS adapter.
 
 Local operation uses the automatic build override:
 
