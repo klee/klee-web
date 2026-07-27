@@ -66,6 +66,8 @@ jobs:
             *) exit 1 ;;
           esac
       - run: npm ci
+      - name: Install Playwright video support
+        run: npx playwright install ffmpeg
       - name: Install Linux browser dependencies
         if: runner.os == 'Linux'
         run: npx playwright install-deps ${{ matrix.linux_deps }}
