@@ -77,6 +77,7 @@ locals {
     compose_production_b64 = filebase64("${path.module}/../../deploy/compose.production.yml")
     compose_worker_b64     = filebase64("${path.module}/../../deploy/compose.worker.yml")
     bootstrap_host_b64     = filebase64("${path.module}/../../deploy/bootstrap-host.sh")
+    maintain_host_b64      = filebase64("${path.module}/../../deploy/maintain-host.sh")
     compose_deployment_b64 = filebase64("${path.module}/../../deploy/compose-deployment.sh")
     pull_images_b64        = filebase64("${path.module}/../../deploy/pull-images.sh")
     set_admin_password_b64 = filebase64("${path.module}/../../deploy/set-admin-password.sh")

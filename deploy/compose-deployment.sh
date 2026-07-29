@@ -87,7 +87,11 @@ case "$action" in
     fi
     systemctl daemon-reload
     if [[ $deployment_role == worker ]]; then
-      systemctl enable --now klee-web.service
+      if [[ -f /var/run/reboot-required ]]; then
+        systemctl enable klee-web.service
+      else
+        systemctl enable --now klee-web.service
+      fi
     fi
     ;;
   ps)

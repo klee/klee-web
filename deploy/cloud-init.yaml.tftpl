@@ -26,6 +26,12 @@ write_files:
     encoding: b64
     content: ${bootstrap_host_b64}
 
+  - path: /opt/klee-web/maintain-host.sh
+    owner: root:root
+    permissions: "0755"
+    encoding: b64
+    content: ${maintain_host_b64}
+
   - path: /opt/klee-web/compose-deployment.sh
     owner: root:root
     permissions: "0755"
@@ -72,3 +78,7 @@ runcmd:
   - ["/opt/klee-web/compose-deployment.sh", "prepare"]
 
 final_message: KLEE Web host preparation completed in $UPTIME seconds
+
+power_state:
+  mode: reboot
+  condition: test -f /var/run/reboot-required

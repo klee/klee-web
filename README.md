@@ -115,7 +115,9 @@ provisions one public web/state VM and one or two private Worker VMs. See the
 [single-VM AWS guide](docs/deployment/aws.md),
 [role-separated AWS guide](docs/deployment/aws-multi-vm.md), and
 [Azure deployment guide](docs/deployment/azure.md) for planning, activation,
-operation, rollback, and teardown.
+operation, rollback, and teardown. Use the shared
+[host-maintenance procedure](docs/deployment/host-maintenance.md) for controlled
+Ubuntu security updates.
 
 ## Regenerating the API contract
 

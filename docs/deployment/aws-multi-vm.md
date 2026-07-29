@@ -138,6 +138,10 @@ ssh -J ubuntu@"$public_ip" ubuntu@"$worker_1_ip" \
   'cloud-init status --wait --long'
 ```
 
+Ubuntu package updates may reboot either host after cloud-init finishes. If an SSH
+command disconnects, wait for that host to return and rerun the same cloud-init
+status command before continuing.
+
 The web role installs Docker, skips unused gVisor setup, pulls Redis, backend,
 and frontend images, then provisions the short-lived public-IP certificate. It
 does not start KLEE Web before an administrator password exists.
@@ -155,6 +159,9 @@ the password in Terraform, shell history, or a command argument:
 ssh -t ubuntu@"$public_ip" \
   'sudo /opt/klee-web/set-admin-password.sh'
 ```
+
+If the helper reports `Host reboot pending`, wait for SSH to return after reboot,
+then rerun the same `set-admin-password.sh` command.
 
 The helper writes the bcrypt hash, enables the web service, and starts Redis,
 FastAPI, and nginx. Verify the edge and API:
@@ -306,6 +313,8 @@ Restarting or rebooting a Worker affects only that execution host. Restarting
 the web service recreates Redis, API, and nginx while preserving the named Redis
 volume. Rebooting the web VM restores those services because the administrator
 helper enabled the unit.
+Use the [shared host-maintenance procedure](host-maintenance.md) to update one
+Worker at a time before the announced web/state maintenance window.
 
 ## Promote and roll back images
 

@@ -9,6 +9,11 @@ if ((EUID != 0)); then
   exit 1
 fi
 
+if [[ -f /var/run/reboot-required ]]; then
+  printf 'Host reboot pending. Reconnect after reboot and rerun set-admin-password.sh\n' >&2
+  exit 1
+fi
+
 if [[ ! -f $DEPLOYMENT_ENV ]]; then
   printf 'Deployment environment is missing: %s\n' "$DEPLOYMENT_ENV" >&2
   exit 1

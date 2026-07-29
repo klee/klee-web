@@ -48,8 +48,15 @@ if [[ $os_id != ubuntu || $os_codename != noble || $architecture != amd64 ]]; th
 fi
 
 export DEBIAN_FRONTEND=noninteractive
+export NEEDRESTART_MODE=l
+
+printf '%s\n' \
+  'APT::Periodic::Update-Package-Lists "1";' \
+  'APT::Periodic::Unattended-Upgrade "0";' \
+  > /etc/apt/apt.conf.d/99-klee-web-maintenance
 
 apt-get update
+apt-get dist-upgrade -y
 apt-get install -y --no-install-recommends apache2-utils ca-certificates curl
 
 install -d -m 0755 /etc/apt/keyrings
@@ -66,6 +73,7 @@ apt-get install -y --no-install-recommends \
   "docker-ce-cli=$DOCKER_VERSION" \
   "containerd.io=$CONTAINERD_VERSION" \
   "docker-compose-plugin=$COMPOSE_VERSION"
+apt-mark hold docker-ce docker-ce-cli containerd.io docker-compose-plugin
 systemctl enable --now docker
 
 if [[ $deployment_role != web ]]; then

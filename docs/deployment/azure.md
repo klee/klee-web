@@ -158,12 +158,18 @@ public_ip=$(terraform output -raw public_ip)
 ssh ubuntu@"$public_ip" 'cloud-init status --wait --long'
 ```
 
+Ubuntu package updates may reboot the host after cloud-init finishes. If SSH
+disconnects, wait for it to return and rerun the same cloud-init status command.
+
 Create the password through an interactive SSH terminal. Do not put it on the
 command line or in Terraform:
 
 ```bash
 ssh -t ubuntu@"$public_ip" 'sudo /opt/klee-web/set-admin-password.sh'
 ```
+
+If the helper reports `Host reboot pending`, wait for SSH to return after reboot,
+then rerun the same `set-admin-password.sh` command.
 
 The helper stores a bcrypt hash, enables `klee-web.service`, starts Compose, and
 waits for service health. Verify the public edge:
@@ -202,6 +208,9 @@ az vm restart \
   --name klee-web-azure-baseline
 ssh ubuntu@"$public_ip" 'systemctl is-active klee-web.service'
 ```
+
+Use the [shared host-maintenance procedure](host-maintenance.md) for controlled
+Ubuntu security updates and post-reboot verification.
 
 Inspect the certificate deadline with:
 
