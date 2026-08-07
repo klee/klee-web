@@ -61,6 +61,8 @@ def build_run_args(
         f"/work:rw,exec,size={caps.storage_mb}m,uid=1000,gid=1000,mode=0700",
         "--network",
         "none",
+        "--security-opt",
+        "no-new-privileges=true",
         "--name",
         _container_name(job_id),
         "--cpus",

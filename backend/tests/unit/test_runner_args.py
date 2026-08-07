@@ -17,6 +17,11 @@ def test_build_run_args_always_disables_network() -> None:
     assert _value_after(args, "--network") == "none"
 
 
+def test_build_run_args_prevents_privilege_escalation() -> None:
+    args = build_run_args(uuid4(), KleeFlags(), "", runtime=None, caps=CAPS)
+    assert _value_after(args, "--security-opt") == "no-new-privileges=true"
+
+
 def test_build_run_args_omits_runtime_when_none() -> None:
     args = build_run_args(uuid4(), KleeFlags(), "", runtime=None, caps=CAPS)
     assert "--runtime" not in args

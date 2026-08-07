@@ -13,7 +13,7 @@ The Worker selects this image through `RUNNER_IMAGE`, which defaults to the loca
 
 ## Why a separate container per job, not a long-lived process
 
-Per-job containers give cgroup isolation, fixed CPU, memory, swap, and PID Caps, a read-only root, bounded temporary storage on `/work`, and automatic cleanup through Docker's `--rm` flag. A long-lived KLEE process accumulates state: leaked fds, fragmented memory, half-cleaned tmp dirs. Per-job means every run starts from a known clean state. See `../docs/adr/0008-kleerunner-protocol-surface.md` and `../docs/adr/0009-per-job-containers.md`.
+Per-job containers give cgroup isolation, fixed CPU, memory, swap, and PID Caps, a read-only root, bounded temporary storage on `/work`, blocked setuid privilege escalation, and automatic cleanup through Docker's `--rm` flag. A long-lived KLEE process accumulates state: leaked fds, fragmented memory, half-cleaned tmp dirs. Per-job means every run starts from a known clean state. See `../docs/adr/0008-kleerunner-protocol-surface.md` and `../docs/adr/0009-per-job-containers.md`.
 
 ## Known working invocation (reference)
 
