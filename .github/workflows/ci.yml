@@ -48,7 +48,27 @@ jobs:
           node-version: '24'
           cache: 'npm'
           cache-dependency-path: frontend/package-lock.json
+      - uses: astral-sh/setup-uv@v7
+        with:
+          enable-cache: true
       - run: npm ci
+      - run: uv sync --no-dev --locked
+        working-directory: backend
+      - name: Export the backend OpenAPI schema
+        working-directory: backend
+        run: |
+          uv run --no-sync python - <<'PY' > "$RUNNER_TEMP/openapi.json"
+          import json
+
+          from klee_web.main import app
+
+          print(json.dumps(app.openapi()))
+          PY
+      - name: Verify generated API types are current
+        run: |
+          npm exec openapi-typescript "$RUNNER_TEMP/openapi.json" -- \
+            -o "$RUNNER_TEMP/api.ts"
+          diff -u src/types/api.ts "$RUNNER_TEMP/api.ts"
       - run: npm run test:unit
       - run: npm run build
 
