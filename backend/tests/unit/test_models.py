@@ -96,6 +96,12 @@ def test_job_request_minimal_valid():
     req = JobRequest(source="int main() { return 0; }")
     assert req.source == "int main() { return 0; }"
     assert req.flags.max_time == 60
+    assert req.flags.enable_replay is True
+
+
+def test_job_request_can_disable_replay():
+    req = JobRequest(source="int main() {}", flags=KleeFlags(enable_replay=False))
+    assert req.flags.enable_replay is False
 
 
 def test_job_request_empty_source_rejected():

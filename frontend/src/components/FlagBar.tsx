@@ -10,6 +10,17 @@ type FlagSpec = {
   default: number;
 };
 
+type BooleanFlagField = {
+  [Field in keyof KleeFlags]-?: KleeFlags[Field] extends boolean ? Field : never;
+}[keyof KleeFlags];
+
+type FlagToggle = {
+  field: BooleanFlagField;
+  label: string;
+  hint: string;
+  default: boolean;
+};
+
 const TIME: FlagSpec = {
   field: "max_time",
   label: "time",
@@ -28,6 +39,13 @@ const MEMORY: FlagSpec = {
   default: 512,
 };
 
+const ENABLE_REPLAY: FlagToggle = {
+  field: "enable_replay",
+  label: "replay",
+  hint: "Per-path replay captures readable output for each generated test. If KLEE generates many tests, try turning replay off to save time.",
+  default: true,
+};
+
 type FlagBarProps = {
   flags: KleeFlags;
   onFlagsChange: (next: KleeFlags) => void;
@@ -39,6 +57,7 @@ export function FlagBar({ flags, onFlagsChange }: FlagBarProps) {
       <FlagInput spec={TIME} flags={flags} onFlagsChange={onFlagsChange} />
       <FlagInput spec={MEMORY} flags={flags} onFlagsChange={onFlagsChange} />
       <QueryFormatSelect flags={flags} onFlagsChange={onFlagsChange} />
+      <FlagToggle toggle={ENABLE_REPLAY} flags={flags} onFlagsChange={onFlagsChange} />
       <ExtraFlagsInput flags={flags} onFlagsChange={onFlagsChange} />
     </div>
   );
@@ -141,6 +160,30 @@ function FlagInput({ spec, flags, onFlagsChange }: FlagInputProps) {
         </div>
       )}
     </div>
+  );
+}
+
+type FlagToggleProps = {
+  toggle: FlagToggle;
+  flags: KleeFlags;
+  onFlagsChange: (next: KleeFlags) => void;
+};
+
+function FlagToggle({ toggle, flags, onFlagsChange }: FlagToggleProps) {
+  return (
+    <label
+      title={toggle.hint}
+      className="flex items-center gap-1.5 text-sm text-slate-600 dark:text-slate-400"
+    >
+      <span>{toggle.label}</span>
+      <input
+        type="checkbox"
+        checked={flags[toggle.field] ?? toggle.default}
+        onChange={(event) => onFlagsChange({ ...flags, [toggle.field]: event.target.checked })}
+        aria-label={toggle.label}
+        className="size-4 accent-[var(--klee-accent)]"
+      />
+    </label>
   );
 }
 

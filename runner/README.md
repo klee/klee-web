@@ -5,7 +5,7 @@ Docker image and entrypoint that actually runs KLEE on user-submitted C code. To
 ## Contents
 
 - `Dockerfile`: pinned `klee/klee:v3.2` base, builds the sleep-neutralising preload and the prebuilt replay objects, copies in the entrypoint, sets the working user
-- `entrypoint.py`: reads C source from stdin, compiles it to LLVM bitcode with clang, runs KLEE with bounded flags (including `--kdalloc=false`, ADR-0022), replays each test case through the zygote driver for per-path output, and streams the output directory back as a tar on stdout (ADR-0021; no shared filesystem with the host)
+- `entrypoint.py`: reads C source from stdin, compiles it to LLVM bitcode with clang, runs KLEE with bounded flags (including `--kdalloc=false`, ADR-0022), captures KLEE's whole-run program output, optionally replays each test case through the zygote driver for per-path output, and streams the output directory back as a tar on stdout (ADR-0021; no shared filesystem with the host)
 - `replay_driver.c`: fork-per-ktest replay zygote (ADR-0022). Linked once per job with the user's program and KLEE's own replay-setup objects, then forked per test case, so replay pays no per-test process creation or dynamic linking
 - `replay_nosleep.c`: `LD_PRELOAD` stub that no-ops sleeps during replay (ADR-0020)
 

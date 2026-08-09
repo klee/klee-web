@@ -467,3 +467,20 @@ async def test_docker_runner_captures_per_path_output_for_make_symbolic(runtime)
     assert len(result.test_cases) == 3
     outputs = {tc.program_output for tc in result.test_cases}
     assert outputs == {"ZERO", "NEG", "POS"}
+
+
+@pytest.mark.parametrize("runtime", RUNTIMES)
+async def test_docker_runner_can_disable_per_path_replay(runtime):
+    runner = DockerKleeRunner(TEST_CAPS, runtime=runtime)
+    result = await asyncio.wait_for(
+        runner.execute(
+            PER_PATH_MAKE_SYMBOLIC_SOURCE,
+            KleeFlags(max_time=10, max_memory=256, enable_replay=False),
+            uuid4(),
+        ),
+        timeout=30,
+    )
+
+    assert len(result.test_cases) == 3
+    assert all(test_case.program_output is None for test_case in result.test_cases)
+    assert result.program_output == "ZERONEGPOS"

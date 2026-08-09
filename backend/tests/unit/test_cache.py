@@ -38,6 +38,12 @@ def test_cache_key_differs_on_query_format():
     assert cache_key(a) != cache_key(b)
 
 
+def test_cache_key_differs_on_replay_setting():
+    a = JobRequest(source=SOURCE, flags=KleeFlags(enable_replay=True))
+    b = JobRequest(source=SOURCE, flags=KleeFlags(enable_replay=False))
+    assert cache_key(a) != cache_key(b)
+
+
 def test_cache_key_same_for_explicit_and_default_flags():
     a = JobRequest(source=SOURCE)
     b = JobRequest(source=SOURCE, flags=KleeFlags())

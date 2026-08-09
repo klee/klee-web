@@ -17,6 +17,7 @@ import type { HistoryEntry } from "../lib/history";
 const DEFAULT_FLAGS: KleeFlags = {
   max_time: 60,
   max_memory: 512,
+  enable_replay: true,
   query_format: "none",
   extra_flags: "",
   sym_stdin: null,

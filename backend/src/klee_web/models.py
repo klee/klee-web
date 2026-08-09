@@ -37,8 +37,8 @@ class QueryFormat(StrEnum):
 
 
 # The hard upper bound on a job's wall-clock, the ceiling the max_time flag is capped at.
-# max_time is the whole job's budget: KLEE runs up to it, then per-path replay uses the
-# leftover, so this bounds KLEE and replay together, not each separately.
+# max_time is the whole job's budget: KLEE runs up to it, then optional per-path replay
+# uses the leftover, so this bounds KLEE and replay together, not each separately.
 MAX_TIME_CEILING = 600
 
 # Cap on the free-text power-user flag string (ADR-0019).
@@ -48,6 +48,10 @@ EXTRA_FLAGS_MAX_LEN = 500
 class KleeFlags(BaseModel):
     max_time: Annotated[int, Field(ge=1, le=MAX_TIME_CEILING)] = 60
     max_memory: Annotated[int, Field(ge=64, le=2048)] = 512
+    enable_replay: bool = Field(
+        default=True,
+        description="Replay generated test cases to capture their program output.",
+    )
     query_format: QueryFormat = QueryFormat.none
     extra_flags: Annotated[str, Field(max_length=EXTRA_FLAGS_MAX_LEN)] = ""
     sym_stdin: SymStdin | None = None

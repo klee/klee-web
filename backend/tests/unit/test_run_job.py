@@ -53,6 +53,21 @@ async def test_run_job_passes_source_and_flags_to_runner(store, runner, cache, u
     assert called_flags.max_memory == 256
 
 
+async def test_run_job_passes_disabled_replay_to_runner(store, runner, cache, usage):
+    job = await _seed_job(store)
+
+    await run_job(
+        job.id,
+        JobRequest(source=SOURCE, flags=KleeFlags(enable_replay=False)),
+        store,
+        runner,
+        cache,
+        usage,
+    )
+
+    assert runner.calls[0][1].enable_replay is False
+
+
 async def test_run_job_runner_failure_marks_job_failed(store, cache, usage):
     job = await _seed_job(store)
     runner = FakeKleeRunner(raise_exc=KleeRunnerError("KLEE crashed"))
@@ -112,7 +127,14 @@ async def test_run_job_streams_partial_result_while_running(store, cache, usage,
     finish = asyncio.Event()
 
     class BlockingRunner:
-        async def execute(self, source, flags, job_id, on_progress=None, on_parsing=None):
+        async def execute(
+            self,
+            source,
+            flags,
+            job_id,
+            on_progress=None,
+            on_parsing=None,
+        ):
             if on_progress is not None:
                 await on_progress(partial)
             partial_emitted.set()
@@ -146,7 +168,14 @@ async def test_run_job_flips_to_parsing_after_klee_exit(store, cache, usage, sam
     finish = asyncio.Event()
 
     class ParsingRunner:
-        async def execute(self, source, flags, job_id, on_progress=None, on_parsing=None):
+        async def execute(
+            self,
+            source,
+            flags,
+            job_id,
+            on_progress=None,
+            on_parsing=None,
+        ):
             if on_parsing is not None:
                 await on_parsing()
             parsing_signaled.set()
@@ -198,7 +227,14 @@ async def test_run_job_cancel_watcher_signals_and_tags(
     cancel_calls: list[UUID] = []
 
     class CancellableRunner:
-        async def execute(self, source, flags, job_id, on_progress=None, on_parsing=None):
+        async def execute(
+            self,
+            source,
+            flags,
+            job_id,
+            on_progress=None,
+            on_parsing=None,
+        ):
             running.set()
             await finish.wait()
             return sample_result

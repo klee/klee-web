@@ -4,6 +4,8 @@
 
 > **Amendment, 2026-07-10:** ADR-0022 replaces `klee-replay` and `libkleeRuntest` with a fork-per-ktest replay zygote. The native per-path replay decision remains.
 
+> **Amendment, 2026-08-09:** Per-path replay is now default-enabled but user-selectable. Disabling replay skips the native phase, leaves per-test `program_output` absent, and retains KLEE's whole-run `program_output` as the fallback.
+
 ## Context
 
 Per-path output (what each test case's path actually printed) has one source: run the compiled program on that path's concrete input and capture its stdout. KLEE interprets bitcode and does not hand back per-path stdout, so producing it means a second execution mode in the runner: compile the user's C to a native binary and run it, once per ktest.

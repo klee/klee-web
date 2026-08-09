@@ -139,6 +139,7 @@ def run_klee() -> int:
     query_format = os.environ.get("KLEE_QUERY_FORMAT", "none")
     extra_flags = os.environ.get("KLEE_EXTRA_FLAGS", "")
     posix_args = os.environ.get("KLEE_POSIX_ARGS", "")
+    enable_replay = os.environ.get("KLEE_ENABLE_REPLAY", "1") == "1"
 
     compile_proc = subprocess.run(
         [
@@ -223,11 +224,12 @@ def run_klee() -> int:
         # Tell the parser this was a time-limit stop, not a clean empty run.
         (OUTPUT_DIR / "host_timeout").touch()
 
-    # Per-path replay: re-run each ktest natively in the leftover budget to capture what
-    # that path printed. Skipped on cancel (halted) and when the run used its whole budget
-    # (leftover below the floor), which is the path-explosion case where per-path output is
-    # noise anyway. A cancel arriving mid-replay kills the group via _forward_halt.
-    if not halted:
+    # Optional per-path replay: when enabled, re-run each ktest natively in the leftover
+    # budget to capture what that path printed. Skipped when disabled, on cancel (halted),
+    # and when the run used its whole budget (leftover below the floor), which is the
+    # path-explosion case where per-path output is noise anyway. A cancel arriving
+    # mid-replay kills the group via _forward_halt.
+    if enable_replay and not halted:
         leftover = int(max_time) - int(time.monotonic() - start)
         if leftover >= REPLAY_MIN_LEFTOVER:
             replay_proc = start_replay_phase(leftover)

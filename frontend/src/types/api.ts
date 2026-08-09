@@ -240,6 +240,12 @@ export interface components {
              * @default 512
              */
             max_memory: number;
+            /**
+             * Enable Replay
+             * @description Replay generated test cases to capture their program output.
+             * @default true
+             */
+            enable_replay: boolean;
             /** @default none */
             query_format: components["schemas"]["QueryFormat"];
             /**

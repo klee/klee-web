@@ -89,6 +89,8 @@ def build_run_args(
         f"KLEE_EXTRA_FLAGS={flags.extra_flags}",
         "-e",
         f"KLEE_POSIX_ARGS={posix_args}",
+        "-e",
+        f"KLEE_ENABLE_REPLAY={int(flags.enable_replay)}",
         image,
     ]
     return args
