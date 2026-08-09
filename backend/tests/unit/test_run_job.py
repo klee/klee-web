@@ -65,6 +65,38 @@ async def test_run_job_runner_failure_marks_job_failed(store, cache, usage):
     assert stored.result is None
 
 
+async def test_run_job_unexpected_parser_failure_marks_job_failed_and_logs(
+    store, cache, usage, caplog
+):
+    class ParsingFailureRunner:
+        async def execute(self, source, flags, job_id, on_progress=None, on_parsing=None):
+            if on_parsing is not None:
+                await on_parsing()
+            raise ValueError("malformed run.stats")
+
+        async def cancel(self, job_id):
+            return True
+
+    job = await _seed_job(store)
+
+    with caplog.at_level("ERROR", logger="klee_web.jobs.run"):
+        await run_job(
+            job.id,
+            JobRequest(source=SOURCE),
+            store,
+            ParsingFailureRunner(),
+            cache,
+            usage,
+        )
+
+    stored = await store.get(job.id)
+    assert stored is not None
+    assert stored.status == JobStatus.failed
+    assert stored.result is None
+    assert (await usage.snapshot()).outcomes[JobOutcome.failed] == 1
+    assert "malformed run.stats" in caplog.text
+
+
 async def test_run_job_streams_partial_result_while_running(store, cache, usage, sample_result):
     partial = JobResult(
         test_cases=[
