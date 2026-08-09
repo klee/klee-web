@@ -49,7 +49,7 @@ class RedisResultCache:
         self._client = client
 
     async def get(self, key: str) -> JobResult | None:
-        data = await self._client.get(_key(key))
+        data = await self._client.getex(_key(key), ex=_CACHE_TTL_SECONDS)
         return JobResult.model_validate_json(data) if data else None
 
     async def set(self, key: str, result: JobResult) -> None:
