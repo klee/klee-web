@@ -5,7 +5,7 @@ import fakeredis
 import pytest
 
 import klee_web.jobs.cache as cache_module
-from klee_web.jobs.cache import RedisResultCache, cache_key
+from klee_web.jobs.cache import _CACHE_TTL_SECONDS, RedisResultCache, cache_key
 from klee_web.models import JobRequest, JobResult, KleeFlags, QueryFormat
 from tests.fakes import FakeResultCache
 
@@ -116,3 +116,18 @@ async def test_distinct_keys_coexist(cache, sample_result):
     await cache.set("k2", other)
     assert await cache.get("k1") == sample_result
     assert await cache.get("k2") == other
+
+
+async def test_get_refreshes_ttl(sample_result):
+    client = fakeredis.FakeAsyncRedis(server=fakeredis.FakeServer())
+    cache = RedisResultCache(client)
+    try:
+        await cache.set("k", sample_result)
+        await client.expire("cache:k", 10)  # set the entry to expire in 10s
+        assert await cache.get("k") == sample_result
+        ttl = await client.ttl("cache:k")
+    finally:
+        await client.aclose()
+
+    # Check cache hit should reset ttl to _CACHE_TTL_SECONDS
+    assert _CACHE_TTL_SECONDS - 1 <= ttl <= _CACHE_TTL_SECONDS
