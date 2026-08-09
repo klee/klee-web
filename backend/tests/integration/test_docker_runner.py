@@ -126,7 +126,7 @@ async def test_docker_runner_runs_get_sign_end_to_end(runtime):
     assert result.stats["Instructions"] > 0
 
 
-async def test_docker_runner_runs_with_allowlisted_extra_flags():
+async def test_docker_runner_applies_allowlisted_extra_flags():
     runner = DockerKleeRunner(TEST_CAPS)
     result = await asyncio.wait_for(
         runner.execute(
@@ -136,7 +136,8 @@ async def test_docker_runner_runs_with_allowlisted_extra_flags():
         ),
         timeout=30,
     )
-    assert len(result.test_cases) == 3
+    # --optimize turns get_sign's branches into branchless IR, so KLEE emits one path.
+    assert len(result.test_cases) == 1
     assert result.compile_error is None
 
 

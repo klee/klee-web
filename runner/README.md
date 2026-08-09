@@ -17,7 +17,7 @@ Per-job containers give cgroup isolation, fixed CPU, memory, swap, and PID Caps,
 
 ## Known working invocation (reference)
 
-- `clang -I /home/klee/klee_src/include -emit-llvm -c -g -O0 input.c -o code.bc`
+- `clang -I /home/klee/klee_src/include -emit-llvm -c -g -O0 -Xclang -disable-O0-optnone input.c -o code.bc`
 - `klee --libc=uclibc --posix-runtime --external-calls=concrete --kdalloc=false --max-time=60 --max-memory=512 --output-dir=/tmp/klee-out code.bc`
 
 The backend may add `--write-kqueries`, allowlisted extra flags, and structured POSIX arguments. The output directory contains KLEE's `messages.txt`, `warnings.txt`, `info`, `*.ktest`, optional `*.err`, and `run.stats` (SQLite3 in KLEE 3.x). The entrypoint adds whole-run `program_output.txt`, an optional `host_timeout` marker, and optional per-path `*.stdout` files from replay. KQuery output adds `*.kquery` path constraints. On compile failure the entrypoint writes `compile_error.txt` instead and exits 0. The backend distinguishes a user compile failure from a Runner crash through that file.

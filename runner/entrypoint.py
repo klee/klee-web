@@ -149,6 +149,8 @@ def run_klee() -> int:
             "-c",
             "-g",
             "-O0",
+            "-Xclang",
+            "-disable-O0-optnone",
             str(INPUT),
             "-o",
             str(BITCODE),
