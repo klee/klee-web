@@ -228,6 +228,17 @@ int main() {
 }
 """
 
+ACTIVE_STATES_QUERY = """
+import sqlite3
+
+try:
+    with sqlite3.connect("file:/work/output/run.stats?mode=ro", uri=True) as con:
+        row = con.execute("SELECT States FROM stats ORDER BY rowid DESC LIMIT 1").fetchone()
+    print(int(row[0]) if row and row[0] is not None else 0)
+except sqlite3.Error:
+    print(0)
+"""
+
 
 async def _container_running(name: str) -> bool:
     proc = await asyncio.create_subprocess_exec(
@@ -242,6 +253,24 @@ async def _container_running(name: str) -> bool:
     )
     out, _ = await proc.communicate()
     return name in out.decode()
+
+
+async def _active_klee_states(name: str) -> int:
+    proc = await asyncio.create_subprocess_exec(
+        "docker",
+        "exec",
+        name,
+        "python3",
+        "-c",
+        ACTIVE_STATES_QUERY,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.DEVNULL,
+    )
+    out, _ = await proc.communicate()
+    try:
+        return int(out)
+    except ValueError:
+        return 0
 
 
 async def _container_caps(name: str) -> tuple[int, int, int, int]:
@@ -303,7 +332,14 @@ async def test_docker_runner_applies_caps_and_cancel_halts_with_partial_results(
             "rw,exec,size=768m,uid=1000,gid=1000,mode=0700",
         )
 
-        await asyncio.sleep(2)  # let KLEE explore so the halt has states to dump
+        for _ in range(100):
+            if await _active_klee_states(name) > 0:
+                break
+            if task.done():
+                pytest.fail("Runner exited before KLEE exposed an active state")
+            await asyncio.sleep(0.3)
+        else:
+            pytest.fail("KLEE never exposed an active state")
 
         assert await runner.cancel(job_id) is True
         # If the entrypoint did not forward the halt, this would run until max_time
