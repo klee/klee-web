@@ -9,7 +9,7 @@ React + TypeScript single-page app. Editor for C source, an examples/history sid
 - `vite.config.ts`: build / dev server config, required KLEE version injection, plus the Vitest `test` block scoped to `src/**/*.test.ts`
 - `Dockerfile`: Node 24 build stage requiring the KLEE version build argument sourced from the repository's `.klee-version`, followed by the nginx image that serves the compiled SPA
 - `nginx.conf`: HTTPS edge, static assets, `/api` proxy, rate limits, and Basic Auth for `/admin` and `/api/admin/*`
-- `playwright.config.ts` and `e2e/`: browser tests against an isolated Compose stack, using the real gVisor Runner path on Linux and Docker's default `runc` runtime on macOS
+- `playwright.config.ts` and `e2e/`: browser tests against an isolated Compose stack, using the real gVisor Runner path on Linux and an explicit reduced-isolation `runc` opt-in on macOS
 - `tsconfig.json`: strict TypeScript
 - `index.html`: entry HTML
 - `src/main.tsx`: React mount point, wraps `<App />` in `QueryClientProvider`

@@ -5,10 +5,20 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 HOST_OS="$(uname -s)"
 
 if [[ "$HOST_OS" == "Darwin" ]]; then
+    if [[ "${KLEE_E2E_ALLOW_RUNC:-}" != "1" ]]; then
+        printf '%s\n' \
+            'gVisor is unavailable on macOS.' \
+            'Run local E2E with reduced isolation using:' \
+            'KLEE_E2E_ALLOW_RUNC=1 npm run test:e2e' >&2
+        exit 1
+    fi
     export KLEE_RUNTIME=runc
     printf '%s\n' \
         'WARNING: macOS E2E is using runc without gVisor isolation.' \
-        'Run only trusted local code in this mode.' >&2
+        'Run only trusted checked-out code and test inputs in this mode.' >&2
+elif [[ -n "${KLEE_E2E_ALLOW_RUNC:-}" ]]; then
+    printf 'KLEE_E2E_ALLOW_RUNC is supported only on macOS\n' >&2
+    exit 1
 fi
 
 ADMIN_HTPASSWD_FILE="$(mktemp)"
