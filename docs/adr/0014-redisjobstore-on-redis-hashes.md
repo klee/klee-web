@@ -3,6 +3,8 @@
 **Status:** Accepted, 2026-06-21
 
 > **Amendment, 2026-07-18:** ADR-0024 makes `RedisJobStore` the only production implementation and removes the `REDIS_URL` selector. The Redis hash model and atomicity decisions remain.
+>
+> **Amendment, 2026-08-11:** Job records expire 48 hours after their latest write. Reads do not refresh the TTL.
 
 ## Context
 

@@ -20,7 +20,7 @@ class JobStore(Protocol):
     async def request_cancel(self, job_id: UUID) -> None: ...
 
 
-_JOB_TTL_SECONDS = 24 * 60 * 60
+_JOB_TTL_SECONDS = 48 * 60 * 60
 
 
 def _key(job_id: UUID) -> str:
