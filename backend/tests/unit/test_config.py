@@ -8,6 +8,7 @@ from klee_web.config import Settings
 REDIS_URL = "redis://localhost:6379/0"
 BROKER_URL = "redis://localhost:6379/1"
 RUNNER_IMAGE = "ghcr.io/finnleh/klee-web-runner@sha256:" + "a" * 64
+LOCAL_RUNNER_IMAGE = "sha256:" + "b" * 64
 
 
 def make_settings(**overrides: Any) -> Settings:
@@ -74,8 +75,8 @@ def test_runner_caps_reject_invalid_values(field, value):
         make_settings(**{field: value})
 
 
-def test_runner_image_defaults_to_local_image():
-    assert make_settings().runner_image == "klee-web-runner"
+def test_runner_image_accepts_local_image_id():
+    assert make_settings(runner_image=LOCAL_RUNNER_IMAGE).runner_image == LOCAL_RUNNER_IMAGE
 
 
 def test_runner_image_reads_environment(monkeypatch):
@@ -84,9 +85,50 @@ def test_runner_image_reads_environment(monkeypatch):
     assert make_settings().runner_image == RUNNER_IMAGE
 
 
-def test_runner_image_must_not_be_empty():
+def test_runner_image_is_required(monkeypatch):
+    monkeypatch.delenv("RUNNER_IMAGE")
+    with pytest.raises(ValidationError) as exc_info:
+        Settings(
+            redis_url=REDIS_URL,
+            celery_broker_url=BROKER_URL,
+            klee_version="v3.2-test",
+            _env_file=None,
+        )
+
+    assert exc_info.value.errors()[0]["loc"] == ("runner_image",)
+
+
+@pytest.mark.parametrize(
+    "runner_image",
+    [
+        "",
+        "klee-web-runner",
+        "ghcr.io/finnleh/klee-web-runner:main",
+        "ghcr.io/finnleh/klee-web-runner@sha256:not-a-digest",
+    ],
+)
+def test_runner_image_must_be_immutable(runner_image):
     with pytest.raises(ValidationError):
-        make_settings(runner_image="")
+        make_settings(runner_image=runner_image)
+
+
+def test_klee_version_reads_environment(monkeypatch):
+    monkeypatch.setenv("KLEE_VERSION", "v3.2-test")
+
+    assert make_settings().klee_version == "v3.2-test"
+
+
+def test_klee_version_is_required(monkeypatch):
+    monkeypatch.delenv("KLEE_VERSION")
+    with pytest.raises(ValidationError) as exc_info:
+        Settings(redis_url=REDIS_URL, celery_broker_url=BROKER_URL, _env_file=None)
+
+    assert exc_info.value.errors()[0]["loc"] == ("klee_version",)
+
+
+def test_klee_version_must_not_be_empty():
+    with pytest.raises(ValidationError):
+        make_settings(klee_version="")
 
 
 def test_redis_url_is_required(monkeypatch):

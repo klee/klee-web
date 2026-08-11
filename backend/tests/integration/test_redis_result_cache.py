@@ -7,7 +7,7 @@ from klee_web.jobs.cache import RedisResultCache
 from klee_web.models import JobResult, SymbolicInput, TestCase
 
 _REDIS_URL = os.environ.get("REDIS_URL", "redis://localhost:6379/0")
-_CACHE_TTL_SECONDS = 24 * 60 * 60
+_CACHE_TTL_SECONDS = 48 * 60 * 60
 
 
 def _redis_ready() -> bool:
@@ -69,4 +69,16 @@ async def test_set_applies_bounded_ttl(cache, sample_result):
         ttl = await client.ttl("cache:k")
     finally:
         await client.aclose()
-    assert 0 < ttl <= _CACHE_TTL_SECONDS
+    assert _CACHE_TTL_SECONDS - 5 <= ttl <= _CACHE_TTL_SECONDS
+
+
+async def test_get_does_not_refresh_ttl(cache, sample_result):
+    await cache.set("k", sample_result)
+    client = Redis.from_url(_REDIS_URL)
+    try:
+        await client.expire("cache:k", 60)
+        await cache.get("k")
+        ttl = await client.ttl("cache:k")
+    finally:
+        await client.aclose()
+    assert 0 < ttl <= 60

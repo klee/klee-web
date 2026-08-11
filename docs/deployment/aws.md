@@ -176,6 +176,45 @@ ssh ubuntu@"$public_ip" \
 
 ## Upgrade and roll back
 
+### One-time cache-identity migration
+
+Hosts provisioned before the API received `RUNNER_IMAGE` need one shared Compose
+update. New hosts already contain it. From the accepted source checkout that
+matches the candidate image set, copy the base file to the host:
+
+```bash
+scp docker-compose.yml \
+  ubuntu@"$public_ip":/home/ubuntu/klee-web-docker-compose.yml
+ssh -t ubuntu@"$public_ip"
+```
+
+Run the migration inside EC2. Back up the installed file, install the candidate,
+and render the complete deployment before changing any image:
+
+```bash
+sudo install -m 0644 \
+  /opt/klee-web/docker-compose.yml \
+  /opt/klee-web/docker-compose.yml.rollback
+sudo install -o root -g root -m 0644 \
+  /home/ubuntu/klee-web-docker-compose.yml \
+  /opt/klee-web/docker-compose.yml
+sudo /opt/klee-web/compose-deployment.sh config
+rm /home/ubuntu/klee-web-docker-compose.yml
+```
+
+If rendering fails, restore `docker-compose.yml.rollback` before leaving the
+host:
+
+```bash
+sudo install -m 0644 \
+  /opt/klee-web/docker-compose.yml.rollback \
+  /opt/klee-web/docker-compose.yml
+```
+
+This migration does not reload the running service. The new file is compatible
+with the previous backend image, and later application promotions return to the
+image-only procedure below.
+
 Application promotion changes only `FRONTEND_IMAGE`, `BACKEND_IMAGE`, and
 `RUNNER_IMAGE` in `/etc/klee-web/deployment.env`. Use immutable signed digests.
 Resolve one complete three-image publication and verify all three attestations

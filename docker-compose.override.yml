@@ -1,10 +1,19 @@
 # Compose loads this override automatically for local builds. VM deployment names files explicitly.
 services:
   api:
-    build: ./backend
+    build:
+      context: ./backend
+      args:
+        KLEE_VERSION: ${KLEE_VERSION:?KLEE_VERSION is required}
 
   worker:
-    build: ./backend
+    build:
+      context: ./backend
+      args:
+        KLEE_VERSION: ${KLEE_VERSION:?KLEE_VERSION is required}
 
   nginx:
-    build: ./frontend
+    build:
+      context: ./frontend
+      args:
+        KLEE_VERSION: ${KLEE_VERSION:?KLEE_VERSION is required}

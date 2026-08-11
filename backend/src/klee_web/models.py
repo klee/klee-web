@@ -93,6 +93,7 @@ class JobResult(BaseModel):
     compile_error: str | None = None
     halt_reason: HaltReason | None = None
     states_culled_for_memory: Annotated[int, Field(ge=0)] = 0
+    klee_version: str | None = None
 
 
 class Job(BaseModel):

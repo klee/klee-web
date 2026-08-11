@@ -39,6 +39,8 @@ async def run_job(
     runner: KleeRunner,
     cache: ResultCache,
     usage: UsageStatsStore,
+    runner_image: str,
+    klee_version: str,
 ) -> None:
     async def record_outcome(outcome: JobOutcome, result: JobResult | None = None) -> None:
         await usage.record_execution(
@@ -56,6 +58,7 @@ async def run_job(
     await store.update_status(job_id, JobStatus.running)
 
     async def on_progress(partial: JobResult) -> None:
+        partial = partial.model_copy(update={"klee_version": klee_version})
         await store.set_partial_result(job_id, partial)
 
     async def on_parsing() -> None:
@@ -77,6 +80,7 @@ async def run_job(
             on_progress=on_progress,
             on_parsing=on_parsing,
         )
+        result.klee_version = klee_version
     except Exception:
         logger.exception("Runner execution failed for Job %s", job_id)
         await store.update_status(job_id, JobStatus.failed)
@@ -87,7 +91,7 @@ async def run_job(
             result.halt_reason = HaltReason.cancelled
         await store.set_result(job_id, result)
         if result.halt_reason == HaltReason.completed:
-            await cache.set(cache_key(request), result)
+            await cache.set(cache_key(request, runner_image), result)
         await record_outcome(outcome_of_result(result), result)
     finally:
         watcher.cancel()

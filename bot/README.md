@@ -79,7 +79,7 @@ opencode models deepseek --refresh
 
    ```sh
    cd backend && uv run pytest tests/unit
-   cd frontend && npm run build
+   cd frontend && KLEE_VERSION="$(tr -d '\r\n' < ../.klee-version)" npm run build
    ```
 
 6. If checks pass and files changed, it commits, pushes, opens a draft PR, and

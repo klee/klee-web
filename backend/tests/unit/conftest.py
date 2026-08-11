@@ -3,7 +3,13 @@ from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
 
 from klee_web.api.jobs import router as jobs_router
-from klee_web.deps import get_cache, get_dispatcher, get_job_store, get_usage_stats
+from klee_web.deps import (
+    get_cache,
+    get_dispatcher,
+    get_job_store,
+    get_runner_image,
+    get_usage_stats,
+)
 from klee_web.models import JobResult, SymbolicInput, TestCase
 from tests.fakes import (
     FakeJobDispatcher,
@@ -12,6 +18,9 @@ from tests.fakes import (
     FakeResultCache,
     FakeUsageStatsStore,
 )
+
+TEST_KLEE_VERSION = "v3.2-test"
+TEST_RUNNER_IMAGE = "ghcr.io/finnleh/klee-web-runner@sha256:" + "a" * 64
 
 
 @pytest.fixture
@@ -54,6 +63,16 @@ def dispatcher() -> FakeJobDispatcher:
 
 
 @pytest.fixture
+def klee_version() -> str:
+    return TEST_KLEE_VERSION
+
+
+@pytest.fixture
+def runner_image() -> str:
+    return TEST_RUNNER_IMAGE
+
+
+@pytest.fixture
 def app(store, cache, usage, dispatcher) -> FastAPI:
     app = FastAPI()
     app.include_router(jobs_router)
@@ -61,6 +80,7 @@ def app(store, cache, usage, dispatcher) -> FastAPI:
     app.dependency_overrides[get_dispatcher] = lambda: dispatcher
     app.dependency_overrides[get_cache] = lambda: cache
     app.dependency_overrides[get_usage_stats] = lambda: usage
+    app.dependency_overrides[get_runner_image] = lambda: TEST_RUNNER_IMAGE
     return app
 
 

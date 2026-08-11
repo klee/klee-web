@@ -28,11 +28,13 @@ async def _seed_job(store) -> Job:
 
 
 async def test_run_job_happy_path_advances_to_done_and_stores_result(
-    store, runner, cache, usage, sample_result
+    store, runner, cache, usage, runner_image, klee_version, sample_result
 ):
     job = await _seed_job(store)
 
-    await run_job(job.id, JobRequest(source=SOURCE), store, runner, cache, usage)
+    await run_job(
+        job.id, JobRequest(source=SOURCE), store, runner, cache, usage, runner_image, klee_version
+    )
 
     stored = await store.get(job.id)
     assert stored is not None
@@ -40,11 +42,13 @@ async def test_run_job_happy_path_advances_to_done_and_stores_result(
     assert stored.result == sample_result
 
 
-async def test_run_job_passes_source_and_flags_to_runner(store, runner, cache, usage):
+async def test_run_job_passes_source_and_flags_to_runner(
+    store, runner, cache, usage, runner_image, klee_version
+):
     job = await _seed_job(store)
     request = JobRequest(source=SOURCE, flags=KleeFlags(max_time=120, max_memory=256))
 
-    await run_job(job.id, request, store, runner, cache, usage)
+    await run_job(job.id, request, store, runner, cache, usage, runner_image, klee_version)
 
     assert len(runner.calls) == 1
     called_source, called_flags = runner.calls[0]
@@ -53,26 +57,15 @@ async def test_run_job_passes_source_and_flags_to_runner(store, runner, cache, u
     assert called_flags.max_memory == 256
 
 
-async def test_run_job_passes_disabled_replay_to_runner(store, runner, cache, usage):
-    job = await _seed_job(store)
-
-    await run_job(
-        job.id,
-        JobRequest(source=SOURCE, flags=KleeFlags(enable_replay=False)),
-        store,
-        runner,
-        cache,
-        usage,
-    )
-
-    assert runner.calls[0][1].enable_replay is False
-
-
-async def test_run_job_runner_failure_marks_job_failed(store, cache, usage):
+async def test_run_job_runner_failure_marks_job_failed(
+    store, cache, usage, runner_image, klee_version
+):
     job = await _seed_job(store)
     runner = FakeKleeRunner(raise_exc=KleeRunnerError("KLEE crashed"))
 
-    await run_job(job.id, JobRequest(source=SOURCE), store, runner, cache, usage)
+    await run_job(
+        job.id, JobRequest(source=SOURCE), store, runner, cache, usage, runner_image, klee_version
+    )
 
     stored = await store.get(job.id)
     assert stored is not None
@@ -81,7 +74,7 @@ async def test_run_job_runner_failure_marks_job_failed(store, cache, usage):
 
 
 async def test_run_job_unexpected_parser_failure_marks_job_failed_and_logs(
-    store, cache, usage, caplog
+    store, cache, usage, runner_image, klee_version, caplog
 ):
     class ParsingFailureRunner:
         async def execute(self, source, flags, job_id, on_progress=None, on_parsing=None):
@@ -102,6 +95,8 @@ async def test_run_job_unexpected_parser_failure_marks_job_failed_and_logs(
             ParsingFailureRunner(),
             cache,
             usage,
+            runner_image,
+            klee_version,
         )
 
     stored = await store.get(job.id)
@@ -112,7 +107,9 @@ async def test_run_job_unexpected_parser_failure_marks_job_failed_and_logs(
     assert "malformed run.stats" in caplog.text
 
 
-async def test_run_job_streams_partial_result_while_running(store, cache, usage, sample_result):
+async def test_run_job_streams_partial_result_while_running(
+    store, cache, usage, runner_image, klee_version, sample_result
+):
     partial = JobResult(
         test_cases=[
             TestCase(
@@ -122,6 +119,7 @@ async def test_run_job_streams_partial_result_while_running(store, cache, usage,
         messages="",
         warnings="",
         stats={},
+        klee_version=None,
     )
     partial_emitted = asyncio.Event()
     finish = asyncio.Event()
@@ -146,14 +144,24 @@ async def test_run_job_streams_partial_result_while_running(store, cache, usage,
 
     job = await _seed_job(store)
     task = asyncio.create_task(
-        run_job(job.id, JobRequest(source=SOURCE), store, BlockingRunner(), cache, usage)
+        run_job(
+            job.id,
+            JobRequest(source=SOURCE),
+            store,
+            BlockingRunner(),
+            cache,
+            usage,
+            runner_image,
+            klee_version,
+        )
     )
 
     await partial_emitted.wait()
     mid = await store.get(job.id)
     assert mid is not None
     assert mid.status == JobStatus.running
-    assert mid.result == partial
+    assert mid.result == partial.model_copy(update={"klee_version": klee_version})
+    assert mid.result.klee_version == klee_version
 
     finish.set()
     await task
@@ -161,9 +169,12 @@ async def test_run_job_streams_partial_result_while_running(store, cache, usage,
     assert final is not None
     assert final.status == JobStatus.done
     assert final.result == sample_result
+    assert final.result.klee_version == klee_version
 
 
-async def test_run_job_flips_to_parsing_after_klee_exit(store, cache, usage, sample_result):
+async def test_run_job_flips_to_parsing_after_klee_exit(
+    store, cache, usage, runner_image, klee_version, sample_result
+):
     parsing_signaled = asyncio.Event()
     finish = asyncio.Event()
 
@@ -187,7 +198,16 @@ async def test_run_job_flips_to_parsing_after_klee_exit(store, cache, usage, sam
 
     job = await _seed_job(store)
     task = asyncio.create_task(
-        run_job(job.id, JobRequest(source=SOURCE), store, ParsingRunner(), cache, usage)
+        run_job(
+            job.id,
+            JobRequest(source=SOURCE),
+            store,
+            ParsingRunner(),
+            cache,
+            usage,
+            runner_image,
+            klee_version,
+        )
     )
 
     await parsing_signaled.wait()
@@ -202,11 +222,15 @@ async def test_run_job_flips_to_parsing_after_klee_exit(store, cache, usage, sam
     assert final.status == JobStatus.done
 
 
-async def test_run_job_short_circuits_when_cancelled_before_start(store, runner, cache, usage):
+async def test_run_job_short_circuits_when_cancelled_before_start(
+    store, runner, cache, usage, runner_image, klee_version
+):
     job = await _seed_job(store)
     await store.request_cancel(job.id)
 
-    await run_job(job.id, JobRequest(source=SOURCE), store, runner, cache, usage)
+    await run_job(
+        job.id, JobRequest(source=SOURCE), store, runner, cache, usage, runner_image, klee_version
+    )
 
     assert runner.calls == []
     stored = await store.get(job.id)
@@ -216,10 +240,11 @@ async def test_run_job_short_circuits_when_cancelled_before_start(store, runner,
     assert stored.result.halt_reason == HaltReason.cancelled
     assert stored.result.test_cases == []
     assert stored.result.stats == {}
+    assert stored.result.klee_version is None
 
 
 async def test_run_job_cancel_watcher_signals_and_tags(
-    store, cache, usage, sample_result, monkeypatch
+    store, cache, usage, runner_image, klee_version, sample_result, monkeypatch
 ):
     monkeypatch.setattr("klee_web.jobs.run._CANCEL_POLL_SECONDS", 0.01)
     running = asyncio.Event()
@@ -245,7 +270,16 @@ async def test_run_job_cancel_watcher_signals_and_tags(
 
     job = await _seed_job(store)
     task = asyncio.create_task(
-        run_job(job.id, JobRequest(source=SOURCE), store, CancellableRunner(), cache, usage)
+        run_job(
+            job.id,
+            JobRequest(source=SOURCE),
+            store,
+            CancellableRunner(),
+            cache,
+            usage,
+            runner_image,
+            klee_version,
+        )
     )
     await running.wait()
 
@@ -262,9 +296,10 @@ async def test_run_job_cancel_watcher_signals_and_tags(
     assert stored is not None
     assert stored.result is not None
     assert stored.result.halt_reason == HaltReason.cancelled
+    assert stored.result.klee_version == klee_version
 
 
-async def test_run_job_caches_completed_result(store, cache, usage):
+async def test_run_job_caches_completed_result(store, cache, usage, runner_image, klee_version):
     job = await _seed_job(store)
     request = JobRequest(source=SOURCE)
     result = JobResult(
@@ -277,56 +312,109 @@ async def test_run_job_caches_completed_result(store, cache, usage):
         warnings="",
         stats={"paths": 1},
         halt_reason=HaltReason.completed,
+        klee_version=klee_version,
     )
     runner = FakeKleeRunner(canned_result=result)
-    await run_job(job.id, request, store, runner, cache, usage)
+    await run_job(job.id, request, store, runner, cache, usage, runner_image, klee_version)
 
-    assert await cache.get(cache_key(request)) == result
+    assert await cache.get(cache_key(request, runner_image)) == result
 
 
-async def test_run_job_does_not_cache_timed_out_result(store, cache, usage):
+async def test_run_job_runner_image_change_invalidates_cache(
+    store, cache, usage, runner_image, klee_version
+):
+    job = await _seed_job(store)
+    request = JobRequest(source=SOURCE)
+    result = JobResult(
+        test_cases=[TestCase(name="t", inputs=[])],
+        messages="ok",
+        warnings="",
+        stats={"paths": 1},
+        halt_reason=HaltReason.completed,
+        klee_version=klee_version,
+    )
+    runner = FakeKleeRunner(canned_result=result)
+
+    await run_job(job.id, request, store, runner, cache, usage, runner_image, klee_version)
+
+    # run_job caches with the current RUNNER_IMAGE
+    assert await cache.get(cache_key(request, runner_image)) == result
+    # A different image misses the cache
+    assert (
+        await cache.get(cache_key(request, "klee-web-runner@sha256:runner-image-test-new")) is None
+    )
+
+
+async def test_run_job_does_not_cache_timed_out_result(
+    store, cache, usage, runner_image, klee_version
+):
     job = await _seed_job(store)
     request = JobRequest(source=SOURCE)
     timed_out = JobResult(
         test_cases=[], messages="", warnings="", stats={}, halt_reason=HaltReason.max_time
     )
     runner = FakeKleeRunner(canned_result=timed_out)
-    await run_job(job.id, request, store, runner, cache, usage)
+    await run_job(job.id, request, store, runner, cache, usage, runner_image, klee_version)
 
-    assert await cache.get(cache_key(request)) is None
+    assert await cache.get(cache_key(request, runner_image)) is None
 
 
-async def test_run_job_does_not_cache_failed_job(store, cache, usage):
+async def test_run_job_passes_disabled_replay_to_runner(
+    store, runner, cache, usage, runner_image, klee_version
+):
+    job = await _seed_job(store)
+
+    await run_job(
+        job.id,
+        JobRequest(source=SOURCE, flags=KleeFlags(enable_replay=False)),
+        store,
+        runner,
+        cache,
+        usage,
+        runner_image,
+        klee_version,
+    )
+
+    assert runner.calls[0][1].enable_replay is False
+
+
+async def test_run_job_does_not_cache_failed_job(store, cache, usage, runner_image, klee_version):
     job = await _seed_job(store)
     request = JobRequest(source=SOURCE)
     runner = FakeKleeRunner(raise_exc=KleeRunnerError("KLEE crashed"))
-    await run_job(job.id, request, store, runner, cache, usage)
+    await run_job(job.id, request, store, runner, cache, usage, runner_image, klee_version)
 
-    assert await cache.get(cache_key(request)) is None
+    assert await cache.get(cache_key(request, runner_image)) is None
 
 
-async def test_run_job_does_not_cache_compile_error(store, cache, usage):
+async def test_run_job_does_not_cache_compile_error(
+    store, cache, usage, runner_image, klee_version
+):
     job = await _seed_job(store)
     request = JobRequest(source=SOURCE)
     compile_err = JobResult(
         test_cases=[], messages="", warnings="", stats={}, compile_error="input.c:1: error"
     )
     runner = FakeKleeRunner(canned_result=compile_err)
-    await run_job(job.id, request, store, runner, cache, usage)
+    await run_job(job.id, request, store, runner, cache, usage, runner_image, klee_version)
 
-    assert await cache.get(cache_key(request)) is None
+    assert await cache.get(cache_key(request, runner_image)) is None
 
 
-async def test_run_job_does_not_cache_cancelled_job(store, runner, cache, usage):
+async def test_run_job_does_not_cache_cancelled_job(
+    store, runner, cache, usage, runner_image, klee_version
+):
     job = await _seed_job(store)
     await store.request_cancel(job.id)
     request = JobRequest(source=SOURCE)
-    await run_job(job.id, request, store, runner, cache, usage)
+    await run_job(job.id, request, store, runner, cache, usage, runner_image, klee_version)
 
-    assert await cache.get(cache_key(request)) is None
+    assert await cache.get(cache_key(request, runner_image)) is None
 
 
-async def test_run_job_records_completed_outcome_and_totals(store, cache, usage):
+async def test_run_job_records_completed_outcome_and_totals(
+    store, cache, usage, klee_version, runner_image
+):
     job = await _seed_job(store)
     result = JobResult(
         test_cases=[TestCase(name="t1", inputs=[]), TestCase(name="t2", inputs=[])],
@@ -334,9 +422,12 @@ async def test_run_job_records_completed_outcome_and_totals(store, cache, usage)
         warnings="",
         stats={"Instructions": 250},
         halt_reason=HaltReason.completed,
+        klee_version=klee_version,
     )
     runner = FakeKleeRunner(canned_result=result)
-    await run_job(job.id, JobRequest(source=SOURCE), store, runner, cache, usage)
+    await run_job(
+        job.id, JobRequest(source=SOURCE), store, runner, cache, usage, runner_image, klee_version
+    )
 
     snap = await usage.snapshot()
     assert snap.outcomes[JobOutcome.completed] == 1
@@ -344,10 +435,14 @@ async def test_run_job_records_completed_outcome_and_totals(store, cache, usage)
     assert snap.instructions_executed == 250
 
 
-async def test_run_job_records_failed_outcome_with_zero_totals(store, cache, usage):
+async def test_run_job_records_failed_outcome_with_zero_totals(
+    store, cache, usage, runner_image, klee_version
+):
     job = await _seed_job(store)
     runner = FakeKleeRunner(raise_exc=KleeRunnerError("KLEE crashed"))
-    await run_job(job.id, JobRequest(source=SOURCE), store, runner, cache, usage)
+    await run_job(
+        job.id, JobRequest(source=SOURCE), store, runner, cache, usage, runner_image, klee_version
+    )
 
     snap = await usage.snapshot()
     assert snap.outcomes[JobOutcome.failed] == 1
@@ -356,11 +451,13 @@ async def test_run_job_records_failed_outcome_with_zero_totals(store, cache, usa
 
 
 async def test_run_job_records_cancelled_outcome_when_cancelled_before_start(
-    store, runner, cache, usage
+    store, runner, cache, usage, runner_image, klee_version
 ):
     job = await _seed_job(store)
     await store.request_cancel(job.id)
-    await run_job(job.id, JobRequest(source=SOURCE), store, runner, cache, usage)
+    await run_job(
+        job.id, JobRequest(source=SOURCE), store, runner, cache, usage, runner_image, klee_version
+    )
 
     snap = await usage.snapshot()
     assert snap.outcomes[JobOutcome.cancelled] == 1

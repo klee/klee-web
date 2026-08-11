@@ -74,16 +74,16 @@ Each unit has one job, is reached through an interface, and can be swapped witho
 | **Ops API** (`api/health.py`, `api/admin.py`) | `GET /health` (liveness), `GET /ready` (readiness), admin telemetry and usage reads, and per-worker maximum-capacity writes. | Compose polls readiness and the browser polls liveness. The admin UI reads telemetry and stats and changes worker capacity. nginx gates `/admin` and `/api/admin/*` at the edge. | `Readiness`, `FleetTelemetry`, `FleetControl`, `UsageStatsStore`. |
 | **JobStore** (`jobs/store.py`, `Protocol`) | Holds each `Job` (status, result, cancel flag). | `create`, `get`, `set_result`, `request_cancel`, ... | Redis. |
 | **KleeRunner** (`jobs/runner.py`, `Protocol`) | Runs one KLEE job in a container and parses the output into a `JobResult`. | `execute(source, flags, job_id, ...)`, `cancel(job_id)`. | Docker and the runner image. |
-| **ResultCache** (`jobs/cache.py`, `Protocol`) | Caches finished results keyed by a hash of the submission (source + flags). | `get(key)`, `set(key, result)`. | Redis. |
+| **ResultCache** (`jobs/cache.py`, `Protocol`) | Caches finished results keyed by the canonical submission, exact Runner image identity, and `JobResult` schema. | `get(key)`, `set(key, result)`. | Redis. |
 | **JobDispatcher** (`jobs/dispatch.py`, `Protocol`) | Enqueues a complete Job request for Worker execution. | `dispatch(job_id, request)`. | Celery + Redis broker. |
 | **run_job** (`jobs/run.py`) | The FastAPI-free core of a run: drive status transitions, call the Runner, watch for cancel, write the result, populate the cache, record the outcome. | Called by the Celery task. | `JobStore`, `KleeRunner`, `ResultCache`, `UsageStatsStore`. |
 | **Readiness** (`health.py`, `Protocol`) | Reports whether the service can serve by pinging Redis. | `is_ready()`. | Redis. |
 | **FleetTelemetry** (`jobs/telemetry.py`, `Protocol`) | Live fleet view: Worker pool sizes, active/reserved Jobs, queue depth (Celery `inspect` + a broker `LLEN`). | `snapshot()`. | Celery + Redis broker. |
 | **FleetControl** (`jobs/telemetry.py`, `Protocol`) | Changes one Worker's autoscaler maximum, bounded by the deployment setting. | `set_max_concurrency(worker_name, maximum)`. | Celery remote control. |
 | **UsageStatsStore** (`jobs/usage.py`, `Protocol`) | Cumulative counters: outcomes per kind, cache hits, aggregate KLEE totals. | `record_execution`, `record_cache_hit`, `snapshot`. | Redis `INCR`. |
-| **Runner image** (`runner/`) | The Docker image (based on `klee/klee:v3.2`) and `entrypoint.py`: compile C to LLVM bitcode with clang, run KLEE (`--kdalloc=false`), capture whole-run output, and optionally replay each test case through the fork-per-ktest zygote for per-path output (ADR-0020, ADR-0022). | Built locally by `make runner` or selected through `RUNNER_IMAGE`. One container per job, launched under the `KLEE_RUNTIME` sandbox with no network, blocked setuid privilege escalation, a read-only root, and bounded temporary storage at `/work` (ADR-0023). | KLEE, clang, Docker. |
+| **Runner image** (`runner/`) | The Docker image (based on the `klee/klee` tag selected by `.klee-version`) and `entrypoint.py`: compile C to LLVM bitcode with clang, run KLEE (`--kdalloc=false`), capture whole-run output, and optionally replay each test case through the fork-per-ktest zygote for per-path output (ADR-0020, ADR-0022). | Built locally by `make runner` or selected through `RUNNER_IMAGE`. One container per job, launched under the `KLEE_RUNTIME` sandbox with no network, blocked setuid privilege escalation, a read-only root, and bounded temporary storage at `/work` (ADR-0023). | KLEE, clang, Docker. |
 | **Broker** (`celery_app.py`) | The queue between the API and Workers. Carries the `run_klee_job` task. | `CeleryDispatcher` publishes and Workers consume. | Redis. |
-| **Settings** (`config.py`) | Validates infrastructure URLs, Runner image, sandbox runtime, Runner Caps, and Worker-capacity bound. | Required `REDIS_URL` and `CELERY_BROKER_URL`. `RUNNER_IMAGE`, `KLEE_RUNTIME`, the Runner Caps, and `WORKER_CONCURRENCY_MAX` have deployment defaults. | pydantic-settings. |
+| **Settings** (`config.py`) | Validates infrastructure URLs, KLEE version metadata, immutable Runner identity, sandbox runtime, Runner Caps, and Worker-capacity bound. | Required `REDIS_URL`, `CELERY_BROKER_URL`, and `RUNNER_IMAGE`. The backend image supplies `KLEE_VERSION`. `KLEE_RUNTIME`, the Runner Caps, and `WORKER_CONCURRENCY_MAX` have deployment defaults. | pydantic-settings. |
 
 ## The request lifecycle
 
@@ -128,7 +128,7 @@ The contract has been async-shaped since Stage 1 (ADR-0007): `POST /jobs` return
 
 Two paths worth calling out:
 
-- **Cache hit.** An identical resubmission (same source and flags) short-circuits: the API stores a job already `done` with the cached result and never touches the queue (ADR-0017).
+- **Cache hit.** An identical resubmission (same source and flags) under the same Runner image and result schema short-circuits: the API stores a job already `done` with the cached result and never touches the queue (ADR-0017).
 - **Cancel.** `POST /jobs/{id}/cancel` is an API-side eager flip: the endpoint writes the terminal `cancelled` result into the store itself, so a job resolves even if no worker is alive to act on it. A running worker's watcher also signals the container so KLEE can halt and flush the output available at termination. Stream transport does not deliver incremental results while the container is still running (ADR-0013, ADR-0018, ADR-0021).
 
 ## The Protocol seams
@@ -165,6 +165,8 @@ Local operation uses the automatic build override:
 - **`make down`** removes the service containers and network while preserving the Redis named volume.
 
 Compose defaults to the local `klee-web-backend`, `klee-web-frontend`, and `klee-web-runner` image names. Registry-backed VM deployment instead supplies immutable digests through `BACKEND_IMAGE`, `FRONTEND_IMAGE`, and `RUNNER_IMAGE`. The pull helper validates those references before systemd starts the same services with `docker compose up --no-build`.
+
+`.klee-version` is a build input for the Runner base, backend result metadata, and frontend status bar. It is not a host deployment value. `RUNNER_IMAGE` remains runtime configuration because the Worker launches that exact image while the API includes the same identity in cache keys.
 
 Cloud-init prepares a VM but does not start KLEE Web. The administrator helper first creates the Basic Auth hash, then enables and starts the systemd unit. systemd reconciles the Compose project on start and reload, restores it after reboot, and preserves the Redis named volume when stopping the service.
 

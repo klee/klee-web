@@ -4,12 +4,12 @@ Docker image and entrypoint that actually runs KLEE on user-submitted C code. To
 
 ## Contents
 
-- `Dockerfile`: pinned `klee/klee:v3.2` base, builds the sleep-neutralising preload and the prebuilt replay objects, copies in the entrypoint, sets the working user
+- `Dockerfile`: `klee/klee` base selected by the repository's `.klee-version`, builds the sleep-neutralising preload and the prebuilt replay objects, copies in the entrypoint, sets the working user
 - `entrypoint.py`: reads C source from stdin, compiles it to LLVM bitcode with clang, runs KLEE with bounded flags (including `--kdalloc=false`, ADR-0022), captures KLEE's whole-run program output, optionally replays each test case through the zygote driver for per-path output, and streams the output directory back as a tar on stdout (ADR-0021; no shared filesystem with the host)
 - `replay_driver.c`: fork-per-ktest replay zygote (ADR-0022). Linked once per job with the user's program and KLEE's own replay-setup objects, then forked per test case, so replay pays no per-test process creation or dynamic linking
 - `replay_nosleep.c`: `LD_PRELOAD` stub that no-ops sleeps during replay (ADR-0020)
 
-The Worker selects this image through `RUNNER_IMAGE`, which defaults to the locally built `klee-web-runner` name and also accepts a registry tag or digest. Docker caches one image on each Worker host and creates a fresh container from it for every Job.
+The Worker selects this image through `RUNNER_IMAGE`. `make deploy` resolves the locally built `klee-web-runner` name to its content-addressed image ID. Registry deployment resolves a publication tag first and supplies the immutable digest. The API receives that same identity for cache keys. Mutable tags are not accepted as runtime identities. Docker caches one image on each Worker host and creates a fresh container from it for every Job.
 
 ## Why a separate container per job, not a long-lived process
 

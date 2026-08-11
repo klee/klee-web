@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { BASE_URL } from "../api/client";
 
-const KLEE_VERSION = "v3.2";
+declare const KLEE_VERSION: string;
 const POLL_INTERVAL_MS = 5000;
 
 type StatusBarProps = {

@@ -3,6 +3,8 @@
 **Status:** Accepted, 2026-06-25
 
 > **Amendment, 2026-07-18:** ADR-0024 retires `InMemoryResultCache`. The cache-key and API short-circuit decisions remain.
+>
+> **Amendment, 2026-08-11:** The key now includes the exact Runner image identity and a hash of the `JobResult` schema alongside the canonical `JobRequest`. This invalidates entries when KLEE, Runner code, or the result contract changes. The cache TTL is 48 hours and reads do not refresh it.
 
 ## Context
 

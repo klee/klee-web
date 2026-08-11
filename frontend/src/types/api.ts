@@ -222,6 +222,8 @@ export interface components {
              * @default 0
              */
             states_culled_for_memory: number;
+            /** Klee Version */
+            klee_version?: string | null;
         };
         /**
          * JobStatus

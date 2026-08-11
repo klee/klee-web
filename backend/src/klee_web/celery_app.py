@@ -71,7 +71,14 @@ def run_klee_job(job_id: str, request_data: dict[str, object]) -> None:
         cache = _build_cache(settings)
         usage = _build_usage(settings)
         await run_job(
-            UUID(job_id), JobRequest.model_validate(request_data), store, runner, cache, usage
+            UUID(job_id),
+            JobRequest.model_validate(request_data),
+            store,
+            runner,
+            cache,
+            usage,
+            settings.runner_image,
+            settings.klee_version,
         )
 
     asyncio.run(_run())

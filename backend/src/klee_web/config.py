@@ -1,10 +1,8 @@
 from functools import lru_cache
 from typing import Annotated
 
-from pydantic import Field
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
-
-from klee_web.jobs.runner import DEFAULT_RUNNER_IMAGE
 
 
 class Settings(BaseSettings):
@@ -13,7 +11,19 @@ class Settings(BaseSettings):
     redis_url: str
     celery_broker_url: str
     klee_runtime: str | None = None
-    runner_image: Annotated[str, Field(min_length=1)] = DEFAULT_RUNNER_IMAGE
+    klee_version: str = ""
+
+    @field_validator("klee_version")
+    @classmethod
+    def _klee_version_required(cls, v: str) -> str:
+        if not v:
+            raise ValueError("KLEE_VERSION is required")
+        return v
+
+    runner_image: Annotated[
+        str,
+        Field(pattern=r"^(?:sha256:[0-9a-f]{64}|.+@sha256:[0-9a-f]{64})$"),
+    ]
     worker_concurrency_max: Annotated[int, Field(ge=1)] = 4
     runner_cpus: Annotated[float, Field(gt=0)] = 2
     runner_memory_mb: Annotated[int, Field(gt=0)] = 3072

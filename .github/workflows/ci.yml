@@ -31,6 +31,8 @@ jobs:
       - uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
+      - name: Export KLEE version
+        run: sed 's/^/KLEE_VERSION=/' "$GITHUB_WORKSPACE/.klee-version" >> "$GITHUB_ENV"
       - run: uv sync
       - run: uv run pytest tests/unit
       - run: uv run pytest tests/integration -m "not requires_docker"
@@ -51,7 +53,15 @@ jobs:
       - uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
+      - name: Export KLEE version
+        run: sed 's/^/KLEE_VERSION=/' "$GITHUB_WORKSPACE/.klee-version" >> "$GITHUB_ENV"
       - run: npm ci
+      - name: Frontend build requires the KLEE version
+        run: |
+          if env -u KLEE_VERSION npm run build; then
+            printf 'Frontend build succeeded without KLEE_VERSION\n' >&2
+            exit 1
+          fi
       - run: uv sync --no-dev --locked
         working-directory: backend
       - name: Export the backend OpenAPI schema
@@ -76,6 +86,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+      - name: Export KLEE version
+        run: sed 's/^/KLEE_VERSION=/' "$GITHUB_WORKSPACE/.klee-version" >> "$GITHUB_ENV"
       - uses: hashicorp/setup-terraform@v4.0.1
         with:
           terraform_version: 1.15.8
@@ -106,6 +118,7 @@ jobs:
         env:
           TLS_CERTIFICATE_FILE: /tmp/klee-web-cert.pem
           TLS_PRIVATE_KEY_FILE: /tmp/klee-web-key.pem
+          RUNNER_IMAGE: registry.example/klee-web-runner@sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
           WORKER_REPLICAS: '1'
         run: |
           docker compose -f docker-compose.yml -f deploy/compose.production.yml config --quiet
@@ -148,6 +161,8 @@ jobs:
       - uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
+      - name: Export KLEE version
+        run: sed 's/^/KLEE_VERSION=/' "$GITHUB_WORKSPACE/.klee-version" >> "$GITHUB_ENV"
       - run: uv sync
         working-directory: backend
       - name: Install gVisor (runsc) and register the runtime
@@ -164,7 +179,7 @@ jobs:
           sudo runsc install
           sudo systemctl restart docker
       - name: Build runner image
-        run: docker build -t klee-web-runner ./runner
+        run: docker build --build-arg "KLEE_VERSION=$KLEE_VERSION" -t klee-web-runner ./runner
       - name: Run docker integration tests
         run: uv run pytest tests/integration -m requires_docker -v
         working-directory: backend
@@ -191,6 +206,8 @@ jobs:
           node-version: '24'
           cache: 'npm'
           cache-dependency-path: frontend/package-lock.json
+      - name: Export KLEE version
+        run: sed 's/^/KLEE_VERSION=/' "$GITHUB_WORKSPACE/.klee-version" >> "$GITHUB_ENV"
       - run: npm ci
         working-directory: frontend
       - run: npx playwright install --with-deps chromium
@@ -211,8 +228,12 @@ jobs:
 
   edge-smoke:
     runs-on: ubuntu-latest
+    env:
+      RUNNER_IMAGE: sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc
     steps:
       - uses: actions/checkout@v7
+      - name: Export KLEE version
+        run: sed 's/^/KLEE_VERSION=/' "$GITHUB_WORKSPACE/.klee-version" >> "$GITHUB_ENV"
       - name: Create the test admin credential
         run: |
           mkdir -p .secrets
@@ -220,6 +241,12 @@ jobs:
           docker run --rm httpd:2.4.68-alpine \
             htpasswd -nbB admin test-password > .secrets/admin.htpasswd
           chmod 644 .secrets/admin.htpasswd
+      - name: Runner identity is required
+        run: |
+          if env -u RUNNER_IMAGE docker compose config --quiet; then
+            printf 'Compose rendered without RUNNER_IMAGE\n' >&2
+            exit 1
+          fi
       - name: Services have restart and log retention policies
         run: |
           config=$(docker compose config --format json)
@@ -245,6 +272,7 @@ jobs:
               .services.api.image == $backend and
               .services.worker.image == $backend and
               .services.nginx.image == $frontend and
+              .services.api.environment.RUNNER_IMAGE == $runner and
               .services.worker.environment.RUNNER_IMAGE == $runner
             ' <<< "$config"
       - name: Bring up the edge (nginx pulls in api and redis via depends_on)
@@ -286,6 +314,11 @@ jobs:
           done
           docker inspect "$container_id"
           exit 1
+      - name: Backend image carries the KLEE version
+        run: |
+          expected_version=$(tr -d '\r\n' < .klee-version)
+          test "$(docker compose exec -T api printenv KLEE_VERSION)" = "$expected_version"
+          test "$(docker compose exec -T worker printenv KLEE_VERSION)" = "$expected_version"
       - name: Tear down
         if: always()
         run: docker compose down

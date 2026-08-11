@@ -77,7 +77,7 @@ async def test_enqueued_job_runs_on_the_worker_and_lands_in_the_store(worker):
 
         assert stored is not None
         assert stored.status == JobStatus.done
-        assert stored.result == get_sign_result()
+        assert stored.result == get_sign_result(get_settings().klee_version)
     finally:
         await client.flushdb()
         await client.aclose()

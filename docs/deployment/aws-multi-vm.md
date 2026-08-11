@@ -318,6 +318,49 @@ Worker at a time before the announced web/state maintenance window.
 
 ## Promote and roll back images
 
+### One-time cache-identity migration
+
+Hosts provisioned before the API received `RUNNER_IMAGE` need one shared Compose
+update. New hosts already contain it. From the accepted source checkout that
+matches the candidate image set, copy the base file to the web host and every
+Worker:
+
+```bash
+scp docker-compose.yml \
+  ubuntu@"$public_ip":/home/ubuntu/klee-web-docker-compose.yml
+scp -J ubuntu@"$public_ip" docker-compose.yml \
+  ubuntu@"$worker_1_ip":/home/ubuntu/klee-web-docker-compose.yml
+scp -J ubuntu@"$public_ip" docker-compose.yml \
+  ubuntu@"$worker_2_ip":/home/ubuntu/klee-web-docker-compose.yml
+```
+
+On each host, preserve the installed file, install the candidate, and render
+that host's role-specific deployment before changing any image:
+
+```bash
+sudo install -m 0644 \
+  /opt/klee-web/docker-compose.yml \
+  /opt/klee-web/docker-compose.yml.rollback
+sudo install -o root -g root -m 0644 \
+  /home/ubuntu/klee-web-docker-compose.yml \
+  /opt/klee-web/docker-compose.yml
+sudo /opt/klee-web/compose-deployment.sh config
+rm /home/ubuntu/klee-web-docker-compose.yml
+```
+
+If rendering fails on one host, restore its `docker-compose.yml.rollback`
+before continuing:
+
+```bash
+sudo install -m 0644 \
+  /opt/klee-web/docker-compose.yml.rollback \
+  /opt/klee-web/docker-compose.yml
+```
+
+This migration does not reload the running services. The new file is compatible
+with the previous backend image, and later promotions return to changing only
+the image references below.
+
 Verify one complete signed frontend, backend, and Runner image set before
 changing any host. Preserve `/etc/klee-web/deployment.env` as
 `deployment.env.rollback` on the web VM and every Worker.

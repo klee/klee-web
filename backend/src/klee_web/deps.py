@@ -62,3 +62,7 @@ def get_usage_stats() -> UsageStatsStore:
 
 def get_dispatcher() -> JobDispatcher:
     return CeleryDispatcher()
+
+
+def get_runner_image() -> str:
+    return get_settings().runner_image
