@@ -30,7 +30,7 @@ klee-web/
 
 ## Running locally
 
-The full stack requires Docker with Compose, GNU Make, and a registered gVisor runtime (`runsc`, plus `runsc-kvm` where `/dev/kvm` is available). Host-side development checks additionally use [`uv`](https://docs.astral.sh/uv/) and [`node`](https://nodejs.org/).
+The full stack requires Docker with Compose and GNU Make. Linux hosts use a registered gVisor runtime (`runsc`, plus `runsc-kvm` where `/dev/kvm` is available); because gVisor does not support macOS, the local E2E launcher uses Docker's default `runc` runtime there. Host-side development checks additionally use [`uv`](https://docs.astral.sh/uv/) and [`node`](https://nodejs.org/).
 
 Install the project dependencies once after cloning:
 
@@ -158,6 +158,8 @@ pre-commit install --hook-type pre-commit --hook-type pre-push
 On `git commit`, the commit-stage hooks run ruff (backend), eslint (frontend), actionlint (GitHub Actions), and whitespace / end-of-file checks. The eslint hook needs `frontend/node_modules`, so run `npm install` in `frontend/` once before the first commit. CI runs the pre-commit hooks across all files and runs mypy separately in the backend job, so the same checks are enforced on every pull request even if you never install the local hooks.
 
 On `git push`, the pre-push hook runs Playwright through an isolated Compose stack and a real KLEE container under gVisor, but only when the push touches `frontend/`, `backend/`, or `runner/`. It needs Docker, a registered gVisor runtime, and free ports 80 and 443. The hook builds its images, creates a temporary admin credential, and tears the stack down afterward. To skip it in a pinch, push with `--no-verify`.
+
+gVisor does not support macOS. The E2E launcher detects macOS automatically and uses Docker's default `runc` runtime, so `git push` and `npm run test:e2e` need no additional environment variables. The launcher prints a warning because this mode does not provide gVisor's isolation; use it only with trusted local source code. Linux hosts, including CI, continue to require `runsc` or `runsc-kvm`.
 
 The pre-push hook is local and optional. Without it, or with `--no-verify`, the push still succeeds. The same test runs as a required CI check on the pull request, so a broken contract cannot be merged either way. The hook just gives faster, real-KLEE feedback before you push.
 
