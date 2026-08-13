@@ -5,3 +5,9 @@
 :root {
   --klee-accent: #475569;
 }
+
+button:enabled,
+input[type="checkbox"]:enabled,
+select:enabled {
+  cursor: pointer;
+}

@@ -173,7 +173,7 @@ function FlagToggle({ toggle, flags, onFlagsChange }: FlagToggleProps) {
   return (
     <label
       title={toggle.hint}
-      className="flex items-center gap-1.5 text-sm text-slate-600 dark:text-slate-400"
+      className="flex cursor-pointer select-none items-center gap-1.5 text-sm text-slate-600 dark:text-slate-400"
     >
       <span>{toggle.label}</span>
       <input

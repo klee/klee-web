@@ -51,6 +51,15 @@ export function TopBar({
           <FlagBar flags={flags} onFlagsChange={onFlagsChange} />
         </div>
         <div className="flex items-center gap-2">
+          <a
+            href="https://github.com/FinnLeh/klee-web/issues/new?template=user_report.yml"
+            target="_blank"
+            rel="noreferrer"
+            aria-label="Report an issue on GitHub (opens in a new tab)"
+            className="flex items-center px-3 py-1.5 rounded border border-slate-300 dark:border-slate-700 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 active:brightness-95"
+          >
+            Report issue
+          </a>
           {jobActive ? (
             <button
               type="button"

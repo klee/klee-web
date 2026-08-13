@@ -1,0 +1,56 @@
+name: KLEE Web user report
+description: Report a problem encountered while using KLEE Web.
+title: "[User report] "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping improve KLEE Web. This report will be public. Do not include private source code, credentials, or other sensitive information.
+  - type: textarea
+    id: problem
+    attributes:
+      label: What happened?
+      description: Describe what you observed while using KLEE Web.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: List the example or shareable program, settings, and actions that led to the problem.
+      placeholder: |
+        1. Select ...
+        2. Set ...
+        3. Click Run
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect?
+    validations:
+      required: false
+  - type: input
+    id: browser
+    attributes:
+      label: Browser
+      description: For example, Firefox 141 or Chrome 139.
+    validations:
+      required: false
+  - type: textarea
+    id: source
+    attributes:
+      label: Shareable source code
+      description: Optional. Include only source code that is safe to post publicly.
+      render: c
+    validations:
+      required: false
+  - type: checkboxes
+    id: public-content
+    attributes:
+      label: Public content
+      options:
+        - label: I confirm that this report contains no private source code, credentials, or other sensitive information.
+          required: true
