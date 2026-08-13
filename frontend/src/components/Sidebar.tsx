@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { EXAMPLES } from "../data/examples";
 import type { HistoryEntry } from "../lib/history";
 import { historyLabel, relativeTime, statusGlyph } from "../lib/historyView";
+import { HelpTooltip } from "./HelpTooltip";
 
 type SidebarProps = {
   entries: HistoryEntry[];
@@ -67,16 +68,21 @@ export function Sidebar({
           <ul className="py-1">
             {EXAMPLES.map((ex) => (
               <li key={ex.id}>
-                <button
-                  type="button"
-                  onClick={() => onLoadExample(ex.code)}
-                  className="w-full flex items-center justify-between gap-2 px-3 py-1.5 text-left hover:bg-slate-200 dark:hover:bg-slate-800"
-                >
-                  <span className="truncate">{ex.label}</span>
-                  <span className="shrink-0 text-xs text-slate-500 dark:text-slate-400">
-                    {ex.tag}
-                  </span>
-                </button>
+                <HelpTooltip content={ex.description} placement="sidebar" className="flex w-full">
+                  {(descriptionId) => (
+                    <button
+                      type="button"
+                      onClick={() => onLoadExample(ex.code)}
+                      aria-describedby={descriptionId}
+                      className="w-full flex items-center justify-between gap-2 px-3 py-1.5 text-left hover:bg-slate-200 dark:hover:bg-slate-800"
+                    >
+                      <span className="truncate">{ex.label}</span>
+                      <span className="shrink-0 text-xs text-slate-500 dark:text-slate-400">
+                        {ex.tag}
+                      </span>
+                    </button>
+                  )}
+                </HelpTooltip>
               </li>
             ))}
           </ul>
