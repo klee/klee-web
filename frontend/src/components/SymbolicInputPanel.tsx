@@ -4,6 +4,7 @@ import { HelpTooltip } from "./HelpTooltip";
 
 type Props = {
   flags: KleeFlags;
+  settingsRevision: number;
   onFlagsChange: (next: KleeFlags) => void;
 };
 
@@ -11,7 +12,7 @@ type SymStdin = NonNullable<KleeFlags["sym_stdin"]>;
 type SymFiles = NonNullable<KleeFlags["sym_files"]>;
 type SymArgs = NonNullable<KleeFlags["sym_args"]>;
 
-export function SymbolicInputPanel({ flags, onFlagsChange }: Props) {
+export function SymbolicInputPanel({ flags, settingsRevision, onFlagsChange }: Props) {
   const active = [flags.sym_stdin, flags.sym_files, flags.sym_args].filter(Boolean).length;
   return (
     <details className="px-3 pb-2 text-sm">
@@ -28,14 +29,17 @@ export function SymbolicInputPanel({ flags, onFlagsChange }: Props) {
       </summary>
       <div className="mt-2 flex flex-wrap items-center gap-x-6 gap-y-2 pl-1">
         <StdinRow
+          key={`stdin-${settingsRevision}`}
           value={flags.sym_stdin ?? null}
           onChange={(v) => onFlagsChange({ ...flags, sym_stdin: v })}
         />
         <FilesRow
+          key={`files-${settingsRevision}`}
           value={flags.sym_files ?? null}
           onChange={(v) => onFlagsChange({ ...flags, sym_files: v })}
         />
         <ArgsRow
+          key={`args-${settingsRevision}`}
           value={flags.sym_args ?? null}
           onChange={(v) => onFlagsChange({ ...flags, sym_args: v })}
         />

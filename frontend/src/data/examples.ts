@@ -1,3 +1,4 @@
+import type { KleeFlags } from "../api/jobs";
 import doubleFree from "./examples/double_free.c?raw";
 import getSign from "./examples/get_sign.c?raw";
 import helloWorld from "./examples/hello_world.c?raw";
@@ -11,7 +12,22 @@ export type Example = {
   tag: "tutorial" | "example";
   code: string;
   description: string;
+  flags: KleeFlags;
 };
+
+function exampleFlags(overrides: Partial<KleeFlags> = {}): KleeFlags {
+  return {
+    max_time: 10,
+    max_memory: 512,
+    enable_replay: true,
+    query_format: "none",
+    extra_flags: "",
+    sym_stdin: null,
+    sym_files: null,
+    sym_args: null,
+    ...overrides,
+  };
+}
 
 export const EXAMPLES: Example[] = [
   {
@@ -20,6 +36,7 @@ export const EXAMPLES: Example[] = [
     tag: "tutorial",
     code: getSign,
     description: "Makes one integer symbolic and explores its negative, zero, and positive paths.",
+    flags: exampleFlags(),
   },
   {
     id: "regexp",
@@ -28,6 +45,11 @@ export const EXAMPLES: Example[] = [
     code: regexp,
     description:
       'Makes a seven-byte regular expression symbolic and explores matching it against "hello".',
+    flags: exampleFlags({
+      max_time: 60,
+      enable_replay: false,
+      extra_flags: "--only-output-states-covering-new",
+    }),
   },
   {
     id: "maze",
@@ -35,6 +57,10 @@ export const EXAMPLES: Example[] = [
     tag: "tutorial",
     code: maze,
     description: "Makes 28 movement commands symbolic and searches for a path through the maze.",
+    flags: exampleFlags({
+      max_time: 60,
+      extra_flags: "--only-output-states-covering-new",
+    }),
   },
   {
     id: "hello_world",
@@ -42,6 +68,7 @@ export const EXAMPLES: Example[] = [
     tag: "example",
     code: helloWorld,
     description: 'Runs a concrete one-path program that prints "Hello world".',
+    flags: exampleFlags(),
   },
   {
     id: "sym_input",
@@ -49,6 +76,7 @@ export const EXAMPLES: Example[] = [
     tag: "example",
     code: symInput,
     description: 'Reads one symbolic stdin byte and branches on whether it is "a".',
+    flags: exampleFlags({ sym_stdin: { size: 1 } }),
   },
   {
     id: "double_free",
@@ -56,6 +84,7 @@ export const EXAMPLES: Example[] = [
     tag: "example",
     code: doubleFree,
     description: "Demonstrates KLEE detecting an allocation that is freed twice.",
+    flags: exampleFlags(),
   },
 ];
 

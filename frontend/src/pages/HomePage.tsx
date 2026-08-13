@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import type { KleeFlags } from "../api/jobs";
 import { Editor } from "../components/Editor";
 import { Results } from "../components/Results";
 import { Sidebar } from "../components/Sidebar";
@@ -7,36 +6,30 @@ import { StatusBar } from "../components/StatusBar";
 import { TopBar } from "../components/TopBar";
 import { Workspace } from "../components/Workspace";
 import { SymbolicTypeProvider } from "../context/SymbolicTypeContext";
-import { DEFAULT_EXAMPLE } from "../data/examples";
+import { DEFAULT_EXAMPLE, type Example } from "../data/examples";
 import { useCancelJob } from "../hooks/useCancelJob";
 import { useHistory } from "../hooks/useHistory";
 import { useJob } from "../hooks/useJob";
 import { useSubmitJob } from "../hooks/useSubmitJob";
 import type { HistoryEntry } from "../lib/history";
 
-const DEFAULT_FLAGS: KleeFlags = {
-  max_time: 60,
-  max_memory: 512,
-  enable_replay: true,
-  query_format: "none",
-  extra_flags: "",
-  sym_stdin: null,
-  sym_files: null,
-  sym_args: null,
-};
-
 function initialState(entries: HistoryEntry[]) {
   const newest = entries[0];
   if (newest) return { source: newest.code, flags: newest.flags, jobId: newest.jobId };
-  return { source: DEFAULT_EXAMPLE.code, flags: DEFAULT_FLAGS, jobId: null as string | null };
+  return {
+    source: DEFAULT_EXAMPLE.code,
+    flags: DEFAULT_EXAMPLE.flags,
+    jobId: null as string | null,
+  };
 }
 
 export function HomePage() {
   const { entries, addRun, setStatus, removeEntry, clear } = useHistory();
   const [init] = useState(() => initialState(entries));
   const [source, setSource] = useState(init.source);
-  const [flags, setFlags] = useState<KleeFlags>(init.flags);
+  const [flags, setFlags] = useState(init.flags);
   const [jobId, setJobId] = useState<string | null>(init.jobId);
+  const [settingsRevision, setSettingsRevision] = useState(0);
   const [errorsFirst, setErrorsFirst] = useState(false);
   const [cancelling, setCancelling] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -82,11 +75,13 @@ export function HomePage() {
     });
   };
 
-  const loadExample = (code: string) => {
+  const loadExample = (example: Example) => {
     setCancelling(false);
     submitMutation.reset();
     setJobId(null);
-    setSource(code);
+    setSource(example.code);
+    setFlags(example.flags);
+    setSettingsRevision((revision) => revision + 1);
   };
 
   const restoreRun = (entry: HistoryEntry) => {
@@ -94,6 +89,7 @@ export function HomePage() {
     submitMutation.reset();
     setSource(entry.code);
     setFlags(entry.flags);
+    setSettingsRevision((revision) => revision + 1);
     setJobId(entry.jobId);
   };
 
@@ -102,6 +98,7 @@ export function HomePage() {
       topBar={
         <TopBar
           flags={flags}
+          settingsRevision={settingsRevision}
           onFlagsChange={setFlags}
           onRun={handleRun}
           jobActive={jobActive}

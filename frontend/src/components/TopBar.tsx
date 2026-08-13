@@ -8,6 +8,7 @@ import { SymbolicInputPanel } from "./SymbolicInputPanel";
 
 type TopBarProps = {
   flags: KleeFlags;
+  settingsRevision: number;
   onFlagsChange: (next: KleeFlags) => void;
   onRun: () => void;
   jobActive: boolean;
@@ -17,6 +18,7 @@ type TopBarProps = {
 
 export function TopBar({
   flags,
+  settingsRevision,
   onFlagsChange,
   onRun,
   jobActive,
@@ -49,7 +51,7 @@ export function TopBar({
       <div className="px-3 py-3 flex items-center justify-between">
         <div className="flex items-center gap-6">
           <KleeLogo />
-          <FlagBar flags={flags} onFlagsChange={onFlagsChange} />
+          <FlagBar key={settingsRevision} flags={flags} onFlagsChange={onFlagsChange} />
         </div>
         <div className="flex items-center gap-2">
           <HelpTooltip
@@ -111,7 +113,11 @@ export function TopBar({
           </div>
         </div>
       </div>
-      <SymbolicInputPanel flags={flags} onFlagsChange={onFlagsChange} />
+      <SymbolicInputPanel
+        flags={flags}
+        settingsRevision={settingsRevision}
+        onFlagsChange={onFlagsChange}
+      />
     </div>
   );
 }

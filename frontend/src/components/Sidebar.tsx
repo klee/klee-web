@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
-import { EXAMPLES } from "../data/examples";
+import { EXAMPLES, type Example } from "../data/examples";
 import type { HistoryEntry } from "../lib/history";
 import { historyLabel, relativeTime, statusGlyph } from "../lib/historyView";
 import { HelpTooltip } from "./HelpTooltip";
 
 type SidebarProps = {
   entries: HistoryEntry[];
-  onLoadExample: (code: string) => void;
+  onLoadExample: (example: Example) => void;
   onRestore: (entry: HistoryEntry) => void;
   onDelete: (jobId: string) => void;
   onClear: () => void;
@@ -72,7 +72,7 @@ export function Sidebar({
                   {(descriptionId) => (
                     <button
                       type="button"
-                      onClick={() => onLoadExample(ex.code)}
+                      onClick={() => onLoadExample(ex)}
                       aria-describedby={descriptionId}
                       className="w-full flex items-center justify-between gap-2 px-3 py-1.5 text-left hover:bg-slate-200 dark:hover:bg-slate-800"
                     >
