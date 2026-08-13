@@ -113,7 +113,9 @@ jobs:
             deploy/pull-images.sh \
             deploy/set-admin-password.sh \
             infra/aws/provision-tls.sh.tftpl \
-            infra/azure/provision-tls.sh.tftpl
+            infra/azure/provision-tls.sh.tftpl \
+            infra/doc/provision-tls.sh \
+            infra/doc/configure-redis-firewall.sh
       - name: Validate production service configuration
         env:
           TLS_CERTIFICATE_FILE: /tmp/klee-web-cert.pem
@@ -139,7 +141,16 @@ jobs:
             .services.worker.environment.REDIS_URL == "redis://10.0.1.10:6379/0" and
             .services.worker.environment.CELERY_BROKER_URL == "redis://10.0.1.10:6379/1"
           ' <<<"$worker_config"
-          systemd-analyze verify deploy/klee-web.service
+          unit_directory=$(mktemp -d)
+          trap 'rm -rf "$unit_directory"' EXIT
+          install -m 0644 deploy/klee-web.service "$unit_directory/klee-web.service"
+          install -m 0644 infra/doc/klee-web-redis-firewall.service \
+            "$unit_directory/klee-web-redis-firewall.service"
+          install -d "$unit_directory/klee-web.service.d"
+          install -m 0644 infra/doc/klee-web-redis-firewall.conf \
+            "$unit_directory/klee-web.service.d/redis-firewall.conf"
+          SYSTEMD_UNIT_PATH="$unit_directory:" \
+            systemd-analyze verify klee-web.service klee-web-redis-firewall.service
       - uses: actions/setup-python@v7
         with:
           python-version: '3.x'
