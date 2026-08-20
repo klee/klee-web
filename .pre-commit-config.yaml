@@ -3,7 +3,7 @@ repos:
     rev: v5.0.0
     hooks:
       - id: trailing-whitespace
-        exclude: ^backend/tests/fixtures/.*/output/
+        exclude: ^(backend/tests/fixtures/.*/output/|docs/thesis-evidence/patches/.*\.patch)$
       - id: end-of-file-fixer
         exclude: ^backend/tests/fixtures/.*/output/
       - id: check-yaml

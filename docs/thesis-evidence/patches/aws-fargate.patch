@@ -1,0 +1,417 @@
+diff --git a/infra/aws-fargate-screening/.terraform.lock.hcl b/infra/aws-fargate-screening/.terraform.lock.hcl
+new file mode 100644
+index 0000000000000000000000000000000000000000..6d89c871ce598e9301f781c6de710ec06926b943
+--- /dev/null
++++ b/infra/aws-fargate-screening/.terraform.lock.hcl
+@@ -0,0 +1,25 @@
++# This file is maintained automatically by "terraform init".
++# Manual edits may be lost in future updates.
++
++provider "registry.terraform.io/hashicorp/aws" {
++  version     = "6.44.0"
++  constraints = "~> 6.44.0"
++  hashes = [
++    "h1:ycsDqsaBxoZmyx9tZKxOFinhpb0oDAGryioYuF1LvfA=",
++    "zh:0462747d28f6dcd7b1b723bea9da1600526b7cdcf929ed4be54352d74b0746e6",
++    "zh:0c9b7e7b04050360f609ff5700d8a76227fb4ea84dac92b844d82a2013706705",
++    "zh:2877a6854edf237f9d6c66dc928294cbbcf29d3f52577fb8f232d0cfd11d5c0d",
++    "zh:3347b82e222bbfad326b79c408e53a9252b80c6c762f4dd4f4617583394f0a4e",
++    "zh:33997dbe611b5abf49c87a31f29d8f797c97421f67b71fec8aa688799511b758",
++    "zh:5d5c37375c5e776e6e8f95fb8cbd8009258618b9f51c55551a18adc09ef5814a",
++    "zh:67d6bd61c52ca5f4c37c96a76f6820c9f1902e4b83f89faddf9fd7f17ba0b160",
++    "zh:739588639fa30db7084d6939c2eb9b4dd2d7f58dbb5d5b3b2c4bda2a35dcf521",
++    "zh:9b12af85486a96aedd8d7984b0ff811a4b42e3d88dad1a3fb4c0b580d04fa425",
++    "zh:a953797142df4245bd8f456b9e78690f501a0fff2f58552db4eb2da409cd99e9",
++    "zh:aeb8d616dd34a9f1c5048ed4cdd6d7692db93cd33a468872618d4cd38c4784aa",
++    "zh:dc8420556aca50658247b097de6734259fc3a6012ff1cf96612fca10b3982f9d",
++    "zh:f9083d6d9fb9cbdcd91e38c92f96e67223ecc7ce6d0986bd5eb8e6d52e9aa02b",
++    "zh:f9418aa1e4d29f9026aa6f521e97d085e000902ea929debbbef61135185e3ad4",
++    "zh:fb2494a6c92118055cfb2c114a4fe5c750946a1b0d6be6bf02ab3e37a091fb8b",
++  ]
++}
+diff --git a/infra/aws-fargate-screening/main.tf b/infra/aws-fargate-screening/main.tf
+new file mode 100644
+index 0000000000000000000000000000000000000000..fd87394650bafa5ed7db3196271cd22a7abe367c
+--- /dev/null
++++ b/infra/aws-fargate-screening/main.tf
+@@ -0,0 +1,218 @@
++terraform {
++  required_version = "~> 1.15.0"
++
++  required_providers {
++    aws = {
++      source  = "hashicorp/aws"
++      version = "~> 6.44.0"
++    }
++  }
++}
++
++provider "aws" {
++  region = "eu-west-2"
++
++  default_tags {
++    tags = {
++      Environment = "serverless-runner-screening"
++      ManagedBy   = "Terraform"
++      Project     = "klee-web-runner-screening"
++    }
++  }
++}
++
++data "aws_iam_role" "task_execution" {
++  name = "klee-web-fargate-execution"
++}
++
++locals {
++  resource_name  = "klee-web-runner-screening"
++  container_name = "runner"
++
++  task_command = <<-SCRIPT
++    set -eu
++    printf 'HARNESS_START=%s\n' "$(date --utc +%Y-%m-%dT%H:%M:%S.%NZ)"
++    python3 -c 'import json, os, urllib.request; metadata = json.load(urllib.request.urlopen(os.environ["ECS_CONTAINER_METADATA_URI_V4"])); print(json.dumps({"snapshotter": metadata.get("Snapshotter", "unknown")}, sort_keys=True))'
++    printf '%s' "$SOURCE_GZIP_BASE64" | base64 --decode | gzip --decompress | python3 /home/klee/entrypoint.py > /work/result.tar
++    python3 -c 'import hashlib, json, os, tarfile; archive = "/work/result.tar"; tar = tarfile.open(archive); names = tar.getnames(); read = lambda suffix: next((tar.extractfile(name).read().decode(errors="replace") for name in names if name.endswith(suffix)), ""); print(json.dumps({"archive_bytes": os.path.getsize(archive), "archive_sha256": hashlib.sha256(open(archive, "rb").read()).hexdigest(), "compile_error": bool(read("compile_error.txt")), "ktests": sum(name.endswith(".ktest") for name in names), "max_time": "HaltTimer invoked" in read("messages.txt"), "workload": os.environ["WORKLOAD_NAME"]}, sort_keys=True))'
++    printf 'HARNESS_DONE=%s\n' "$(date --utc +%Y-%m-%dT%H:%M:%S.%NZ)"
++  SCRIPT
++}
++
++resource "aws_vpc" "main" {
++  cidr_block           = "10.42.0.0/24"
++  enable_dns_hostnames = true
++  enable_dns_support   = true
++
++  tags = {
++    Name = local.resource_name
++  }
++}
++
++resource "aws_internet_gateway" "main" {
++  vpc_id = aws_vpc.main.id
++
++  tags = {
++    Name = local.resource_name
++  }
++}
++
++resource "aws_subnet" "public" {
++  vpc_id                  = aws_vpc.main.id
++  availability_zone       = "eu-west-2a"
++  cidr_block              = "10.42.0.0/25"
++  map_public_ip_on_launch = true
++
++  tags = {
++    Name = "${local.resource_name}-public"
++  }
++}
++
++resource "aws_route_table" "public" {
++  vpc_id = aws_vpc.main.id
++
++  route {
++    cidr_block = "0.0.0.0/0"
++    gateway_id = aws_internet_gateway.main.id
++  }
++
++  tags = {
++    Name = "${local.resource_name}-public"
++  }
++}
++
++resource "aws_route_table_association" "public" {
++  subnet_id      = aws_subnet.public.id
++  route_table_id = aws_route_table.public.id
++}
++
++# The controlled fixtures need outbound ECR, metadata, and CloudWatch access only.
++resource "aws_security_group" "task" {
++  name        = local.resource_name
++  description = "No-ingress Fargate Runner screening tasks"
++  vpc_id      = aws_vpc.main.id
++
++  tags = {
++    Name = local.resource_name
++  }
++}
++
++resource "aws_vpc_security_group_egress_rule" "task" {
++  security_group_id = aws_security_group.task.id
++  description       = "Outbound image, metadata, and log access"
++  cidr_ipv4         = "0.0.0.0/0"
++  ip_protocol       = "-1"
++}
++
++resource "aws_ecr_repository" "runner" {
++  name                 = local.resource_name
++  force_delete         = true
++  image_tag_mutability = "MUTABLE"
++
++  encryption_configuration {
++    encryption_type = "AES256"
++  }
++
++  image_scanning_configuration {
++    scan_on_push = false
++  }
++}
++
++resource "aws_ecs_cluster" "runner" {
++  name = local.resource_name
++}
++
++resource "aws_cloudwatch_log_group" "runner" {
++  name              = "/klee-web/runner-screening"
++  retention_in_days = 7
++}
++
++resource "aws_ecs_task_definition" "runner" {
++  family                   = local.resource_name
++  requires_compatibilities = ["FARGATE"]
++  network_mode             = "awsvpc"
++  cpu                      = "2048"
++  memory                   = "4096"
++  execution_role_arn       = data.aws_iam_role.task_execution.arn
++
++  runtime_platform {
++    cpu_architecture        = "X86_64"
++    operating_system_family = "LINUX"
++  }
++
++  ephemeral_storage {
++    size_in_gib = 30
++  }
++
++  container_definitions = jsonencode([
++    {
++      name       = local.container_name
++      image      = "${aws_ecr_repository.runner.repository_url}@sha256:47b7acdddc0e1d9d1f541c2c1740c3cee09afb0dcf0b9064848c9ab5381486aa"
++      essential  = true
++      entryPoint = ["/bin/bash", "-lc"]
++      command    = [local.task_command]
++      environment = [
++        {
++          name  = "KLEE_EXTRA_FLAGS"
++          value = ""
++        },
++        {
++          name  = "KLEE_MAX_MEMORY"
++          value = "512"
++        },
++        {
++          name  = "KLEE_MAX_TIME"
++          value = "60"
++        },
++        {
++          name  = "KLEE_POSIX_ARGS"
++          value = ""
++        },
++        {
++          name  = "KLEE_QUERY_FORMAT"
++          value = "none"
++        },
++        {
++          name  = "TMPDIR"
++          value = "/work"
++        }
++      ]
++      logConfiguration = {
++        logDriver = "awslogs"
++        options = {
++          awslogs-group         = aws_cloudwatch_log_group.runner.name
++          awslogs-region        = "eu-west-2"
++          awslogs-stream-prefix = "runner"
++        }
++      }
++    }
++  ])
++}
++
++output "cluster_name" {
++  value = aws_ecs_cluster.runner.name
++}
++
++output "container_name" {
++  value = local.container_name
++}
++
++output "log_group_name" {
++  value = aws_cloudwatch_log_group.runner.name
++}
++
++output "repository_url" {
++  value = aws_ecr_repository.runner.repository_url
++}
++
++output "security_group_id" {
++  value = aws_security_group.task.id
++}
++
++output "subnet_id" {
++  value = aws_subnet.public.id
++}
++
++output "task_definition_arn" {
++  value = aws_ecs_task_definition.runner.arn
++}
+diff --git a/infra/aws-fargate-screening/run-task.sh b/infra/aws-fargate-screening/run-task.sh
+new file mode 100755
+index 0000000000000000000000000000000000000000..e0e85375425390c12869e98ce6869a94ae257e6d
+--- /dev/null
++++ b/infra/aws-fargate-screening/run-task.sh
+@@ -0,0 +1,156 @@
++#!/usr/bin/env bash
++set -euo pipefail
++
++if [[ $# -ne 5 ]]; then
++  printf 'Usage: %s VARIANT WORKLOAD SOURCE_PATH MAX_TIME OUTPUT_DIR\n' "$0" >&2
++  exit 2
++fi
++
++variant=$1
++workload=$2
++source_path=$3
++max_time=$4
++output_dir=$5
++
++if [[ ! $variant =~ ^[a-z0-9-]+$ || ! $workload =~ ^[a-z0-9-]+$ ]]; then
++  printf 'VARIANT and WORKLOAD must contain only lowercase letters, digits, and hyphens.\n' >&2
++  exit 2
++fi
++
++if [[ ! $max_time =~ ^[0-9]+$ ]] || ((max_time < 1 || max_time > 600)); then
++  printf 'MAX_TIME must be an integer from 1 through 600.\n' >&2
++  exit 2
++fi
++
++script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
++repo_root=$(cd -- "$script_dir/../.." && pwd)
++if [[ $source_path != /* ]]; then
++  source_path="$repo_root/$source_path"
++fi
++if [[ ! -f $source_path ]]; then
++  printf 'Source file does not exist: %s\n' "$source_path" >&2
++  exit 2
++fi
++
++mkdir -p -- "$output_dir"
++
++cluster=$(terraform -chdir="$script_dir" output -raw cluster_name)
++container=$(terraform -chdir="$script_dir" output -raw container_name)
++log_group=$(terraform -chdir="$script_dir" output -raw log_group_name)
++security_group=$(terraform -chdir="$script_dir" output -raw security_group_id)
++subnet=$(terraform -chdir="$script_dir" output -raw subnet_id)
++task_definition=$(terraform -chdir="$script_dir" output -raw task_definition_arn)
++
++source_gzip_base64=$(gzip --stdout "$source_path" | base64 --wrap=0)
++overrides=$(jq -cn \
++  --arg container "$container" \
++  --arg source "$source_gzip_base64" \
++  --arg workload "$workload" \
++  --arg max_time "$max_time" \
++  '{containerOverrides: [{name: $container, environment: [
++    {name: "SOURCE_GZIP_BASE64", value: $source},
++    {name: "WORKLOAD_NAME", value: $workload},
++    {name: "KLEE_MAX_TIME", value: $max_time}
++  ]}]}')
++
++if ((${#overrides} > 8192)); then
++  printf 'ECS task override is %d bytes, exceeding the 8192-byte limit.\n' "${#overrides}" >&2
++  exit 2
++fi
++
++network_configuration=$(jq -cn \
++  --arg subnet "$subnet" \
++  --arg security_group "$security_group" \
++  '{awsvpcConfiguration: {
++    subnets: [$subnet],
++    securityGroups: [$security_group],
++    assignPublicIp: "ENABLED"
++  }}')
++
++requested_at=$(date --utc +%Y-%m-%dT%H:%M:%S.%NZ)
++stem="$(date --utc +%Y%m%dT%H%M%SZ)-$variant-$workload"
++run_file="$output_dir/$stem-run-task.json"
++task_file="$output_dir/$stem-task.json"
++log_file="$output_dir/$stem-logs.json"
++
++run_response=$(aws ecs run-task \
++  --profile klee-web \
++  --region eu-west-2 \
++  --cluster "$cluster" \
++  --task-definition "$task_definition" \
++  --launch-type FARGATE \
++  --platform-version 1.4.0 \
++  --count 1 \
++  --network-configuration "$network_configuration" \
++  --overrides "$overrides" \
++  --started-by "screen-$variant-$workload" \
++  --tags "key=Variant,value=$variant" "key=Workload,value=$workload" \
++  --output json)
++
++jq --arg requested_at "$requested_at" \
++  '. + {harness: {requestedAt: $requested_at}}' \
++  <<<"$run_response" >"$run_file"
++
++task_arn=$(jq -r '.tasks[0].taskArn // empty' <<<"$run_response")
++if [[ -z $task_arn || $(jq '.failures | length' <<<"$run_response") -ne 0 ]]; then
++  jq '{failures, tasks}' <<<"$run_response" >&2
++  exit 1
++fi
++
++aws ecs wait tasks-stopped \
++  --profile klee-web \
++  --region eu-west-2 \
++  --cluster "$cluster" \
++  --tasks "$task_arn"
++
++aws ecs describe-tasks \
++  --profile klee-web \
++  --region eu-west-2 \
++  --cluster "$cluster" \
++  --tasks "$task_arn" \
++  --output json >"$task_file"
++
++task_id=${task_arn##*/}
++log_stream="runner/$container/$task_id"
++for _ in $(seq 1 30); do
++  if aws logs get-log-events \
++    --profile klee-web \
++    --region eu-west-2 \
++    --log-group-name "$log_group" \
++    --log-stream-name "$log_stream" \
++    --start-from-head \
++    --output json >"$log_file.tmp" 2>/dev/null; then
++    mv -- "$log_file.tmp" "$log_file"
++    break
++  fi
++  sleep 2
++done
++
++if [[ ! -f $log_file ]]; then
++  rm -f -- "$log_file.tmp"
++  printf 'CloudWatch log stream did not become available: %s\n' "$log_stream" >&2
++  exit 1
++fi
++
++jq '.tasks[0] | {
++  taskArn,
++  imageDigest: .containers[0].imageDigest,
++  createdAt,
++  pullStartedAt,
++  pullStoppedAt,
++  startedAt,
++  executionStoppedAt,
++  stoppingAt,
++  stoppedAt,
++  stopCode,
++  stoppedReason,
++  exitCode: .containers[0].exitCode,
++  reason: .containers[0].reason
++}' "$task_file"
++jq -r '.events[].message' "$log_file"
++
++exit_code=$(jq -r '.tasks[0].containers[0].exitCode // -1' "$task_file")
++if [[ $exit_code -ne 0 ]]; then
++  printf 'Runner container exited with code %s.\n' "$exit_code" >&2
++  exit 1
++fi

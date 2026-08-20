@@ -181,3 +181,5 @@ request. Use the `Agent task` issue template for issues intended for automation.
 ## Design
 
 [`docs/architecture.md`](docs/architecture.md) is the overview: how the frontend, backend, runner, broker, and store fit together. The ADRs in `docs/adr/` record why each decision was made, one per major choice.
+
+The [thesis source-evidence bundle](docs/thesis-evidence/) records the exact commit ranges, retained patches, and per-file accounting used in the portability evaluation. The thesis remains self-contained. The bundle provides supplementary traceability.

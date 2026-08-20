@@ -1,0 +1,101 @@
+experiment,accounting_unit,file,category,additions,deletions,changed_lines,note
+C01,aws-provider-transition,.github/workflows/ci.yml,validation-and-tooling,27,0,27,Deployment CI
+C01,aws-provider-transition,.gitignore,shared-deployment,14,0,14,Deployment state exclusions
+C01,aws-provider-transition,Makefile,shared-deployment,2,2,4,Deployment commands
+C01,aws-provider-transition,README.md,documentation,16,13,29,Deployment entry point
+C01,aws-provider-transition,deploy/bootstrap-host.sh,shared-deployment,101,0,101,Provider-neutral host bootstrap
+C01,aws-provider-transition,deploy/cloud-init.yaml.tftpl,shared-deployment,61,0,61,Provider-neutral first-boot payload
+C01,aws-provider-transition,deploy/compose.production.yml,shared-deployment,13,0,13,Production Compose override
+C01,aws-provider-transition,deploy/deployment.env.tftpl,shared-deployment,19,0,19,Runtime environment template
+C01,aws-provider-transition,deploy/klee-web.service,shared-deployment,27,0,27,Deployment service lifecycle
+C01,aws-provider-transition,deploy/pull-images.sh,shared-deployment,61,0,61,Immutable image activation
+C01,aws-provider-transition,deploy/set-admin-password.sh,shared-deployment,37,0,37,Administrator credential activation
+C01,aws-provider-transition,docker-compose.override.yml,shared-deployment,10,0,10,Local build separation
+C01,aws-provider-transition,docker-compose.yml,shared-deployment,5,4,9,Deployment-configurable runtime values
+C01,aws-provider-transition,docs/README.md,documentation,2,1,3,Documentation index
+C01,aws-provider-transition,docs/architecture.md,documentation,13,4,17,Deployment architecture
+C01,aws-provider-transition,docs/deployment/aws.md,documentation,312,0,312,AWS lifecycle runbook
+C01,aws-provider-transition,frontend/e2e/serve-stack.sh,validation-and-tooling,1,1,2,Local Compose selection correction
+C01,aws-provider-transition,infra/aws/.terraform.lock.hcl,generated-tracked,25,0,25,AWS provider lock
+C01,aws-provider-transition,infra/aws/main.tf,target-specific-infrastructure,271,0,271,AWS resource graph
+C01,aws-provider-transition,infra/aws/outputs.tf,target-specific-infrastructure,35,0,35,AWS deployment outputs
+C01,aws-provider-transition,infra/aws/provision-tls.sh.tftpl,target-specific-infrastructure,80,0,80,AWS IP certificate adapter
+C01,aws-provider-transition,infra/aws/variables.tf,target-specific-infrastructure,199,0,199,AWS deployment inputs
+C01,aws-provider-transition,infra/aws/versions.tf,target-specific-infrastructure,10,0,10,AWS provider requirements
+C02,role-separation,.github/workflows/ci.yml,validation-and-tooling,20,0,20,Multi-root and role validation
+C02,role-separation,.pre-commit-config.yaml,validation-and-tooling,1,0,1,Compose tag parser exclusion
+C02,role-separation,README.md,documentation,12,8,20,Topology entry point
+C02,role-separation,deploy/bootstrap-host.sh,shared-deployment,61,34,95,Role-aware host bootstrap
+C02,role-separation,deploy/cloud-init.yaml.tftpl,shared-deployment,15,2,17,Role file transport
+C02,role-separation,deploy/compose-deployment.sh,shared-deployment,107,0,107,Role-aware Compose launcher
+C02,role-separation,deploy/compose.worker.yml,shared-deployment,3,0,3,Worker Compose override
+C02,role-separation,deploy/klee-web.service,shared-deployment,4,5,9,Role-aware service lifecycle
+C02,role-separation,deploy/pull-images.sh,shared-deployment,26,15,41,Role-aware image pulling
+C02,role-separation,docker-compose.yml,shared-deployment,6,5,11,External Redis and Worker identity inputs
+C02,role-separation,docs/README.md,documentation,2,1,3,Documentation index
+C02,role-separation,docs/architecture.md,documentation,20,0,20,Role-separated architecture
+C02,role-separation,docs/deployment/aws-multi-vm.md,documentation,391,0,391,Role-separation runbook
+C02,role-separation,infra/aws-multi-vm/.terraform.lock.hcl,generated-tracked,25,0,25,AWS provider lock
+C02,role-separation,infra/aws-multi-vm/main.tf,target-specific-infrastructure,456,0,456,Role-separated AWS graph
+C02,role-separation,infra/aws-multi-vm/outputs.tf,target-specific-infrastructure,72,0,72,Role-separated outputs
+C02,role-separation,infra/aws-multi-vm/variables.tf,target-specific-infrastructure,207,0,207,Role-separated inputs
+C02,role-separation,infra/aws-multi-vm/versions.tf,target-specific-infrastructure,10,0,10,AWS provider requirements
+C02,role-aware-provider-integration,infra/aws/main.tf,target-specific-infrastructure,2,0,2,Role inputs for existing AWS adapter
+C03,azure-provider-transition,.github/workflows/ci.yml,validation-and-tooling,4,1,5,Azure root validation
+C03,azure-provider-transition,README.md,documentation,8,6,14,Azure entry point
+C03,azure-provider-transition,docs/architecture.md,documentation,1,1,2,Azure architecture placement
+C03,azure-provider-transition,docs/deployment/azure.md,documentation,328,0,328,Azure lifecycle runbook
+C03,azure-provider-transition,infra/azure/.terraform.lock.hcl,generated-tracked,22,0,22,AzureRM provider lock
+C03,azure-provider-transition,infra/azure/main.tf,target-specific-infrastructure,236,0,236,Azure resource graph
+C03,azure-provider-transition,infra/azure/outputs.tf,target-specific-infrastructure,41,0,41,Azure deployment outputs
+C03,azure-provider-transition,infra/azure/provision-tls.sh.tftpl,target-specific-infrastructure,79,0,79,Azure IP certificate adapter
+C03,azure-provider-transition,infra/azure/variables.tf,target-specific-infrastructure,203,0,203,Azure deployment inputs
+C03,azure-provider-transition,infra/azure/versions.tf,target-specific-infrastructure,10,0,10,Azure provider requirements
+C04,role-aware-provider-integration,infra/azure/main.tf,target-specific-infrastructure,2,0,2,Role inputs for existing Azure adapter
+C05,maintenance-lifecycle,.github/workflows/ci.yml,validation-and-tooling,1,0,1,Maintenance script validation
+C05,maintenance-lifecycle,README.md,documentation,3,1,4,Maintenance entry point
+C05,maintenance-lifecycle,backend/tests/unit/test_celery_app.py,validation-and-tooling,2,2,4,Early-ack explanation correction
+C05,maintenance-lifecycle,deploy/bootstrap-host.sh,shared-deployment,8,0,8,Package policy
+C05,maintenance-lifecycle,deploy/cloud-init.yaml.tftpl,shared-deployment,10,0,10,Maintenance script transport
+C05,maintenance-lifecycle,deploy/compose-deployment.sh,shared-deployment,5,1,6,Deferred Worker start
+C05,maintenance-lifecycle,deploy/maintain-host.sh,shared-deployment,15,0,15,Provider-neutral maintenance operation
+C05,maintenance-lifecycle,deploy/set-admin-password.sh,shared-deployment,5,0,5,Reboot-safe credential guard
+C05,maintenance-lifecycle,docs/README.md,documentation,2,0,2,Documentation index
+C05,maintenance-lifecycle,docs/deployment/aws-multi-vm.md,documentation,9,0,9,Multi-host maintenance entry point
+C05,maintenance-lifecycle,docs/deployment/aws.md,documentation,8,0,8,AWS maintenance entry point
+C05,maintenance-lifecycle,docs/deployment/azure.md,documentation,9,0,9,Azure maintenance entry point
+C05,maintenance-lifecycle,docs/deployment/host-maintenance.md,documentation,165,0,165,Maintenance runbook
+C05,maintenance-lifecycle,infra/aws-multi-vm/main.tf,target-specific-infrastructure,1,0,1,Maintenance script transport
+C05,maintenance-lifecycle,infra/aws/main.tf,target-specific-infrastructure,1,0,1,Maintenance script transport
+C05,maintenance-lifecycle,infra/azure/main.tf,target-specific-infrastructure,1,0,1,Maintenance script transport
+C06,doc-deployment,.github/workflows/ci.yml,validation-and-tooling,13,2,15,DoC script and service validation
+C06,doc-deployment,deploy/bootstrap-host.sh,shared-deployment,21,6,27,Jammy and Noble package selection
+C06,doc-deployment,infra/doc/configure-redis-firewall.sh,target-specific-infrastructure,67,0,67,Source-restricted Redis ingress
+C06,doc-deployment,infra/doc/klee-web-redis-firewall.conf,target-specific-infrastructure,3,0,3,Firewall service configuration
+C06,doc-deployment,infra/doc/klee-web-redis-firewall.service,target-specific-infrastructure,15,0,15,Firewall service ordering
+C06,doc-deployment,infra/doc/provision-tls.sh,target-specific-infrastructure,52,0,52,DoC certificate provisioning
+P01,ubuntu-22.04-host,deploy/bootstrap-host.sh,shared-deployment,6,6,12,Jammy host guard and package suffixes
+P01,ubuntu-22.04-host,infra/aws/main.tf,target-specific-infrastructure,2,2,4,Canonical Jammy image verification
+P01,ubuntu-22.04-host,infra/aws/variables.tf,target-specific-infrastructure,2,2,4,Canonical Jammy image selection
+P02,ubuntu-26.04-host,deploy/bootstrap-host.sh,shared-deployment,6,6,12,Resolute host guard and package suffixes
+P02,ubuntu-26.04-host,infra/aws/main.tf,target-specific-infrastructure,2,2,4,Canonical Resolute image verification
+P02,ubuntu-26.04-host,infra/aws/variables.tf,target-specific-infrastructure,2,2,4,Canonical Resolute image selection
+P03,debian-13-host,deploy/bootstrap-host.sh,shared-deployment,8,8,16,Debian host guard and package repository
+P03,debian-13-host,infra/aws/main.tf,target-specific-infrastructure,6,6,12,Debian publisher and image selection
+P03,debian-13-host,infra/aws/outputs.tf,target-specific-infrastructure,6,6,12,Debian login output
+P03,debian-13-host,infra/aws/variables.tf,target-specific-infrastructure,6,6,12,Debian image and host inputs
+P04,managed-redis,deploy/compose-deployment.sh,shared-deployment,15,0,15,Managed state activation
+P04,managed-redis,deploy/compose.managed-redis.yml,shared-deployment,25,0,25,Managed Redis Compose substitution
+P04,managed-redis,deploy/set-admin-password.sh,shared-deployment,36,0,36,Redis credential activation and validation
+P04,managed-redis,infra/aws/main.tf,target-specific-infrastructure,120,20,140,ElastiCache resource graph
+P04,managed-redis,infra/aws/outputs.tf,target-specific-infrastructure,12,0,12,Managed Redis endpoint outputs
+P04,managed-redis,infra/aws/variables.tf,target-specific-infrastructure,33,0,33,ElastiCache inputs
+P05,fargate-runner-screen,infra/aws-fargate-screening/.terraform.lock.hcl,generated-tracked,25,0,25,AWS provider lock
+P05,fargate-runner-screen,infra/aws-fargate-screening/main.tf,target-specific-infrastructure,218,0,218,Fargate screening resources
+P05,fargate-runner-screen,infra/aws-fargate-screening/run-task.sh,validation-and-tooling,156,0,156,Direct Runner execution harness
+P06,azure-jobs-runner-screen,infra/azure-container-apps-screening/.terraform.lock.hcl,generated-tracked,22,0,22,AzureRM provider lock
+P06,azure-jobs-runner-screen,infra/azure-container-apps-screening/main.tf,target-specific-infrastructure,162,0,162,Container Apps Jobs screening resources
+P06,azure-jobs-runner-screen,infra/azure-container-apps-screening/run-job.sh,validation-and-tooling,168,0,168,Direct Runner execution harness
+P07,cloud-run-runner-screen,infra/google-cloud-run-screening/.terraform.lock.hcl,generated-tracked,22,0,22,Google provider lock
+P07,cloud-run-runner-screen,infra/google-cloud-run-screening/main.tf,target-specific-infrastructure,213,0,213,Cloud Run Jobs screening resources
+P07,cloud-run-runner-screen,infra/google-cloud-run-screening/run-job.sh,validation-and-tooling,145,0,145,Direct Runner execution harness

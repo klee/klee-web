@@ -8,5 +8,6 @@ In-repo documentation. Currently:
 - **`deployment/aws-multi-vm.md`**: deploy one web/state VM and one or two private Worker VMs on AWS EC2.
 - **`deployment/azure.md`**: provision, operate, and destroy the single-VM Azure deployment.
 - **`deployment/host-maintenance.md`**: apply Ubuntu updates to single-VM and role-separated deployments.
+- **`thesis-evidence/`**: exact commit comparisons, retained patches, and file-level source accounting for the thesis portability evaluation.
 
 Cross-cutting diagrams, runbooks, and deployment guides live here. Component-specific details stay beside their implementation.

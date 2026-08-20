@@ -1,0 +1,368 @@
+diff --git a/deploy/compose-deployment.sh b/deploy/compose-deployment.sh
+index 57aa09d..7b11cd3 100755
+--- a/deploy/compose-deployment.sh
++++ b/deploy/compose-deployment.sh
+@@ -3,6 +3,7 @@ set -euo pipefail
+ 
+ readonly DEPLOYMENT_ENV=/etc/klee-web/deployment.env
+ readonly RUNTIME_ENV=/etc/klee-web/runtime.env
++readonly MANAGED_REDIS_ENV=/etc/klee-web/managed-redis.env
+ readonly DEPLOYMENT_DIRECTORY=/opt/klee-web
+ 
+ if ((EUID != 0)); then
+@@ -34,6 +35,20 @@ set -a
+ . "$RUNTIME_ENV"
+ set +a
+ 
++if [[ ${MANAGED_REDIS:-false} == true ]]; then
++  if [[ $action == up && ! -f $MANAGED_REDIS_ENV ]]; then
++    printf 'Managed Redis credentials are missing: %s\n' "$MANAGED_REDIS_ENV" >&2
++    exit 1
++  fi
++  if [[ -f $MANAGED_REDIS_ENV ]]; then
++    set -a
++    # This root-only activation file is unavailable during static analysis.
++    # shellcheck disable=SC1090
++    . "$MANAGED_REDIS_ENV"
++    set +a
++  fi
++fi
++
+ readonly deployment_role=${DEPLOYMENT_ROLE:-single}
+ compose_options=(
+   --project-name klee-web
+diff --git a/deploy/set-admin-password.sh b/deploy/set-admin-password.sh
+index f7661e3..0b52c83 100755
+--- a/deploy/set-admin-password.sh
++++ b/deploy/set-admin-password.sh
+@@ -3,6 +3,7 @@ set -euo pipefail
+ 
+ readonly DEPLOYMENT_ENV=/etc/klee-web/deployment.env
+ readonly ADMIN_HTPASSWD=/etc/klee-web/admin.htpasswd
++readonly MANAGED_REDIS_ENV=/etc/klee-web/managed-redis.env
+ 
+ if ((EUID != 0)); then
+   printf 'set-admin-password.sh must run as root\n' >&2
+@@ -32,6 +33,41 @@ for certificate_file in "$TLS_CERTIFICATE_FILE" "$TLS_PRIVATE_KEY_FILE"; do
+   fi
+ done
+ 
++if [[ ${MANAGED_REDIS:-false} == true ]]; then
++  : "${REDIS_ENDPOINT:?REDIS_ENDPOINT must be set}"
++  : "${BACKEND_IMAGE:?BACKEND_IMAGE must be set}"
++
++  read -r -s -p 'Managed Redis AUTH token: ' redis_auth_token
++  printf '\n'
++  read -r -s -p 'Confirm managed Redis AUTH token: ' redis_auth_token_confirmation
++  printf '\n'
++  if [[ $redis_auth_token != "$redis_auth_token_confirmation" ]]; then
++    printf 'Managed Redis AUTH tokens do not match\n' >&2
++    exit 1
++  fi
++  if [[ ! $redis_auth_token =~ ^[[:alnum:]]{32,128}$ ]]; then
++    printf 'Managed Redis AUTH token must contain 32 to 128 letters or digits\n' >&2
++    exit 1
++  fi
++
++  umask 077
++  printf 'REDIS_URL=rediss://:%s@%s:6379/0\nCELERY_BROKER_URL=rediss://:%s@%s:6379/1?ssl_cert_reqs=required\n' \
++    "$redis_auth_token" "$REDIS_ENDPOINT" "$redis_auth_token" "$REDIS_ENDPOINT" \
++    > "$MANAGED_REDIS_ENV"
++  chmod 0600 "$MANAGED_REDIS_ENV"
++
++  # Use the application's Redis client to reject bad credentials before startup.
++  if ! docker run --rm --network host --env-file "$MANAGED_REDIS_ENV" \
++    "$BACKEND_IMAGE" python -c \
++    'import os; from kombu import Connection; from redis import Redis; Redis.from_url(os.environ["REDIS_URL"], socket_connect_timeout=5, socket_timeout=5).ping(); broker = Connection(os.environ["CELERY_BROKER_URL"]); broker.ensure_connection(max_retries=0); broker.close()' \
++    >/dev/null 2>&1; then
++    rm -f "$MANAGED_REDIS_ENV"
++    printf 'Managed Redis TLS/AUTH validation failed. KLEE Web was not started.\n' >&2
++    printf 'Rerun set-admin-password.sh and enter the Redis token again.\n' >&2
++    exit 1
++  fi
++fi
++
+ # -c intentionally replaces the file. Omit it only if multiple usernames are supported.
+ htpasswd -cB "$ADMIN_HTPASSWD" admin
+ # The private parent protects the host file. nginx workers need read access after mounting.
+diff --git a/infra/aws/main.tf b/infra/aws/main.tf
+index 67e2ad0..b0536c0 100644
+--- a/infra/aws/main.tf
++++ b/infra/aws/main.tf
+@@ -4,7 +4,7 @@ provider "aws" {
+ 
+   default_tags {
+     tags = {
+-      Environment = "aws-baseline"
++      Environment = "managed-redis"
+       ManagedBy   = "Terraform"
+       Project     = "klee-web"
+     }
+@@ -48,24 +48,40 @@ data "aws_ami" "ubuntu" {
+ 
+ # Render the provider-independent deployment files and AWS TLS input for cloud-init.
+ locals {
+-  resource_name      = "klee-web-aws-baseline"
+-  vpc_cidr           = format("%d.%d.%d.%d/%d", 10, 0, 0, 0, 16)
+-  public_subnet_cidr = format("%d.%d.%d.%d/%d", 10, 0, 1, 0, 24)
+-  all_ipv4_cidr      = format("%d.%d.%d.%d/%d", 0, 0, 0, 0, 0)
+-
+-  deployment_environment = templatefile("${path.module}/../../deploy/deployment.env.tftpl", {
+-    backend_image          = var.backend_image
+-    frontend_image         = var.frontend_image
+-    runner_image           = var.runner_image
+-    worker_replicas        = var.worker_replicas
+-    worker_concurrency_max = var.worker_concurrency_max
+-    redis_maxmemory        = var.redis_maxmemory
+-    runner_cpus            = var.runner_cpus
+-    runner_memory_mb       = var.runner_memory_mb
+-    runner_swap_mb         = var.runner_swap_mb
+-    runner_pids_limit      = var.runner_pids_limit
+-    runner_storage_mb      = var.runner_storage_mb
+-  })
++  resource_name             = "klee-web-managed-redis"
++  vpc_cidr                  = format("%d.%d.%d.%d/%d", 10, 0, 0, 0, 16)
++  public_subnet_cidr        = format("%d.%d.%d.%d/%d", 10, 0, 1, 0, 24)
++  replica_availability_zone = "eu-west-2b"
++  cache_subnets = {
++    primary = {
++      availability_zone = var.availability_zone
++      cidr_block        = format("%d.%d.%d.%d/%d", 10, 0, 2, 0, 24)
++    }
++    replica = {
++      availability_zone = local.replica_availability_zone
++      cidr_block        = format("%d.%d.%d.%d/%d", 10, 0, 3, 0, 24)
++    }
++  }
++  all_ipv4_cidr = format("%d.%d.%d.%d/%d", 0, 0, 0, 0, 0)
++
++  deployment_environment = join("\n", [
++    trimspace(templatefile("${path.module}/../../deploy/deployment.env.tftpl", {
++      backend_image          = var.backend_image
++      frontend_image         = var.frontend_image
++      runner_image           = var.runner_image
++      worker_replicas        = var.worker_replicas
++      worker_concurrency_max = var.worker_concurrency_max
++      redis_maxmemory        = var.redis_maxmemory
++      runner_cpus            = var.runner_cpus
++      runner_memory_mb       = var.runner_memory_mb
++      runner_swap_mb         = var.runner_swap_mb
++      runner_pids_limit      = var.runner_pids_limit
++      runner_storage_mb      = var.runner_storage_mb
++    })),
++    "MANAGED_REDIS=true",
++    "REDIS_ENDPOINT=${aws_elasticache_replication_group.main.primary_endpoint_address}",
++    "",
++  ])
+ 
+   provision_tls = templatefile("${path.module}/provision-tls.sh.tftpl", {
+     public_ip = aws_eip.public.public_ip
+@@ -74,7 +90,7 @@ locals {
+   # Base64 preserves embedded shell and Compose syntax when cloud-init parses YAML.
+   cloud_init = templatefile("${path.module}/../../deploy/cloud-init.yaml.tftpl", {
+     docker_compose_b64     = filebase64("${path.module}/../../docker-compose.yml")
+-    compose_production_b64 = filebase64("${path.module}/../../deploy/compose.production.yml")
++    compose_production_b64 = filebase64("${path.module}/../../deploy/compose.managed-redis.yml")
+     compose_worker_b64     = filebase64("${path.module}/../../deploy/compose.worker.yml")
+     bootstrap_host_b64     = filebase64("${path.module}/../../deploy/bootstrap-host.sh")
+     maintain_host_b64      = filebase64("${path.module}/../../deploy/maintain-host.sh")
+@@ -139,6 +155,26 @@ resource "aws_route_table_association" "public" {
+   route_table_id = aws_route_table.public.id
+ }
+ 
++# Place managed Redis nodes in two private subnets with only VPC-local routing.
++resource "aws_subnet" "cache" {
++  for_each = local.cache_subnets
++
++  vpc_id                  = aws_vpc.main.id
++  availability_zone       = each.value.availability_zone
++  cidr_block              = each.value.cidr_block
++  map_public_ip_on_launch = false
++
++  tags = {
++    Name = "${local.resource_name}-cache-${each.key}"
++  }
++}
++
++# Make both cache Availability Zones available before the replica extension.
++resource "aws_elasticache_subnet_group" "main" {
++  name       = "${local.resource_name}-subnets"
++  subnet_ids = [for subnet in aws_subnet.cache : subnet.id]
++}
++
+ # Define the firewall boundary around the EC2 host.
+ resource "aws_security_group" "host" {
+   name        = local.resource_name
+@@ -150,6 +186,27 @@ resource "aws_security_group" "host" {
+   }
+ }
+ 
++# Give the managed cache a distinct network identity from the application host.
++resource "aws_security_group" "cache" {
++  name        = "${local.resource_name}-cache"
++  description = "Managed Redis reachable only from the KLEE Web host"
++  vpc_id      = aws_vpc.main.id
++
++  tags = {
++    Name = "${local.resource_name}-cache"
++  }
++}
++
++# Permit Redis only from network interfaces carrying the application-host identity.
++resource "aws_vpc_security_group_ingress_rule" "redis" {
++  security_group_id            = aws_security_group.cache.id
++  referenced_security_group_id = aws_security_group.host.id
++  description                  = "TLS Redis from the KLEE Web host"
++  from_port                    = 6379
++  ip_protocol                  = "tcp"
++  to_port                      = 6379
++}
++
+ # Permit SSH only from the operator's current public address.
+ resource "aws_vpc_security_group_ingress_rule" "ssh" {
+   security_group_id = aws_security_group.host.id
+@@ -188,6 +245,49 @@ resource "aws_vpc_security_group_egress_rule" "internet" {
+   ip_protocol       = "-1"
+ }
+ 
++# Preserve the self-hosted cache eviction contract without fixing managed memory size.
++resource "aws_elasticache_parameter_group" "main" {
++  name   = "${local.resource_name}-redis7"
++  family = "redis7"
++
++  parameter {
++    name  = "maxmemory-policy"
++    value = "volatile-lru"
++  }
++}
++
++# Start with one primary, then add one replica through the experiment variable.
++resource "aws_elasticache_replication_group" "main" {
++  replication_group_id = local.resource_name
++  description          = "KLEE Web managed Redis portability experiment"
++
++  engine             = "redis"
++  engine_version     = "7.1"
++  cluster_mode       = "disabled"
++  node_type          = var.redis_node_type
++  num_cache_clusters = 1 + var.redis_replica_count
++  preferred_cache_cluster_azs = slice(
++    [var.availability_zone, local.replica_availability_zone],
++    0,
++    1 + var.redis_replica_count,
++  )
++  port                 = 6379
++  parameter_group_name = aws_elasticache_parameter_group.main.name
++  subnet_group_name    = aws_elasticache_subnet_group.main.name
++  security_group_ids   = [aws_security_group.cache.id]
++
++  transit_encryption_enabled = true
++  transit_encryption_mode    = "required"
++  auth_token                 = var.redis_auth_token
++  auth_token_update_strategy = "SET"
++  at_rest_encryption_enabled = true
++
++  automatic_failover_enabled = var.redis_replica_count == 1
++  multi_az_enabled           = var.redis_replica_count == 1
++  snapshot_retention_limit   = 0
++  apply_immediately          = true
++}
++
+ # Register only the public half of the 1Password-held SSH key.
+ resource "aws_key_pair" "operator" {
+   key_name   = "${local.resource_name}-operator"
+diff --git a/infra/aws/outputs.tf b/infra/aws/outputs.tf
+index 15a7cc7..f8d630f 100644
+--- a/infra/aws/outputs.tf
++++ b/infra/aws/outputs.tf
+@@ -33,3 +33,15 @@ output "ssh_command" {
+   description = "SSH command for the Ubuntu operator account."
+   value       = "ssh ubuntu@${aws_eip.public.public_ip}"
+ }
++
++# Identify the managed state service for inspection and controlled failover.
++output "redis_replication_group_id" {
++  description = "ElastiCache replication group used by KLEE Web."
++  value       = aws_elasticache_replication_group.main.id
++}
++
++# Expose only the private endpoint metadata, never the Redis AUTH token.
++output "redis_primary_endpoint" {
++  description = "Private TLS endpoint for the managed Redis primary."
++  value       = aws_elasticache_replication_group.main.primary_endpoint_address
++}
+diff --git a/infra/aws/variables.tf b/infra/aws/variables.tf
+index d672755..22c1a80 100644
+--- a/infra/aws/variables.tf
++++ b/infra/aws/variables.tf
+@@ -131,6 +131,39 @@ variable "redis_maxmemory" {
+   default     = "256mb"
+ }
+ 
++variable "redis_node_type" {
++  description = "ElastiCache node type used by the managed Redis experiment."
++  type        = string
++  default     = "cache.t4g.micro"
++
++  validation {
++    condition     = can(regex("^cache\\.[a-z0-9.-]+$", var.redis_node_type))
++    error_message = "redis_node_type must be an ElastiCache node type."
++  }
++}
++
++variable "redis_replica_count" {
++  description = "Managed Redis replica count: zero for substitution, one for failover."
++  type        = number
++  default     = 0
++
++  validation {
++    condition     = contains([0, 1], var.redis_replica_count)
++    error_message = "redis_replica_count must be zero or one."
++  }
++}
++
++variable "redis_auth_token" {
++  description = "Temporary AUTH token for the managed Redis experiment."
++  type        = string
++  sensitive   = true
++
++  validation {
++    condition     = can(regex("^[A-Za-z0-9]{32,128}$", var.redis_auth_token))
++    error_message = "redis_auth_token must contain 32 to 128 letters or digits."
++  }
++}
++
+ variable "runner_cpus" {
+   description = "CPU Cap applied to each Runner container."
+   type        = number
+diff --git a/deploy/compose.managed-redis.yml b/deploy/compose.managed-redis.yml
+new file mode 100644
+index 0000000..ab48379
+--- /dev/null
++++ b/deploy/compose.managed-redis.yml
+@@ -0,0 +1,25 @@
++services:
++  redis: !reset null
++
++  api:
++    depends_on: !reset null
++
++  worker:
++    depends_on: !reset null
++
++  nginx:
++    # Keep this override self-contained so only managed-service deployments receive it.
++    # Duplicating the TLS mounts avoids adding an inert cloud-init input to every provider.
++    volumes:
++      - type: bind
++        source: ${TLS_CERTIFICATE_FILE:?TLS_CERTIFICATE_FILE must be set}
++        target: /etc/nginx/certs/selfsigned.crt
++        read_only: true
++
++      - type: bind
++        source: ${TLS_PRIVATE_KEY_FILE:?TLS_PRIVATE_KEY_FILE must be set}
++        target: /etc/nginx/certs/selfsigned.key
++        read_only: true
++
++volumes:
++  redis-data: !reset null
