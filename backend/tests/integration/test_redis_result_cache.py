@@ -29,14 +29,21 @@ pytestmark = pytest.mark.skipif(
 
 
 @pytest.fixture
-async def cache():
+async def redis_client():
     client = Redis.from_url(_REDIS_URL)
-    await client.flushdb()
     try:
-        yield RedisResultCache(client)
+        yield client
     finally:
-        await client.flushdb()
         await client.aclose()
+
+
+@pytest.fixture
+async def cache(redis_client):
+    await redis_client.flushdb()
+    try:
+        yield RedisResultCache(redis_client)
+    finally:
+        await redis_client.flushdb()
 
 
 @pytest.fixture
@@ -58,15 +65,22 @@ async def test_round_trips_result_through_real_redis(cache, sample_result):
     assert await cache.get("k") == sample_result
 
 
-async def test_get_miss_returns_none(cache):
+async def test_get_miss_returns_none_without_creating_key(cache, redis_client):
     assert await cache.get("absent") is None
+    assert await redis_client.exists("cache:absent") == 0
 
 
-async def test_set_applies_bounded_ttl(cache, sample_result):
+async def test_set_applies_bounded_ttl(cache, sample_result, redis_client):
     await cache.set("k", sample_result)
-    client = Redis.from_url(_REDIS_URL)
-    try:
-        ttl = await client.ttl("cache:k")
-    finally:
-        await client.aclose()
+    ttl = await redis_client.ttl("cache:k")
     assert 0 < ttl <= _CACHE_TTL_SECONDS
+
+
+async def test_cache_hit_refreshes_ttl(cache, sample_result, redis_client):
+    await cache.set("k", sample_result)
+    await redis_client.expire("cache:k", 10)
+
+    assert await cache.get("k") == sample_result
+    ttl = await redis_client.ttl("cache:k")
+
+    assert _CACHE_TTL_SECONDS - 1 <= ttl <= _CACHE_TTL_SECONDS

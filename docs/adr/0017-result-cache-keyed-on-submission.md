@@ -4,6 +4,8 @@
 
 > **Amendment, 2026-07-18:** ADR-0024 retires `InMemoryResultCache`. The cache-key and API short-circuit decisions remain.
 
+> **Amendment, 2026-08-22:** Successful Redis cache reads now refresh the result's 24-hour retention window. Job-record reads retain their existing fixed-expiry behavior.
+
 ## Context
 
 Stage 2 caches results so an identical resubmission does not run KLEE again. The brief calls the key a "program hash", but the program text alone is the wrong key. A submission is source plus flags, and the flags change the result: `query_format=kquery` adds a path constraint per test case, `max_time` and `max_memory` bound exploration. A source-only key would let a `query_format=none` run satisfy a later `kquery` submission and return results missing the constraints the user asked for.
@@ -22,12 +24,15 @@ The read sits in `POST /jobs` before dispatch, the write in `run_job` after a co
 
 A `ResultCache` Protocol with `get` and `set` carries `InMemoryResultCache` and `RedisResultCache`, and `get_cache` selects on `REDIS_URL`, the same shape as `get_job_store` (ADR-0014). The in-memory cache is the zero-config default, so the in-process path caches too.
 
-The TTL is a flat 24h, set on write and never refreshed on read. A fixed lifetime is deliberate, because it is also the only invalidation. A runner-image change would otherwise serve old results forever, and a TTL refreshed on every hit would keep a popular stale entry alive against exactly that. It covers the common case, a user resubmitting within a session, and bounds how long a stale entry can outlive an image bump.
+The result-cache TTL is a sliding 24-hour retention window. A write starts the window, and every successful read restores it to the full 24 hours. `RedisResultCache.get` uses Redis `GETEX`, so retrieving the value and refreshing its expiry are one atomic cache operation; a miss returns no value and does not create a key. Because `GETEX` updates expiry metadata, a cache hit is also a Redis write and the expiry update is recorded in Redis's append-only file (AOF).
+
+This sliding policy applies only to result-cache entries. `RedisJobStore.get` continues to read a job record without changing its expiry, so job-record reads retain their fixed-expiry behavior; job-record writes keep their existing TTL refresh semantics from ADR-0014.
 
 ## Consequences
 
 - An identical resubmission returns on the first poll and never touches the worker pool. The short-circuit is additive: the contract and the frontend are untouched, the ADR-0001 promise kept again.
 - A program that always times out re-runs on every submission. The cache helps least where a run costs most. This is the price of caching only reproducible results, and it is the right price.
+- A popular completed result can remain cached while it continues to receive hits. Each hit writes updated expiry metadata to Redis and its AOF.
 - There is no version in the key, so a runner-image bump serves stale results until the 24h TTL clears them. Acceptable for a rare, deliberate bump, and parked as a future issue rather than built now.
 - Concurrent identical submissions both run. The cache dedupes later submissions, not simultaneous ones. The write is idempotent, so the cost is wasted compute in a narrow window, never a wrong result. Single-flight is parked as a future issue.
 - The read and the write live in different modules. That is the two halves of a cache in their natural places, the request and the result, over one shared `cache_key`, not duplicated logic.
