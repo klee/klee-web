@@ -109,6 +109,52 @@ int main() {
 
 
 @pytest.mark.parametrize("runtime", RUNTIMES)
+async def test_runner_hard_timeout_covers_the_complete_entrypoint(runtime):
+    name = f"klee-job-{uuid4()}"
+    runtime_args = ["--runtime", runtime] if runtime is not None else []
+    started_at = asyncio.get_running_loop().time()
+    process = subprocess.Popen(
+        [
+            "docker",
+            "run",
+            *runtime_args,
+            "-i",
+            "--rm",
+            "--name",
+            name,
+            "-e",
+            "KLEE_MAX_TIME=600",
+            "-e",
+            "KLEE_RUNNER_HARD_TIMEOUT=1",
+            DEFAULT_RUNNER_IMAGE,
+        ],
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+    )
+
+    try:
+        returncode = await asyncio.to_thread(process.wait, timeout=10)
+        elapsed = asyncio.get_running_loop().time() - started_at
+        inspect = await asyncio.to_thread(
+            subprocess.run,
+            ["docker", "inspect", name],
+            capture_output=True,
+        )
+
+        assert returncode == 124
+        assert elapsed >= 1
+        assert inspect.returncode != 0
+    finally:
+        for stream in (process.stdin, process.stdout, process.stderr):
+            if stream is not None:
+                stream.close()
+        if process.poll() is None:
+            process.kill()
+        subprocess.run(["docker", "rm", "-f", name], capture_output=True)
+
+
+@pytest.mark.parametrize("runtime", RUNTIMES)
 async def test_docker_runner_runs_get_sign_end_to_end(runtime):
     runner = DockerKleeRunner(TEST_CAPS, runtime=runtime)
     result = await asyncio.wait_for(

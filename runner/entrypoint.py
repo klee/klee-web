@@ -51,10 +51,30 @@ OUTPUT_DIR = Path("/work/output")
 KLEE_INCLUDE = "/home/klee/klee_src/include"
 GRACE_SECONDS = 10  # after forwarding the halt, SIGKILL KLEE if it has not flushed and exited
 HOST_TIMEOUT_MARGIN = 15  # bound KLEE at max_time + this, for when it overruns its own --max-time
-REPLAY_PER_TEST_TIMEOUT = 10  # KLEE_REPLAY_TIMEOUT: read by replay_driver.c, kills one hanging replay
+REPLAY_PER_TEST_TIMEOUT = 10  # replay_driver.c kills one hanging path after this many seconds
 REPLAY_MIN_LEFTOVER = 1  # skip replay entirely below this many seconds of budget left
 REPLAY_NOSLEEP_SO = "/usr/local/lib/replay_nosleep.so"  # LD_PRELOAD: no-op sleeps in replay
 ZYGOTE_OBJ_DIR = "/usr/local/lib/klee-replay-zygote"  # prebuilt by the Dockerfile
+RUNNER_HARD_TIMEOUT_MARGIN = 60
+
+
+def _start_runner_watchdog() -> None:
+    timeout_seconds = int(
+        os.environ.get(
+            "KLEE_RUNNER_HARD_TIMEOUT",
+            int(os.environ.get("KLEE_MAX_TIME", "60")) + RUNNER_HARD_TIMEOUT_MARGIN,
+        )
+    )
+
+    def _hard_timeout(_signum, _frame) -> None:
+        os._exit(124)
+
+    signal.signal(signal.SIGUSR1, _hard_timeout)
+    # The child remains independent of whichever Runner phase blocks PID 1.
+    if os.fork() == 0:
+        time.sleep(timeout_seconds)
+        os.kill(os.getppid(), signal.SIGUSR1)
+        os._exit(0)
 
 
 def build_klee_command(
@@ -255,4 +275,5 @@ def main() -> int:
 
 
 if __name__ == "__main__":
+    _start_runner_watchdog()
     sys.exit(main())
