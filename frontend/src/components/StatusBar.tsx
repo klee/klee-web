@@ -27,10 +27,15 @@ export function StatusBar({ source }: StatusBarProps) {
   const bytes = new TextEncoder().encode(source).length;
 
   return (
-    <div className="px-3 py-1 border-t border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-900 text-xs flex items-center gap-4 text-slate-700 dark:text-slate-300">
-      <ConnectionIndicator connection={connection} />
-      <span>{bytes} bytes</span>
-      <span className="ml-auto">KLEE {KLEE_VERSION}</span>
+    <div className="px-3 py-1 border-t border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-900 text-xs grid grid-cols-[1fr_auto_1fr] items-center text-slate-700 dark:text-slate-300">
+      <div className="flex items-center gap-4">
+        <ConnectionIndicator connection={connection} />
+        <span>{bytes} bytes</span>
+      </div>
+      <span role="note" className="font-medium text-amber-700 dark:text-amber-300">
+        Do not submit confidential source code.
+      </span>
+      <span className="justify-self-end">KLEE {KLEE_VERSION}</span>
     </div>
   );
 }
