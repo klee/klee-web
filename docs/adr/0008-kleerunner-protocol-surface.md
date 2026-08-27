@@ -2,6 +2,8 @@
 
 **Status:** Accepted, 2026-05-21
 
+> **Amendment, 2026-08-27:** `execute` now also receives the Job identifier and optional progress and parsing callbacks. The Protocol includes `cancel(job_id)`. `DockerKleeRunner` uses the identifier to name and cancel the container, while its stream transport leaves the progress callback unused. The failure split and typed result remain unchanged.
+
 ## Context
 
 Stage 1 ships `DockerKleeRunner`: shell out to `docker run`, parse the output. Stage 2 moves execution into Celery workers on separate VMs. Stage 3 may swap the container runtime. Endpoints must not change across stages, so the abstraction is held once.

@@ -15,8 +15,8 @@ FastAPI service. Receives Job submissions, enqueues them through Celery, and ret
 - `src/klee_web/flag_allowlist.py`: default-deny validation for the free-text `extra_flags` field, with per-flag boolean / bounded-integer / enum value policies (ADR-0019)
 - `src/klee_web/jobs/dispatch.py`: `JobDispatcher` protocol + `CeleryDispatcher`, which enqueues the complete `JobRequest` (ADR-0016, amended by ADR-0024)
 - `src/klee_web/jobs/run.py`: `run_job`, the Worker job body: mark running, run KLEE, write the result, cache a completed run, record the outcome, and watch for a cancel
-- `src/klee_web/jobs/store.py`: `JobStore` protocol + `RedisJobStore`. `set_partial_result` writes mid-flight progress, `set_result` flips status to `done`, `request_cancel` sets the cancel flag
-- `src/klee_web/jobs/runner.py`: `KleeRunner` protocol + `DockerKleeRunner`. Stream-only transport: source in on the container's stdin, the whole output dir back as a tar on stdout, no bind mount (ADR-0021). Backend Settings require `RUNNER_IMAGE` as a local image ID or immutable registry digest. Supported deployments pick `runsc` or `runsc-kvm`. `runc` remains an integration-test control. Every run disables the network, prevents setuid privilege escalation, makes the root read-only, and mounts bounded temporary storage at `/work`
+- `src/klee_web/jobs/store.py`: `JobStore` protocol + `RedisJobStore`. `set_partial_result` supports Runner implementations that emit progress, although the current stream-only Docker Runner does not. `set_result` flips status to `done`, and `request_cancel` sets the cancel flag
+- `src/klee_web/jobs/runner.py`: `KleeRunner` protocol + `DockerKleeRunner`. Stream-only transport: source in on the container's stdin, the whole output dir back as a tar on stdout, no bind mount (ADR-0021). Backend Settings require `RUNNER_IMAGE` as a local image ID or immutable registry digest. Supported deployments pick `runsc` or `runsc-kvm`. `runc` remains an integration-test control. Every run disables the network, prevents setuid privilege escalation, makes the root read-only, and mounts bounded temporary storage at `/work`. A Runner-owned watchdog bounds the complete container lifecycle at the requested KLEE limit plus 60 seconds
 - `src/klee_web/jobs/cache.py`: `ResultCache` protocol + `RedisResultCache`, keyed on the canonical submission, exact Runner image identity, and `JobResult` schema (ADR-0017, amended by ADR-0024)
 - `src/klee_web/jobs/telemetry.py`: `FleetTelemetry` for worker pool sizes, active/reserved jobs, and queue depth, plus `FleetControl` for changing a worker's autoscaler maximum through Celery remote control
 - `src/klee_web/jobs/usage.py`: `UsageStatsStore` protocol + `RedisUsageStatsStore` (`INCR` counters for outcomes, cache hits, and aggregate KLEE totals), read at `/admin/stats`
@@ -59,7 +59,7 @@ A dead Worker's Job is lost, not redelivered (ADR-0018, at-most-once). Celery ac
 2. Watch the worker log pick up `run_klee_job` and spawn `klee-job-{id}`. Confirm `GET /jobs/{id}` is `running`.
 3. Find the Worker with `docker compose ps worker`, then kill that container. The restart policy brings the Worker container back, but the acknowledged Job stays `running` and its sibling Runner container continues until its own bound stops it.
 4. `POST /jobs/{id}/cancel` (or click Cancel in the UI). The API writes the terminal state straight to the store, so the job resolves at once with no worker alive and the UI unblocks.
-5. The orphaned container keeps running until its own entrypoint bound stops it (up to `max_time`), then `--rm` removes it. That bounded waste is the accepted cost of not reclaiming (ADR-0018). Resubmit if you still want the result.
+5. The orphaned container keeps running until its own watchdog stops it (up to `max_time + 60` seconds), then `--rm` removes it. That bounded waste is the accepted cost of not reclaiming (ADR-0018). Resubmit if you still want the result.
 
 ### Worker pool
 

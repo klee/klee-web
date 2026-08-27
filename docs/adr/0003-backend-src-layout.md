@@ -44,7 +44,7 @@ The benefit is concrete and recurring: every packaging declaration error gets ca
 
 ### The old klee-web's `src/` is a different convention
 
-The original klee-web (`https://github.com/klee/klee-web`) has `src/` at the **project root**, with `src/db/`, `src/e2e/`, `src/klee_web/`, `src/nginx/` as siblings. That is a "all source under src" monorepo organising rule from the Django era, not per-Python-package src-layout. Superficially the same word, different intent. Worth flagging in this ADR because the surface similarity will mislead anyone reading both codebases.
+The original klee-web (`https://github.com/klee/old-klee-web`) has `src/` at the **project root**, with `src/db/`, `src/e2e/`, `src/klee_web/`, `src/nginx/` as siblings. That is a "all source under src" monorepo organising rule from the Django era, not per-Python-package src-layout. Superficially the same word, different intent. Worth flagging in this ADR because the surface similarity will mislead anyone reading both codebases.
 
 The new klee-web uses **per-Python-package src-layout**, with `src/` only under `backend/`. The frontend and runner subprojects are not Python packages and do not have a `src/` of this kind.
 
@@ -77,4 +77,4 @@ The new klee-web uses **per-Python-package src-layout**, with `src/` only under 
 - ADR-0001: stage-based additive architecture.
 - Python Packaging User Guide, "src layout vs flat layout" discussion.
 - Hatchling documentation on `[tool.hatch.build.targets.wheel] packages`.
-- Original klee-web at `https://github.com/klee/klee-web` for the contrasting "all source under src" convention.
+- Original klee-web at `https://github.com/klee/old-klee-web` for the contrasting "all source under src" convention.

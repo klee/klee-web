@@ -2,6 +2,8 @@
 
 **Status:** Accepted, 2026-07-16
 
+> **Amendment, 2026-08-23:** Later Runner-only screens launched the unchanged image on AWS Fargate, Azure Container Apps Jobs, and Google Cloud Run Jobs. They did not integrate the Worker or the complete application. A complete port must still provide equivalent bounded storage for `/work`.
+
 ## Context
 
 Each Runner writes source, bitcode, KLEE output, replay binaries, and replay output. Leaving the container layer writable lets one Job consume unbounded Worker disk. Docker writable-layer quotas depend on the host storage driver, while a quota-backed bind mount would restore the host-path coupling removed by ADR-0021.

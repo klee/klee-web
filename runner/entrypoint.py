@@ -8,6 +8,8 @@ unchanged under any runtime without a bind mount (a microVM, a serverless
 sandbox), not only runc.
 
 Reads max_time and max_memory from KLEE_MAX_TIME and KLEE_MAX_MEMORY env vars.
+A separate watchdog exits the complete Runner after max_time plus 60 seconds,
+including compilation and archive creation. It remains active if the Worker dies.
 On compile failure, writes clang stderr to /work/output/compile_error.txt and
 exits 0: the runner did its job, the user's code is what didn't compile, and the
 backend distinguishes this from a runner crash via the presence of that file.

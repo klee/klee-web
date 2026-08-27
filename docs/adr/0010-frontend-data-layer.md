@@ -2,6 +2,8 @@
 
 **Status:** Accepted, 2026-05-22
 
+> **Amendment, 2026-08-27:** The client now uses the relative `/api` path so the same build works through the Vite proxy and nginx. CI exports the OpenAPI schema from the FastAPI application and compares the committed TypeScript types with newly generated types.
+
 ## Context
 
 Stage 1 frontend has to call the backend's `POST /jobs` and `GET /jobs/{id}` endpoints and poll the second until a job reaches a terminal status. The decisions made when wiring that up have downstream cost for the rest of Stage 1 and for Stage 2.
