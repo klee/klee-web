@@ -36,9 +36,9 @@ class QueryFormat(StrEnum):
     kquery = "kquery"
 
 
-# The hard upper bound on a job's wall-clock, the ceiling the max_time flag is capped at.
-# max_time is the whole job's budget: KLEE runs up to it, then optional per-path replay
-# uses the leftover, so this bounds KLEE and replay together, not each separately.
+# Maximum user-selected execution budget. KLEE runs up to it, then optional per-path
+# replay uses the leftover. A separate Runner watchdog allows 60 more seconds for the
+# complete lifecycle, including compilation, shutdown, and archive creation.
 MAX_TIME_CEILING = 600
 
 # Cap on the free-text power-user flag string (ADR-0019).

@@ -69,6 +69,7 @@ def build_run_args(
         f"{caps.cpus:g}",
         "--memory",
         f"{caps.memory_mb}m",
+        # Docker defines --memory-swap as the combined memory and swap ceiling.
         "--memory-swap",
         f"{caps.memory_mb + caps.swap_mb}m",
         "--pids-limit",

@@ -38,10 +38,9 @@ def parse_output_dir(output_dir: Path, *, include_test_cases: bool = True) -> Jo
             compile_error=compile_error_path.read_text(),
         )
 
-    # Progress polls pass include_test_cases=False: KLEE writes a ktest per
-    # terminated path (thousands during a single run), so opening them all on
-    # every watcher tick is the work that blocks the event loop. The running UI
-    # shows only stats, so partials skip the ktests; the final parse reads them.
+    # Runners with a growing output directory can skip ktests during progress parses.
+    # The current stream-only Docker Runner receives the archive after exit and does
+    # not use this mode. The final parse always includes the ktests.
     test_cases: list[TestCase] = []
     if include_test_cases:
         err_files_by_stem = _err_files_by_stem(output_dir)

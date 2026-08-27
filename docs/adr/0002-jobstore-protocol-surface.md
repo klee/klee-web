@@ -4,6 +4,8 @@
 
 **Amended 2026-06-21:** The protocol has since grown from four methods to six, both additions made within Stage 1 as features landed rather than at a stage boundary. `set_partial_result` was added for progress streaming, when `POST /jobs` became non-blocking and a running job emits partial results. `request_cancel` was added for user cancel (ADR-0013), along with the `Job.cancel_requested` flag. The decision and reasoning below stand. The load-bearing invariant is the stability of the protocol shape across the Stage 1 to Stage 2 swap, not the literal count, and `RedisJobStore` implements all six (ADR-0014).
 
+> **Amendment, 2026-07-08:** ADR-0021 replaced the shared output directory with stream transport. `set_partial_result` remains available to tests and other Runner implementations, but `DockerKleeRunner` no longer emits progress while a Job runs.
+>
 > **Amendment, 2026-07-18:** ADR-0024 retires `InMemoryJobStore`. The Protocol remains, and handler tests now use a test-only fake.
 
 ## Context

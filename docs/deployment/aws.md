@@ -247,12 +247,23 @@ backend_image="ghcr.io/finnleh/klee-web-backend@$backend_digest"
 runner_image="ghcr.io/finnleh/klee-web-runner@$runner_digest"
 ```
 
-Verify each exact index against this repository's GitHub attestation identity:
+Verify each exact index against this repository's GitHub attestation identity.
+Images up to and including commit `4a7a6f2` were attested before the repository
+transfer and use `FinnLeh/klee-web`. Later images use `klee/klee-web`.
 
 ```bash
-gh attestation verify "oci://$frontend_image" --repo FinnLeh/klee-web
-gh attestation verify "oci://$backend_image" --repo FinnLeh/klee-web
-gh attestation verify "oci://$runner_image" --repo FinnLeh/klee-web
+transfer_boundary="4a7a6f26d7ee25292f4943746044937446e44803"
+if git merge-base --is-ancestor "$commit" "$transfer_boundary"; then
+  attestation_repo="FinnLeh/klee-web"
+else
+  attestation_repo="klee/klee-web"
+fi
+gh attestation verify "oci://$frontend_image" --bundle-from-oci \
+  --repo "$attestation_repo"
+gh attestation verify "oci://$backend_image" --bundle-from-oci \
+  --repo "$attestation_repo"
+gh attestation verify "oci://$runner_image" --bundle-from-oci \
+  --repo "$attestation_repo"
 ```
 
 Print the three complete assignments:

@@ -263,7 +263,9 @@ image-only procedure below.
 Application promotion changes only `FRONTEND_IMAGE`, `BACKEND_IMAGE`, and
 `RUNNER_IMAGE` in `/etc/klee-web/deployment.env`. Resolve and verify one complete
 three-image publication locally before editing the VM. Use immutable signed
-digests and verify each with GitHub's attestation identity:
+digests and verify each with GitHub's attestation identity. Images up to and
+including commit `4a7a6f2` were attested before the repository transfer and use
+`FinnLeh/klee-web`. Later images use `klee/klee-web`.
 
 ```bash
 commit="FULL_COMMIT_SHA"
@@ -281,9 +283,18 @@ frontend_image="ghcr.io/finnleh/klee-web-frontend@$frontend_digest"
 backend_image="ghcr.io/finnleh/klee-web-backend@$backend_digest"
 runner_image="ghcr.io/finnleh/klee-web-runner@$runner_digest"
 
-gh attestation verify "oci://$frontend_image" --repo FinnLeh/klee-web
-gh attestation verify "oci://$backend_image" --repo FinnLeh/klee-web
-gh attestation verify "oci://$runner_image" --repo FinnLeh/klee-web
+transfer_boundary="4a7a6f26d7ee25292f4943746044937446e44803"
+if git merge-base --is-ancestor "$commit" "$transfer_boundary"; then
+  attestation_repo="FinnLeh/klee-web"
+else
+  attestation_repo="klee/klee-web"
+fi
+gh attestation verify "oci://$frontend_image" --bundle-from-oci \
+  --repo "$attestation_repo"
+gh attestation verify "oci://$backend_image" --bundle-from-oci \
+  --repo "$attestation_repo"
+gh attestation verify "oci://$runner_image" --bundle-from-oci \
+  --repo "$attestation_repo"
 ```
 
 Open an interactive remote shell and preserve the previous desired state:

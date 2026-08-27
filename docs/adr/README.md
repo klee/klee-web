@@ -39,26 +39,26 @@ Don't write ADRs for:
 | # | Title | Status |
 |---|-------|--------|
 | 0001 | Stage-based additive architecture | Accepted (amended by ADR-0024) |
-| 0002 | JobStore protocol surface | Accepted (amended by ADR-0013, ADR-0014, and ADR-0024) |
+| 0002 | JobStore protocol surface | Accepted (amended by ADR-0013, ADR-0014, ADR-0021, and ADR-0024) |
 | 0003 | Src-layout for the backend Python package | Accepted |
 | 0004 | Monaco for the in-browser editor | Accepted |
 | 0005 | Narrow KleeFlags schema for Stage 1 | Accepted (amended by ADR-0012, ADR-0019, and ADR-0020) |
 | 0006 | Frontend tooling stack | Accepted |
 | 0007 | POST /jobs returns JobCreated, not full Job | Accepted |
-| 0008 | KleeRunner protocol surface | Accepted |
+| 0008 | KleeRunner protocol surface | Accepted (amended in place) |
 | 0009 | Per-job containers, not a long-lived runner process | Accepted (amended by ADR-0021 and ADR-0022) |
-| 0010 | Frontend data layer (openapi-typescript + openapi-fetch + React Query) | Accepted |
-| 0011 | Frontend layered architecture (Types / API client / Hooks / Components) | Accepted |
+| 0010 | Frontend data layer (openapi-typescript + openapi-fetch + React Query) | Accepted (amended in place) |
+| 0011 | Frontend layered architecture (Types / API client / Hooks / Components) | Accepted (amended in place) |
 | 0012 | Add query_format to the flag schema | Accepted |
 | 0013 | Cancel as a user-triggered halt | Accepted (amended in place) |
-| 0014 | RedisJobStore on Redis hashes | Accepted (amended by ADR-0024) |
+| 0014 | RedisJobStore on Redis hashes | Accepted (amended in place and by ADR-0024) |
 | 0015 | Centralised configuration via a Settings object | Accepted (amended by ADR-0024) |
 | 0016 | Job dispatch behind a JobDispatcher seam | Accepted (amended by ADR-0024) |
 | 0017 | Result cache keyed on the submission | Accepted (amended by ADR-0024) |
-| 0018 | Minimal failsafes: at-most-once delivery with cancel recovery | Accepted |
+| 0018 | Minimal failsafes: at-most-once delivery with cancel recovery | Accepted (amended in place) |
 | 0019 | Allowlisted free-text KLEE flags | Accepted |
 | 0020 | Native per-path replay for program output | Accepted (amended by ADR-0022) |
 | 0021 | Stream transport: source on stdin, output as a tar on stdout | Accepted |
 | 0022 | Stage 3 sandbox: gVisor with a fork-per-ktest replay zygote | Accepted |
-| 0023 | Bounded tmpfs for Runner storage | Accepted |
+| 0023 | Bounded tmpfs for Runner storage | Accepted (amended in place) |
 | 0024 | One full-application topology | Accepted |

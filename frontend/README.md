@@ -14,15 +14,15 @@ React + TypeScript single-page app. Editor for C source, an examples/history sid
 - `index.html`: entry HTML
 - `src/main.tsx`: React mount point, wraps `<App />` in `QueryClientProvider`
 - `src/App.tsx`: route index inside `SettingsProvider` and `BrowserRouter`, with the workspace at `/` and fleet administration at `/admin`
-- `src/api/client.ts`: typed `apiClient` over openapi-fetch. Also exports `BASE_URL` for callers that need the backend origin outside the typed routes (e.g., the status bar pinging `/health`)
+- `src/api/client.ts`: typed `apiClient` over openapi-fetch. Also exports the same-origin `/api` base path for callers outside the typed routes, such as the status bar health check
 - `src/api/jobs.ts`: `submitJob`, `getJob`, `cancelJob`, the `JobNotFoundError` and `RequestFailedError` error types, and re-exported schema aliases
 - `src/api/admin.ts`: typed fleet telemetry, usage-statistics, and Worker-capacity calls used by the admin route
 - `src/types/api.ts`: types generated from the backend OpenAPI spec, committed
 - `src/hooks/useSubmitJob.ts`: React Query mutation over `submitJob`
-- `src/hooks/useJob.ts`: React Query polling query over `getJob`, 1000 ms cadence, stops on terminal status and treats a 404 as terminal with no retry
+- `src/hooks/useJob.ts`: React Query polling query over `getJob`, 1000 ms cadence, stops on terminal status and treats a 404 as terminal with no retry. An empty cancelled result keeps polling for up to 15 seconds so a running Worker can attach partial output
 - `src/hooks/useCancelJob.ts`: React Query mutation over `cancelJob`, resolves true only when the cancel landed (202)
 - `src/hooks/useHistory.ts`: React state over the `history.ts` store, exposes `entries` plus `addRun` / `setStatus` / `removeEntry` / `clear`
-- `src/context/SettingsContext.tsx`: theme (system/dark/light, default system), results-position (right/below), accent colour, and editor font size, all localStorage-backed
+- `src/context/SettingsContext.tsx`: theme (system/dark/light, default system), results-position (right/below), accent colour, editor font size, and main-panel split size, all localStorage-backed
 - `src/context/SymbolicTypeContext.tsx`: `SymbolicTypeProvider` and `useSymbolicTypes`, holds each symbolic variable's chosen decode type by name so the choice persists across reruns
 - `src/lib/decodeSymbolic.ts`: pure client-side re-interpreter of a symbolic value's raw ktest bytes as int / uint / float / double / hex / ascii (`decode`, `availableTypes`, `defaultType`), little-endian, matching ktest-tool
 - `src/lib/resultsError.ts`: `classifyResultsError`, maps a submit or poll error to `expired` / `submit-rejected` / `unreachable`
@@ -33,7 +33,7 @@ React + TypeScript single-page app. Editor for C source, an examples/history sid
 - `src/lib/editorThemes.ts`: `defineKleeDarkTheme`, the `klee-dark` Monaco theme matching the app's slate surfaces
 - `src/data/examples.ts`: the bundled example programs (`EXAMPLES`, `DEFAULT_EXAMPLE`), each C source imported `?raw` from `data/examples/*.c` and paired with a hover description and complete recommended `KleeFlags` preset
 - `src/components/Workspace.tsx`: layout chassis with five slot props (`topBar`, `sidebar?`, `main`, `results`, `statusBar`). `resultsPosition` flips main/results between row and column
-- `src/components/TopBar.tsx`: KLEE wordmark, inline `FlagBar`, Run button, settings cog, and the collapsible `SymbolicInputPanel` mounted below the bar. Owns the local `settingsOpen` state and the document `pointerdown` / `keydown` listeners that dismiss the popover
+- `src/components/TopBar.tsx`: KLEE wordmark, inline `FlagBar`, Run button, public issue link, settings cog, and the collapsible `SymbolicInputPanel` mounted below the bar. Owns the local `settingsOpen` state and the document `pointerdown` / `keydown` listeners that dismiss the popover
 - `src/components/FlagBar.tsx`: inline `max_time` and `max_memory` number inputs (valid / empty / invalid discriminated-union validation, snap-back on blur), the path-constraint (`query_format`) select, and the free-text extra-flags box (validated server-side against an allowlist, a rejection's reason renders in Results)
 - `src/components/HelpTooltip.tsx`: shared control-triggered help shown on hover or keyboard focus. Pointer clicks dismiss the current message without removing focus or disabling later hovers
 - `src/components/SymbolicInputPanel.tsx`: collapsible panel below the top bar. Per-spec toggles for symbolic stdin / files / args with bounded numeric fields, editing the nested `sym_stdin` / `sym_files` / `sym_args` objects on `KleeFlags`
@@ -41,7 +41,7 @@ React + TypeScript single-page app. Editor for C source, an examples/history sid
 - `src/components/Sidebar.tsx`: left panel with Examples and History tabs. Examples loads a bundled program and its complete settings preset, while History lists per-browser runs with restore / delete / clear and a status glyph. Collapsible
 - `src/components/Results.tsx`: dispatches first on submit or poll error kind (expired / submit-rejected / unreachable), then on job status (pending / running / parsing / done / compile-error / failed). Running shows elapsed time against the submitted limit. DoneView holds tab state (Test cases / Stats), a `HaltBadge`, per-variable type dropdowns, and page navigation over the test cases
 - `src/components/SettingsPopover.tsx`: panel of segmented controls over `useSettings()` (theme, accent colour, font size, results position). Pure presentational
-- `src/components/StatusBar.tsx`: bottom strip with backend-connected indicator (polls `/health` every 5 s via React Query, two-state connected/disconnected derived from `data` + `isError`), source byte count, and the KLEE version injected from the repository's `.klee-version` build input
+- `src/components/StatusBar.tsx`: bottom strip with backend-connected indicator (polls `/health` every 5 s via React Query, two-state connected/disconnected derived from `data` + `isError`), source byte count, centred confidential-source warning, and the KLEE version injected from the repository's `.klee-version` build input
 - `src/pages/HomePage.tsx`: composes Workspace at route `/`. Owns `source`, `flags`, `jobId`, and the errors-first toggle. Wires the sidebar via `useHistory` (load example, restore run, delete / clear), `handleRun` posts via `useSubmitJob` and adds a history entry, and `handleCancel` goes via `useCancelJob`. `HomePage` and `Results` subscribe to the same `useJob(jobId)` query for controls, history, and rendering
 - `src/pages/AdminPage.tsx`: polls fleet telemetry and cumulative usage every five seconds, shows queue and Worker state, and changes a Worker's live autoscaler maximum within the deployment limit. nginx protects the route and its API calls with Basic Auth
 
@@ -51,7 +51,7 @@ Monaco, the editor that powers VS Code. CodeMirror 6 was the alternative conside
 
 ## Why types are generated, not hand-written
 
-The backend emits an OpenAPI spec from Pydantic models. `openapi-typescript` consumes that spec and emits TypeScript types. A rename on the backend, after regenerating, fails the frontend at compile time. Contract drift becomes impossible.
+The backend emits an OpenAPI spec from Pydantic models. `openapi-typescript` consumes that spec and emits TypeScript types. After regeneration, a backend rename fails disagreeing frontend consumers at compile time.
 
 Regenerate when the backend schema changes:
 
