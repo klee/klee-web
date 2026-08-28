@@ -261,34 +261,45 @@ with the previous backend image, and later application promotions return to the
 image-only procedure below.
 
 Application promotion changes only `FRONTEND_IMAGE`, `BACKEND_IMAGE`, and
-`RUNNER_IMAGE` in `/etc/klee-web/deployment.env`. Resolve and verify one complete
-three-image publication locally before editing the VM. Use immutable signed
-digests and verify each with GitHub's attestation identity. Images up to and
-including commit `4a7a6f2` were attested before the repository transfer and use
-`FinnLeh/klee-web`. Later images use `klee/klee-web`.
+`RUNNER_IMAGE` in `/etc/klee-web/deployment.env`. From a full clone of
+`klee/klee-web`, resolve and verify one complete three-image publication locally
+before editing the VM. Use immutable signed digests and verify each with GitHub's
+attestation identity. Images up to and including commit `4a7a6f2` remain under
+`ghcr.io/finnleh/` and use `FinnLeh/klee-web`. Later images use `ghcr.io/klee/`
+and `klee/klee-web`.
 
 ```bash
 commit="FULL_COMMIT_SHA"
+transfer_boundary="4a7a6f26d7ee25292f4943746044937446e44803"
+if ! git cat-file -e "$commit^{commit}" || \
+   ! git cat-file -e "$transfer_boundary^{commit}"; then
+  echo "Fetch the complete repository history before resolving images" >&2
+  exit 1
+fi
+if git merge-base --is-ancestor "$commit" "$transfer_boundary"; then
+  image_namespace="finnleh"
+  attestation_repo="FinnLeh/klee-web"
+elif git merge-base --is-ancestor "$transfer_boundary" "$commit"; then
+  image_namespace="klee"
+  attestation_repo="klee/klee-web"
+else
+  echo "Commit does not share the repository transfer history" >&2
+  exit 1
+fi
 frontend_digest=$(docker buildx imagetools inspect \
-  "ghcr.io/finnleh/klee-web-frontend:sha-$commit" \
+  "ghcr.io/$image_namespace/klee-web-frontend:sha-$commit" \
   --format '{{.Manifest.Digest}}')
 backend_digest=$(docker buildx imagetools inspect \
-  "ghcr.io/finnleh/klee-web-backend:sha-$commit" \
+  "ghcr.io/$image_namespace/klee-web-backend:sha-$commit" \
   --format '{{.Manifest.Digest}}')
 runner_digest=$(docker buildx imagetools inspect \
-  "ghcr.io/finnleh/klee-web-runner:sha-$commit" \
+  "ghcr.io/$image_namespace/klee-web-runner:sha-$commit" \
   --format '{{.Manifest.Digest}}')
 
-frontend_image="ghcr.io/finnleh/klee-web-frontend@$frontend_digest"
-backend_image="ghcr.io/finnleh/klee-web-backend@$backend_digest"
-runner_image="ghcr.io/finnleh/klee-web-runner@$runner_digest"
+frontend_image="ghcr.io/$image_namespace/klee-web-frontend@$frontend_digest"
+backend_image="ghcr.io/$image_namespace/klee-web-backend@$backend_digest"
+runner_image="ghcr.io/$image_namespace/klee-web-runner@$runner_digest"
 
-transfer_boundary="4a7a6f26d7ee25292f4943746044937446e44803"
-if git merge-base --is-ancestor "$commit" "$transfer_boundary"; then
-  attestation_repo="FinnLeh/klee-web"
-else
-  attestation_repo="klee/klee-web"
-fi
 gh attestation verify "oci://$frontend_image" --bundle-from-oci \
   --repo "$attestation_repo"
 gh attestation verify "oci://$backend_image" --bundle-from-oci \
