@@ -222,42 +222,54 @@ before editing the host.
 
 ### Resolve and verify locally
 
-On the operator workstation, resolve the indexes from one full commit tag:
+From a full clone of `klee/klee-web` on the operator workstation, select the package
+namespace and attestation identity from the repository-transfer boundary, then resolve
+the indexes from one full commit tag:
 
 ```bash
 commit="FULL_COMMIT_SHA"
+transfer_boundary="4a7a6f26d7ee25292f4943746044937446e44803"
+if ! git cat-file -e "$commit^{commit}" || \
+   ! git cat-file -e "$transfer_boundary^{commit}"; then
+  echo "Fetch the complete repository history before resolving images" >&2
+  exit 1
+fi
+if git merge-base --is-ancestor "$commit" "$transfer_boundary"; then
+  image_namespace="finnleh"
+  attestation_repo="FinnLeh/klee-web"
+elif git merge-base --is-ancestor "$transfer_boundary" "$commit"; then
+  image_namespace="klee"
+  attestation_repo="klee/klee-web"
+else
+  echo "Commit does not share the repository transfer history" >&2
+  exit 1
+fi
 frontend_digest=$(
   docker buildx imagetools inspect \
-    "ghcr.io/finnleh/klee-web-frontend:sha-$commit" \
+    "ghcr.io/$image_namespace/klee-web-frontend:sha-$commit" \
     --format '{{.Manifest.Digest}}'
 )
 backend_digest=$(
   docker buildx imagetools inspect \
-    "ghcr.io/finnleh/klee-web-backend:sha-$commit" \
+    "ghcr.io/$image_namespace/klee-web-backend:sha-$commit" \
     --format '{{.Manifest.Digest}}'
 )
 runner_digest=$(
   docker buildx imagetools inspect \
-    "ghcr.io/finnleh/klee-web-runner:sha-$commit" \
+    "ghcr.io/$image_namespace/klee-web-runner:sha-$commit" \
     --format '{{.Manifest.Digest}}'
 )
 
-frontend_image="ghcr.io/finnleh/klee-web-frontend@$frontend_digest"
-backend_image="ghcr.io/finnleh/klee-web-backend@$backend_digest"
-runner_image="ghcr.io/finnleh/klee-web-runner@$runner_digest"
+frontend_image="ghcr.io/$image_namespace/klee-web-frontend@$frontend_digest"
+backend_image="ghcr.io/$image_namespace/klee-web-backend@$backend_digest"
+runner_image="ghcr.io/$image_namespace/klee-web-runner@$runner_digest"
 ```
 
-Verify each exact index against this repository's GitHub attestation identity.
-Images up to and including commit `4a7a6f2` were attested before the repository
-transfer and use `FinnLeh/klee-web`. Later images use `klee/klee-web`.
+Verify each exact index against the selected GitHub attestation identity. Images up
+to and including commit `4a7a6f2` remain under `ghcr.io/finnleh/` and use
+`FinnLeh/klee-web`. Later images use `ghcr.io/klee/` and `klee/klee-web`.
 
 ```bash
-transfer_boundary="4a7a6f26d7ee25292f4943746044937446e44803"
-if git merge-base --is-ancestor "$commit" "$transfer_boundary"; then
-  attestation_repo="FinnLeh/klee-web"
-else
-  attestation_repo="klee/klee-web"
-fi
 gh attestation verify "oci://$frontend_image" --bundle-from-oci \
   --repo "$attestation_repo"
 gh attestation verify "oci://$backend_image" --bundle-from-oci \
@@ -299,15 +311,8 @@ Open the active file:
 sudoedit /etc/klee-web/deployment.env
 ```
 
-Replace exactly these three assignments. Each placeholder after `sha256:` must
-be replaced by the candidate image's full 64-character OCI index digest copied
-from the local verified references:
-
-```dotenv
-FRONTEND_IMAGE=ghcr.io/finnleh/klee-web-frontend@sha256:FRONTEND_INDEX_DIGEST
-BACKEND_IMAGE=ghcr.io/finnleh/klee-web-backend@sha256:BACKEND_INDEX_DIGEST
-RUNNER_IMAGE=ghcr.io/finnleh/klee-web-runner@sha256:RUNNER_INDEX_DIGEST
-```
+Replace exactly the three image assignments with the complete references printed
+from the local verified values.
 
 Leave every other deployment value unchanged. Pull the selected images before
 asking systemd to reconcile them:
