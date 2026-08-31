@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-test("controls explain their behavior on hover and keyboard focus", async ({ page }) => {
+test("controls explain their behavior only on hover", async ({ page }) => {
   await page.goto("/");
 
   await page.getByRole("link", { name: /Report an issue/ }).hover();
@@ -17,12 +17,14 @@ test("controls explain their behavior on hover and keyboard focus", async ({ pag
     }),
   ).toBeVisible();
 
-  await page.getByLabel("time").focus();
-  await expect(
-    page.getByRole("tooltip").filter({
-      hasText: "Total execution budget shared by KLEE and replay (if activated).",
-    }),
-  ).toBeVisible();
+  const time = page.getByLabel("time");
+  const timeHelp = page.getByRole("tooltip").filter({
+    hasText: "Total execution budget shared by KLEE and replay (if activated).",
+  });
+  await time.focus();
+  await expect(timeHelp).toBeHidden();
+  await time.hover();
+  await expect(timeHelp).toBeVisible();
 
   await page.getByLabel("extra flags").hover();
   const flagsHelp = page.getByRole("tooltip").filter({
