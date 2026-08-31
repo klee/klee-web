@@ -79,7 +79,8 @@ test("execution options explain the data they add to a run", async ({ page }) =>
   await page.getByLabel("path constraint format").hover();
   await expect(
     page.getByRole("tooltip").filter({
-      hasText: "Includes each generated test's path constraint in KQuery format",
+      hasText:
+        "Includes every generated test's path constraint in KQuery format. When off, KLEE still includes path constraints for error cases.",
     }),
   ).toBeVisible();
 
