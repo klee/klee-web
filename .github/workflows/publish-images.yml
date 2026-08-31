@@ -160,8 +160,8 @@ jobs:
       - name: Resolve the stable release commit
         id: release
         run: |
-          if [[ ! "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "Release tag must use stable semantic version form vMAJOR.MINOR.PATCH" >&2
+          if [[ ! "$RELEASE_TAG" =~ ^v[0-9]{4}\.(0[1-9]|1[0-2])\.(0[1-9]|[12][0-9]|3[01])(\.[1-9][0-9]*)?$ ]]; then
+            echo "Release tag must use CalVer form vYYYY.MM.DD or vYYYY.MM.DD.N" >&2
             exit 1
           fi
           echo "commit=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
