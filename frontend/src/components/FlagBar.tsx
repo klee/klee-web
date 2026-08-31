@@ -116,7 +116,7 @@ function ExtraFlagsInput({ flags, onFlagsChange }: FlagBarProps) {
 
 function QueryFormatSelect({ flags, onFlagsChange }: FlagBarProps) {
   return (
-    <HelpTooltip content="Includes each generated test's path constraint in KQuery format. Select off to omit path constraints.">
+    <HelpTooltip content="Includes every generated test's path constraint in KQuery format. When off, KLEE still includes path constraints for error cases.">
       {(descriptionId) => (
         <div className="flex items-center gap-1.5 text-sm">
           <span className="text-slate-600 dark:text-slate-400">path constraint</span>
