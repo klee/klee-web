@@ -108,10 +108,7 @@ async def test_cancel_finished_job_returns_409(client, store, sample_result):
 
 
 async def test_post_jobs_serves_cache_hit_without_dispatching(
-    client,
-    cache,
-    dispatcher,
-    usage,
+    client, cache, dispatcher, usage, klee_version, runner_image
 ):
     payload = {"source": "int main(){}"}
     cached = JobResult(
@@ -124,8 +121,11 @@ async def test_post_jobs_serves_cache_hit_without_dispatching(
         warnings="",
         stats={"paths": 1},
         halt_reason=HaltReason.completed,
+        klee_version=klee_version,
     )
-    await cache.set(cache_key(JobRequest(source=payload["source"])), cached)
+    await cache.set(
+        cache_key(JobRequest(source=payload["source"]), runner_image=runner_image), cached
+    )
 
     response = await client.post("/jobs", json=payload)
     assert response.status_code == 202
@@ -137,4 +137,56 @@ async def test_post_jobs_serves_cache_hit_without_dispatching(
     body = get.json()
     assert body["status"] == "done"
     assert body["result"]["messages"] == "from cache"
+
+
+async def test_post_jobs_second_identical_submission_hits_cache(
+    client, cache, dispatcher, usage, klee_version, runner_image
+):
+    cached = JobResult(
+        test_cases=[
+            TestCase(name="t", inputs=[SymbolicInput(name="x", value="0", bytes_hex="00000000")])
+        ],
+        messages="",
+        warnings="",
+        stats={"paths": 1},
+        halt_reason=HaltReason.completed,
+        klee_version=klee_version,
+    )
+
+    payload = {"source": "int main(){}"}
+    await client.post("/jobs", json=payload)
+    assert len(dispatcher.calls) == 1
+
+    # Simulate the worker completing the first job and caching its result.
+    await cache.set(cache_key(JobRequest(source=payload["source"]), runner_image), cached)
+
+    response = await client.post("/jobs", json=payload)
+    assert response.status_code == 202
+    assert len(dispatcher.calls) == 1  # second identical submission served from cache, no re-run
+
+    job_id = response.json()["job_id"]
+    get = await client.get(f"/jobs/{job_id}")
+    body = get.json()
+    assert body["result"]["klee_version"] == klee_version
+    assert (await usage.snapshot()).cache_hits == 1  # check klee version and cache hits
+
+
+async def test_post_jobs_cache_hit_records_a_cache_hit(
+    client, cache, usage, klee_version, runner_image
+):
+    payload = {"source": "int main(){}"}
+    cached = JobResult(
+        test_cases=[],
+        messages="from cache",
+        warnings="",
+        stats={},
+        halt_reason=HaltReason.completed,
+        klee_version=klee_version,
+    )
+    await cache.set(
+        cache_key(JobRequest(source=payload["source"]), runner_image=runner_image), cached
+    )
+
+    await client.post("/jobs", json=payload)
+
     assert (await usage.snapshot()).cache_hits == 1

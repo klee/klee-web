@@ -8,7 +8,7 @@ from klee_web.jobs.store import JobNotFound, RedisJobStore
 from klee_web.models import Job, JobResult, JobStatus, SymbolicInput, TestCase
 
 _REDIS_URL = os.environ.get("REDIS_URL", "redis://localhost:6379/0")
-_JOB_TTL_SECONDS = 24 * 60 * 60
+_JOB_TTL_SECONDS = 48 * 60 * 60
 
 
 def _redis_ready() -> bool:
@@ -83,4 +83,17 @@ async def test_create_sets_bounded_ttl(store):
         ttl = await client.ttl(f"job:{job.id}")
     finally:
         await client.aclose()
-    assert 0 < ttl <= _JOB_TTL_SECONDS
+    assert _JOB_TTL_SECONDS - 5 <= ttl <= _JOB_TTL_SECONDS
+
+
+async def test_get_does_not_refresh_ttl(store):
+    job = Job()
+    await store.create(job)
+    client = Redis.from_url(_REDIS_URL)
+    try:
+        await client.expire(f"job:{job.id}", 60)
+        await store.get(job.id)
+        ttl = await client.ttl(f"job:{job.id}")
+    finally:
+        await client.aclose()
+    assert 0 < ttl <= 60

@@ -7,7 +7,7 @@ from klee_web.jobs.cache import RedisResultCache
 from klee_web.models import JobResult, SymbolicInput, TestCase
 
 _REDIS_URL = os.environ.get("REDIS_URL", "redis://localhost:6379/0")
-_CACHE_TTL_SECONDS = 24 * 60 * 60
+_CACHE_TTL_SECONDS = 48 * 60 * 60
 
 
 def _redis_ready() -> bool:

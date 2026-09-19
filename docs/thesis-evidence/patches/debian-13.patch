@@ -1,0 +1,145 @@
+diff --git a/deploy/bootstrap-host.sh b/deploy/bootstrap-host.sh
+index e3e21e4..fc76870 100755
+--- a/deploy/bootstrap-host.sh
++++ b/deploy/bootstrap-host.sh
+@@ -1,9 +1,9 @@
+ #!/usr/bin/env bash
+ set -euo pipefail
+ 
+-readonly DOCKER_VERSION='5:29.6.2-1~ubuntu.24.04~noble'
+-readonly CONTAINERD_VERSION='2.2.6-1~ubuntu.24.04~noble'
+-readonly COMPOSE_VERSION='5.3.1-1~ubuntu.24.04~noble'
++readonly DOCKER_VERSION='5:29.6.2-1~debian.13~trixie'
++readonly CONTAINERD_VERSION='2.2.6-1~debian.13~trixie'
++readonly COMPOSE_VERSION='5.3.1-1~debian.13~trixie'
+ readonly GVISOR_RELEASE='20260714'
+ readonly PROBE_IMAGE='hello-world@sha256:d1a8d0a4eeb63aff09f5f34d4d80505e0ba81905f36158cc3970d8e07179e59e'
+ readonly DEPLOYMENT_ENV=/etc/klee-web/deployment.env
+@@ -31,7 +31,7 @@ case "$deployment_role" in
+ esac
+ 
+ if [[ ! -r /etc/os-release ]]; then
+-  printf 'bootstrap-host.sh requires Ubuntu 24.04 on AMD64\n' >&2
++  printf 'bootstrap-host.sh requires Debian 13 on AMD64\n' >&2
+   exit 1
+ fi
+ 
+@@ -42,8 +42,8 @@ os_id=${ID:-}
+ os_codename=${VERSION_CODENAME:-}
+ architecture=$(dpkg --print-architecture)
+ 
+-if [[ $os_id != ubuntu || $os_codename != noble || $architecture != amd64 ]]; then
+-  printf 'bootstrap-host.sh requires Ubuntu 24.04 Noble on AMD64\n' >&2
++if [[ $os_id != debian || $os_codename != trixie || $architecture != amd64 ]]; then
++  printf 'bootstrap-host.sh requires Debian 13 Trixie on AMD64\n' >&2
+   exit 1
+ fi
+ 
+@@ -60,10 +60,10 @@ apt-get dist-upgrade -y
+ apt-get install -y --no-install-recommends apache2-utils ca-certificates curl
+ 
+ install -d -m 0755 /etc/apt/keyrings
+-curl -fsSL https://download.docker.com/linux/ubuntu/gpg \
++curl -fsSL https://download.docker.com/linux/debian/gpg \
+   -o /etc/apt/keyrings/docker.asc
+ chmod 0644 /etc/apt/keyrings/docker.asc
+-printf 'deb [arch=%s signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu %s stable\n' \
++printf 'deb [arch=%s signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/debian %s stable\n' \
+   "$architecture" "$os_codename" \
+   > /etc/apt/sources.list.d/docker.list
+ 
+diff --git a/infra/aws/main.tf b/infra/aws/main.tf
+index 67e2ad0..54f78d8 100644
+--- a/infra/aws/main.tf
++++ b/infra/aws/main.tf
+@@ -11,18 +11,18 @@ provider "aws" {
+   }
+ }
+ 
+-# Verify the pinned AMI is an available AMD64 Ubuntu 24.04 image owned by Canonical.
+-data "aws_ami" "ubuntu" {
+-  owners = ["099720109477"]
++# Verify the pinned AMI is an available AMD64 Debian 13 image owned by Debian.
++data "aws_ami" "host" {
++  owners = ["136693071363"]
+ 
+   filter {
+     name   = "image-id"
+-    values = [var.ubuntu_ami_id]
++    values = [var.host_ami_id]
+   }
+ 
+   filter {
+     name   = "name"
+-    values = ["ubuntu/images/hvm-ssd-gp3/ubuntu-noble-24.04-amd64-server-*"]
++    values = ["debian-13-amd64-*"]
+   }
+ 
+   filter {
+@@ -215,7 +215,7 @@ resource "aws_eip" "public" {
+ 
+ # Launch the complete Compose topology on one Ubuntu host.
+ resource "aws_instance" "host" {
+-  ami           = data.aws_ami.ubuntu.id
++  ami           = data.aws_ami.host.id
+   instance_type = var.instance_type
+   key_name      = aws_key_pair.operator.key_name
+ 
+diff --git a/infra/aws/outputs.tf b/infra/aws/outputs.tf
+index 15a7cc7..2550e56 100644
+--- a/infra/aws/outputs.tf
++++ b/infra/aws/outputs.tf
+@@ -1,7 +1,7 @@
+-# Record the exact Canonical image selected by the Ubuntu release filter.
+-output "ubuntu_ami_id" {
+-  description = "Canonical Ubuntu 24.04 AMD64 AMI used by the host."
+-  value       = data.aws_ami.ubuntu.id
++# Record the exact image selected by the Debian release filter.
++output "host_ami_id" {
++  description = "Debian 13 AMD64 AMI used by the host."
++  value       = data.aws_ami.host.id
+ }
+ 
+ # Identify the EC2 host for inspection and teardown checks.
+@@ -30,6 +30,6 @@ output "https_url" {
+ 
+ # Provide the login command used with the existing 1Password SSH agent.
+ output "ssh_command" {
+-  description = "SSH command for the Ubuntu operator account."
+-  value       = "ssh ubuntu@${aws_eip.public.public_ip}"
++  description = "SSH command for the Debian operator account."
++  value       = "ssh admin@${aws_eip.public.public_ip}"
+ }
+diff --git a/infra/aws/variables.tf b/infra/aws/variables.tf
+index d672755..5049683 100644
+--- a/infra/aws/variables.tf
++++ b/infra/aws/variables.tf
+@@ -10,14 +10,14 @@ variable "availability_zone" {
+   default     = "eu-west-2a"
+ }
+ 
+-variable "ubuntu_ami_id" {
+-  description = "Pinned Canonical Ubuntu 24.04 AMD64 AMI in the selected Region."
++variable "host_ami_id" {
++  description = "Pinned Debian 13 AMD64 AMI in the selected Region."
+   type        = string
+-  default     = "ami-01029182857b20417"
++  default     = "ami-0e12a6adabc582fac"
+ 
+   validation {
+-    condition     = can(regex("^ami-[0-9a-f]+$", var.ubuntu_ami_id))
+-    error_message = "ubuntu_ami_id must be an AWS AMI identifier."
++    condition     = can(regex("^ami-[0-9a-f]+$", var.host_ami_id))
++    error_message = "host_ami_id must be an AWS AMI identifier."
+   }
+ }
+ 
+@@ -55,7 +55,7 @@ variable "operator_cidr" {
+ }
+ 
+ variable "ssh_public_key" {
+-  description = "Ed25519 public key registered for the Ubuntu EC2 user."
++  description = "Ed25519 public key registered for the default EC2 user."
+   type        = string
+ 
+   validation {

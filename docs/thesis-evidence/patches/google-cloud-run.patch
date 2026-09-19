@@ -1,0 +1,398 @@
+diff --git a/infra/google-cloud-run-screening/.terraform.lock.hcl b/infra/google-cloud-run-screening/.terraform.lock.hcl
+new file mode 100644
+index 0000000000000000000000000000000000000000..005fde7c63c3b203b924ba2ed07f47c2c7c3bc23
+--- /dev/null
++++ b/infra/google-cloud-run-screening/.terraform.lock.hcl
+@@ -0,0 +1,22 @@
++# This file is maintained automatically by "terraform init".
++# Manual edits may be lost in future updates.
++
++provider "registry.terraform.io/hashicorp/google" {
++  version     = "7.42.0"
++  constraints = "~> 7.42.0"
++  hashes = [
++    "h1:OgWsoxTL8UjiDXmmqrK3twhvUEFI0IfIr3NzCmUeAGk=",
++    "zh:30b25728203b9208a167fac3f9880c10242fc5accdd29ba01b21355566fc4e3d",
++    "zh:4468f6ea772e991d890724e44f628a24dae44c9028af654469454d05b00b10ec",
++    "zh:4dfa4f7bcd72ea89f6f3f7411d88bf9a1f060699830e1f1f85bf32102be754b3",
++    "zh:59cf73879f10ad9d29ff8ad96559a476e70695bed26b84b6189728129674618c",
++    "zh:73a7966ae1c6db8a3dc31eb43f05dddd27a47f3ff42e25f62594fc0d5b438412",
++    "zh:7c2ea415fb06147cf9834b2169d75a52bd979ad291bed32c94d9a9307316f7ba",
++    "zh:962efdd3dee2b98860528555b0616ca0c8987dfc6c5e5df6d1c025c9b22c2f26",
++    "zh:c4a5ca9f20cbfbdcb88064d53d16f2ce8038e1ddc3303c7261152856728700b5",
++    "zh:ca56a9477177530737d07feea70bb99309414a7c18aa62f975644138606e1faf",
++    "zh:d0c6db8b1da363f69087569716ed96a3a6dadb4b872f598d442d867bd0706fa9",
++    "zh:ddd2472052e0c5c3fab7cffae8376e8855c35ad8614ba8631f7e448e72a41f21",
++    "zh:f569b65999264a9416862bca5cd2a6177d94ccb0424f3a4ef424428912b9cb3c",
++  ]
++}
+diff --git a/infra/google-cloud-run-screening/main.tf b/infra/google-cloud-run-screening/main.tf
+new file mode 100644
+index 0000000000000000000000000000000000000000..4746b47385966c208cbbc389a92b14da7be31d86
+--- /dev/null
++++ b/infra/google-cloud-run-screening/main.tf
+@@ -0,0 +1,213 @@
++terraform {
++  required_version = "~> 1.15.0"
++
++  required_providers {
++    google = {
++      source  = "hashicorp/google"
++      version = "~> 7.42.0"
++    }
++  }
++}
++
++variable "project_id" {
++  type = string
++
++  validation {
++    condition     = can(regex("^[a-z][a-z0-9-]{4,28}[a-z0-9]$", var.project_id))
++    error_message = "project_id must be a valid Google Cloud project ID."
++  }
++}
++
++variable "create_jobs" {
++  type    = bool
++  default = false
++}
++
++variable "runner_image" {
++  type    = string
++  default = ""
++
++  validation {
++    condition = !var.create_jobs || can(regex(
++      "^europe-west2-docker\\.pkg\\.dev/${var.project_id}/klee-web-runner/runner@sha256:[0-9a-f]{64}$",
++      var.runner_image,
++    ))
++    error_message = "runner_image must be the immutable experiment Artifact Registry digest when create_jobs is true."
++  }
++}
++
++provider "google" {
++  project = var.project_id
++  region  = local.region
++}
++
++locals {
++  region = "europe-west2"
++
++  required_services = toset([
++    "artifactregistry.googleapis.com",
++    "iam.googleapis.com",
++    "run.googleapis.com",
++  ])
++
++  labels = {
++    environment = "serverless-runner-screening"
++    managed-by  = "terraform"
++    project     = "klee-web-runner-screening"
++  }
++
++  workloads = {
++    compile-error = {
++      max_time           = "60"
++      source_gzip_base64 = base64gzip(file("${path.module}/../../backend/tests/fixtures/klee_output_sample/compile_error/input.c"))
++    }
++    get-sign = {
++      max_time           = "60"
++      source_gzip_base64 = base64gzip(file("${path.module}/../../frontend/src/data/examples/get_sign.c"))
++    }
++    maze = {
++      max_time           = "60"
++      source_gzip_base64 = base64gzip(file("${path.module}/../../frontend/src/data/examples/maze.c"))
++    }
++    max-time = {
++      max_time           = "3"
++      source_gzip_base64 = base64gzip(file("${path.module}/../../backend/tests/fixtures/klee_output_sample/max_time/input.c"))
++    }
++    regexp = {
++      max_time           = "60"
++      source_gzip_base64 = base64gzip(file("${path.module}/../../frontend/src/data/examples/regexp.c"))
++    }
++  }
++
++  task_command = <<-SCRIPT
++    set -eu
++    printf 'HARNESS_START=%s\n' "$(date --utc +%Y-%m-%dT%H:%M:%S.%NZ)"
++    printf '%s' "$SOURCE_GZIP_BASE64" | base64 --decode | gzip --decompress | python3 /home/klee/entrypoint.py > /tmp/result.tar
++    python3 -c 'import hashlib, json, os, tarfile; archive = "/tmp/result.tar"; tar = tarfile.open(archive); names = tar.getnames(); read = lambda suffix: next((tar.extractfile(name).read().decode(errors="replace") for name in names if name.endswith(suffix)), ""); print(json.dumps({"archive_bytes": os.path.getsize(archive), "archive_sha256": hashlib.sha256(open(archive, "rb").read()).hexdigest(), "compile_error": bool(read("compile_error.txt")), "ktests": sum(name.endswith(".ktest") for name in names), "max_time": "HaltTimer invoked" in read("messages.txt"), "workload": os.environ["WORKLOAD_NAME"]}, sort_keys=True))'
++    printf 'HARNESS_DONE=%s\n' "$(date --utc +%Y-%m-%dT%H:%M:%S.%NZ)"
++  SCRIPT
++}
++
++resource "google_project_service" "required" {
++  for_each = local.required_services
++
++  project            = var.project_id
++  service            = each.value
++  disable_on_destroy = false
++}
++
++resource "google_artifact_registry_repository" "runner" {
++  project       = var.project_id
++  location      = local.region
++  repository_id = "klee-web-runner"
++  description   = "Temporary KLEE Web Runner screening repository"
++  format        = "DOCKER"
++  labels        = local.labels
++
++  docker_config {
++    immutable_tags = true
++  }
++
++  depends_on = [google_project_service.required["artifactregistry.googleapis.com"]]
++}
++
++resource "google_service_account" "runner" {
++  project      = var.project_id
++  account_id   = "klee-web-runner"
++  display_name = "KLEE Web Runner screening"
++
++  depends_on = [google_project_service.required["iam.googleapis.com"]]
++}
++
++resource "google_cloud_run_v2_job" "runner" {
++  for_each = var.create_jobs ? local.workloads : {}
++
++  project             = var.project_id
++  name                = "klee-runner-${each.key}"
++  location            = local.region
++  deletion_protection = false
++  labels              = local.labels
++
++  template {
++    task_count  = 1
++    parallelism = 1
++
++    template {
++      service_account       = google_service_account.runner.email
++      max_retries           = 0
++      timeout               = "900s"
++      execution_environment = "EXECUTION_ENVIRONMENT_GEN2"
++
++      containers {
++        name    = "runner"
++        image   = var.runner_image
++        command = ["/bin/bash", "-lc"]
++        args    = [local.task_command]
++
++        resources {
++          limits = {
++            cpu    = "2"
++            memory = "4Gi"
++          }
++        }
++
++        env {
++          name  = "KLEE_EXTRA_FLAGS"
++          value = ""
++        }
++
++        env {
++          name  = "KLEE_MAX_MEMORY"
++          value = "512"
++        }
++
++        env {
++          name  = "KLEE_MAX_TIME"
++          value = each.value.max_time
++        }
++
++        env {
++          name  = "KLEE_POSIX_ARGS"
++          value = ""
++        }
++
++        env {
++          name  = "KLEE_QUERY_FORMAT"
++          value = "none"
++        }
++
++        env {
++          name  = "SOURCE_GZIP_BASE64"
++          value = each.value.source_gzip_base64
++        }
++
++        env {
++          name  = "TMPDIR"
++          value = "/tmp"
++        }
++
++        env {
++          name  = "WORKLOAD_NAME"
++          value = each.key
++        }
++      }
++    }
++  }
++
++  depends_on = [
++    google_artifact_registry_repository.runner,
++    google_project_service.required["run.googleapis.com"],
++  ]
++}
++
++output "job_names" {
++  value = { for workload, job in google_cloud_run_v2_job.runner : workload => job.name }
++}
++
++output "project_id" {
++  value = var.project_id
++}
++
++output "repository" {
++  value = "${local.region}-docker.pkg.dev/${var.project_id}/${google_artifact_registry_repository.runner.repository_id}"
++}
+diff --git a/infra/google-cloud-run-screening/run-job.sh b/infra/google-cloud-run-screening/run-job.sh
+new file mode 100755
+index 0000000000000000000000000000000000000000..806ec5f51578fd95adaa764ca4e783beb10607e7
+--- /dev/null
++++ b/infra/google-cloud-run-screening/run-job.sh
+@@ -0,0 +1,145 @@
++#!/usr/bin/env bash
++set -euo pipefail
++
++if [[ $# -ne 2 ]]; then
++  printf 'Usage: %s WORKLOAD OUTPUT_DIR\n' "$0" >&2
++  exit 2
++fi
++
++workload=$1
++output_dir=$2
++
++case $workload in
++  compile-error | get-sign | maze | max-time | regexp) ;;
++  *)
++    printf 'Unknown workload: %s\n' "$workload" >&2
++    exit 2
++    ;;
++esac
++
++script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
++project_id=$(terraform -chdir="$script_dir" output -raw project_id)
++job_name=$(terraform -chdir="$script_dir" output -json job_names | jq -r --arg workload "$workload" '.[$workload] // empty')
++if [[ -z $job_name ]]; then
++  printf 'Terraform has no Job output for workload: %s\n' "$workload" >&2
++  exit 2
++fi
++
++if [[ $(gcloud config get project 2>/dev/null) != "$project_id" ]]; then
++  printf 'The active gcloud project does not match Terraform state.\n' >&2
++  exit 2
++fi
++
++mkdir -p -- "$output_dir"
++requested_at=$(date --utc +%Y-%m-%dT%H:%M:%S.%NZ)
++stem="$(date --utc +%Y%m%dT%H%M%SZ)-$workload"
++start_file="$output_dir/$stem-start.json"
++execution_file="$output_dir/$stem-execution.json"
++log_file="$output_dir/$stem-logs.json"
++
++start_response=$(gcloud run jobs execute "$job_name" \
++  --project "$project_id" \
++  --region europe-west2 \
++  --async \
++  --format json)
++
++jq --arg requested_at "$requested_at" \
++  '. + {harness: {requestedAt: $requested_at}}' \
++  <<<"$start_response" >"$start_file"
++
++execution_name=$(jq -r '.metadata.name // .name // empty' <<<"$start_response")
++if [[ -z $execution_name ]]; then
++  printf 'Cloud Run did not return an execution identity for %s.\n' "$job_name" >&2
++  exit 1
++fi
++
++previous_state=""
++for _ in $(seq 1 180); do
++  execution=$(gcloud run jobs executions describe "$execution_name" \
++    --project "$project_id" \
++    --region europe-west2 \
++    --format json)
++  state=$(jq -r '
++    if .status.completionTime == null then "CONDITION_PENDING"
++    elif .status.succeededCount == 1 then "CONDITION_SUCCEEDED"
++    else "CONDITION_FAILED"
++    end
++  ' <<<"$execution")
++  if [[ $state != "$previous_state" ]]; then
++    printf '%s execution=%s state=%s\n' "$(date --utc +%Y-%m-%dT%H:%M:%SZ)" "$execution_name" "$state"
++    previous_state=$state
++  fi
++  case $state in
++    CONDITION_SUCCEEDED | CONDITION_FAILED)
++      printf '%s\n' "$execution" | jq . >"$execution_file"
++      break
++      ;;
++  esac
++  sleep 5
++done
++
++if [[ ! -f $execution_file ]]; then
++  printf 'Cloud Run execution did not reach a terminal state: %s\n' "$execution_name" >&2
++  exit 1
++fi
++
++log_filter="resource.type=\"cloud_run_job\"
++resource.labels.job_name=\"$job_name\"
++labels.\"run.googleapis.com/execution_name\"=\"$execution_name\"
++(textPayload:\"HARNESS_\" OR jsonPayload.workload=\"$workload\")"
++
++logs=""
++for attempt in $(seq 1 30); do
++  logs=$(gcloud logging read "$log_filter" \
++    --project "$project_id" \
++    --freshness 1h \
++    --order asc \
++    --format json)
++  if jq -e 'map(.textPayload // "") | any(startswith("HARNESS_DONE="))' >/dev/null <<<"$logs"; then
++    printf '%s\n' "$logs" | jq . >"$log_file"
++    break
++  fi
++  if ((attempt % 6 == 0)); then
++    printf 'Waiting for Cloud Logging ingestion: %s minutes\n' "$((attempt / 6))"
++  fi
++  sleep 10
++done
++
++if [[ ! -f $log_file ]]; then
++  printf 'Harness logs did not reach Cloud Logging for execution: %s\n' "$execution_name" >&2
++  exit 1
++fi
++
++jq '{
++  name: .metadata.name,
++  state: (if .status.succeededCount == 1 then "CONDITION_SUCCEEDED" else "CONDITION_FAILED" end),
++  startTime: .status.startTime,
++  completionTime: .status.completionTime,
++  image: .spec.template.spec.containers[0].image
++}' "$execution_file"
++jq -r '.[] | if .textPayload then .textPayload else (.jsonPayload | tojson) end' "$log_file"
++
++state=$(jq -r 'if .status.succeededCount == 1 then "CONDITION_SUCCEEDED" else "CONDITION_FAILED" end' "$execution_file")
++summary=$(jq -c '[.[].jsonPayload | select(.archive_bytes != null)][0] // empty' "$log_file")
++if [[ $state != "CONDITION_SUCCEEDED" || -z $summary ]]; then
++  printf 'Cloud Run Job did not return a successful Runner summary.\n' >&2
++  exit 1
++fi
++
++case $workload in
++  compile-error)
++    jq -e '.compile_error == true and .ktests == 0 and .max_time == false' >/dev/null <<<"$summary"
++    ;;
++  get-sign)
++    jq -e '.compile_error == false and .ktests == 3 and .max_time == false' >/dev/null <<<"$summary"
++    ;;
++  maze)
++    jq -e '.compile_error == false and .ktests == 309 and .max_time == false' >/dev/null <<<"$summary"
++    ;;
++  max-time)
++    jq -e '.compile_error == false and .ktests > 0 and .max_time == true' >/dev/null <<<"$summary"
++    ;;
++  regexp)
++    jq -e '.compile_error == false and .ktests > 0 and .max_time == false' >/dev/null <<<"$summary"
++    ;;
++esac

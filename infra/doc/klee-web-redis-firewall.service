@@ -1,0 +1,15 @@
+[Unit]
+Description=KLEE Web Redis source firewall
+Requires=docker.service
+After=docker.service network-online.target
+Wants=network-online.target
+Before=klee-web.service
+PartOf=docker.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/bin/bash /opt/klee-web/configure-redis-firewall.sh
+
+[Install]
+WantedBy=multi-user.target

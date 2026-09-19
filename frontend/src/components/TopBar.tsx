@@ -1,12 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import type { KleeFlags } from "../api/jobs";
 import { FlagBar } from "./FlagBar";
+import { HelpTooltip } from "./HelpTooltip";
 import { KleeLogo } from "./KleeLogo";
 import { SettingsPopover } from "./SettingsPopover";
 import { SymbolicInputPanel } from "./SymbolicInputPanel";
 
 type TopBarProps = {
   flags: KleeFlags;
+  settingsRevision: number;
   onFlagsChange: (next: KleeFlags) => void;
   onRun: () => void;
   jobActive: boolean;
@@ -16,6 +18,7 @@ type TopBarProps = {
 
 export function TopBar({
   flags,
+  settingsRevision,
   onFlagsChange,
   onRun,
   jobActive,
@@ -48,9 +51,26 @@ export function TopBar({
       <div className="px-3 py-3 flex items-center justify-between">
         <div className="flex items-center gap-6">
           <KleeLogo />
-          <FlagBar flags={flags} onFlagsChange={onFlagsChange} />
+          <FlagBar key={settingsRevision} flags={flags} onFlagsChange={onFlagsChange} />
         </div>
         <div className="flex items-center gap-2">
+          <HelpTooltip
+            content="Open a public GitHub issue form to report a problem with KLEE Web."
+            placement="below-right"
+          >
+            {(descriptionId) => (
+              <a
+                href="https://github.com/FinnLeh/klee-web/issues/new?template=user_report.yml"
+                target="_blank"
+                rel="noreferrer"
+                aria-label="Report an issue on GitHub (opens in a new tab)"
+                aria-describedby={descriptionId}
+                className="flex items-center px-3 py-1.5 rounded border border-slate-300 dark:border-slate-700 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-800 active:brightness-95"
+              >
+                Report issue
+              </a>
+            )}
+          </HelpTooltip>
           {jobActive ? (
             <button
               type="button"
@@ -62,14 +82,22 @@ export function TopBar({
               {cancelling ? "Cancelling..." : "Cancel"}
             </button>
           ) : (
-            <button
-              type="button"
-              onClick={onRun}
-              className="flex items-center gap-1.5 px-4 py-1.5 rounded text-sm font-medium text-white bg-[var(--klee-accent)] hover:brightness-110 active:brightness-95"
+            <HelpTooltip
+              content="Compiles the C source to LLVM bitcode and runs KLEE in the sandbox with the selected settings, then displays generated tests and output."
+              placement="below-right"
             >
-              <PlayIcon />
-              Run
-            </button>
+              {(descriptionId) => (
+                <button
+                  type="button"
+                  onClick={onRun}
+                  aria-describedby={descriptionId}
+                  className="flex items-center gap-1.5 px-4 py-1.5 rounded text-sm font-medium text-white bg-[var(--klee-accent)] hover:brightness-110 active:brightness-95"
+                >
+                  <PlayIcon />
+                  Run
+                </button>
+              )}
+            </HelpTooltip>
           )}
           <div ref={settingsRef} className="relative">
             <button
@@ -85,7 +113,11 @@ export function TopBar({
           </div>
         </div>
       </div>
-      <SymbolicInputPanel flags={flags} onFlagsChange={onFlagsChange} />
+      <SymbolicInputPanel
+        flags={flags}
+        settingsRevision={settingsRevision}
+        onFlagsChange={onFlagsChange}
+      />
     </div>
   );
 }

@@ -43,6 +43,13 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - uses: docker/setup-buildx-action@v4
+      - name: Read KLEE version
+        id: klee-version
+        shell: bash
+        run: |
+          version="$(tr -d '\r\n' < .klee-version)"
+          test -n "$version"
+          echo "value=$version" >> "$GITHUB_OUTPUT"
       - name: Check for an existing commit image
         id: commit-image
         run: |
@@ -60,6 +67,8 @@ jobs:
           platforms: linux/amd64
           push: true
           tags: ${{ env.IMAGE }}:${{ env.COMMIT_TAG }}
+          build-args: |
+            KLEE_VERSION=${{ steps.klee-version.outputs.value }}
           labels: |
             org.opencontainers.image.source=https://github.com/${{ github.repository }}
             org.opencontainers.image.revision=${{ inputs.commit_sha }}

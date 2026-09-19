@@ -9,7 +9,13 @@ import {
   type HistoryEntry,
 } from "./history";
 
-const FLAGS = { max_time: 60, max_memory: 512, query_format: "none", extra_flags: "" } as const;
+const FLAGS = {
+  max_time: 60,
+  max_memory: 512,
+  enable_replay: true,
+  query_format: "none",
+  extra_flags: "",
+} as const;
 
 function entry(jobId: string, code: string, createdAt: number): HistoryEntry {
   return { jobId, code, flags: { ...FLAGS }, createdAt };
@@ -48,6 +54,27 @@ describe("history store", () => {
     expect(readHistory()).toEqual([]);
     localStorage.setItem("klee.history", JSON.stringify({ not: "an array" }));
     expect(readHistory()).toEqual([]);
+  });
+
+  test("readHistory defaults replay to enabled for legacy entries", () => {
+    localStorage.setItem(
+      "klee.history",
+      JSON.stringify([
+        {
+          jobId: "legacy",
+          code: "int main() { return 0; }",
+          flags: {
+            max_time: 60,
+            max_memory: 512,
+            query_format: "none",
+            extra_flags: "",
+          },
+          createdAt: 1,
+        },
+      ]),
+    );
+
+    expect(readHistory()[0]?.flags.enable_replay).toBe(true);
   });
 
   test("addRun prepends newest first", () => {

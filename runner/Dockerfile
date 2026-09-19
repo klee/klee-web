@@ -1,4 +1,7 @@
-FROM klee/klee:v3.2
+ARG KLEE_VERSION
+FROM klee/klee:${KLEE_VERSION}
+ARG KLEE_VERSION
+RUN : "${KLEE_VERSION:?KLEE_VERSION is required}"
 
 USER root
 # Make the KLEE home tree readable/traversable by any uid so the container can run

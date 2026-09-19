@@ -63,6 +63,16 @@ def test_build_run_args_limits_writable_storage() -> None:
     assert "TMPDIR=/work" in args
 
 
+def test_build_run_args_enables_replay_by_default() -> None:
+    args = build_run_args(uuid4(), KleeFlags(), "", runtime=None, caps=CAPS)
+    assert "KLEE_ENABLE_REPLAY=1" in args
+
+
+def test_build_run_args_can_disable_replay() -> None:
+    args = build_run_args(uuid4(), KleeFlags(enable_replay=False), "", runtime=None, caps=CAPS)
+    assert "KLEE_ENABLE_REPLAY=0" in args
+
+
 def test_build_run_args_adds_swap_allowance_to_docker_total() -> None:
     caps = RunnerCaps(
         cpus=1.5,

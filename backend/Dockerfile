@@ -1,5 +1,9 @@
 FROM ghcr.io/astral-sh/uv:python3.12-bookworm-slim
 
+ARG KLEE_VERSION
+RUN : "${KLEE_VERSION:?KLEE_VERSION is required}"
+ENV KLEE_VERSION="${KLEE_VERSION}"
+
 # docker CLI (client only; the worker shells out to it, the api carries it
 # unused). Static Go binary, so copying it onto this glibc base is fine.
 COPY --from=docker:29-cli /usr/local/bin/docker /usr/local/bin/docker

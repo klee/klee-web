@@ -32,7 +32,13 @@ export function readHistory(): HistoryEntry[] {
     if (!raw) return [];
     const parsed: unknown = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
-    return parsed.filter(isEntry);
+    return parsed.filter(isEntry).map((entry) => ({
+      ...entry,
+      flags: {
+        ...entry.flags,
+        enable_replay: entry.flags.enable_replay ?? true,
+      },
+    }));
   } catch {
     return [];
   }
@@ -45,7 +51,10 @@ function write(entries: HistoryEntry[]): HistoryEntry[] {
 
 function sameFlags(a: KleeFlags, b: KleeFlags): boolean {
   return (
-    a.max_time === b.max_time && a.max_memory === b.max_memory && a.query_format === b.query_format
+    a.max_time === b.max_time &&
+    a.max_memory === b.max_memory &&
+    a.enable_replay === b.enable_replay &&
+    a.query_format === b.query_format
   );
 }
 

@@ -10,7 +10,12 @@ import {
   type HistoryStatus,
 } from "../lib/history";
 
-type RunInput = { jobId: string; code: string; flags: KleeFlags; createdAt: number };
+type RunInput = {
+  jobId: string;
+  code: string;
+  flags: KleeFlags;
+  createdAt: number;
+};
 
 export function useHistory() {
   const [entries, setEntries] = useState<HistoryEntry[]>(readHistory);

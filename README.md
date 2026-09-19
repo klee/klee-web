@@ -30,7 +30,7 @@ klee-web/
 
 ## Running locally
 
-The full stack requires Docker with Compose, GNU Make, and a registered gVisor runtime (`runsc`, plus `runsc-kvm` where `/dev/kvm` is available). Host-side development checks additionally use [`uv`](https://docs.astral.sh/uv/) and [`node`](https://nodejs.org/).
+The full stack requires Docker with Compose, GNU Make, and a registered gVisor runtime (`runsc`, plus `runsc-kvm` where `/dev/kvm` is available). The explicit macOS runc exception described below applies only to the isolated local E2E launcher. Host-side development checks additionally use [`uv`](https://docs.astral.sh/uv/) and [`node`](https://nodejs.org/).
 
 Install the project dependencies once after cloning:
 
@@ -47,7 +47,9 @@ make deploy
 
 `make deploy` builds the Runner, backend, and frontend images, starts the Compose services in detached mode, waits until every service is running and the defined Redis and API health checks pass, then returns control to the terminal. It selects `runsc-kvm` when `/dev/kvm` exists and `runsc` otherwise.
 
-The local defaults name these images `klee-web-runner`, `klee-web-backend`, and `klee-web-frontend`. `make deploy` remains the local build path. Registry-backed deployment tooling supplies `RUNNER_IMAGE`, `BACKEND_IMAGE`, and `FRONTEND_IMAGE`, pulls those references, and starts the same Compose file with `--no-build`.
+The local defaults name these images `klee-web-runner`, `klee-web-backend`, and `klee-web-frontend`. After building the Runner, `make deploy` resolves `klee-web-runner` to its content-addressed `sha256:...` image ID and supplies that value to the API and Worker, so a changed local Runner cannot reuse stale cache entries. Registry tags locate publications but are not runtime identities. Registry-backed deployment tooling supplies immutable `RUNNER_IMAGE`, `BACKEND_IMAGE`, and `FRONTEND_IMAGE` digests, pulls those references, and starts the same Compose file with `--no-build`.
+
+`.klee-version` is the single KLEE version lever. It selects the Runner base image and is baked into the backend result metadata and frontend status bar. It is a build input, not per-host deployment configuration. Result-cache keys combine the complete submission, exact Runner image identity, and `JobResult` schema. Job records and cached results expire after 48 hours. Reads do not refresh either TTL.
 
 After all six checks pass in a `main` CI run, CI calls the reusable `Publish images` workflow. It builds `linux/amd64` frontend, backend, and Runner images under `ghcr.io/finnleh/`. Each image receives an immutable `sha-<full-commit>` tag and a GitHub/Sigstore-signed provenance attestation. Once all three exist, the workflow updates their moving `main` tags sequentially. Publishing a stable GitHub Release first verifies all three attestations, then adds its `vMAJOR.MINOR.PATCH` tag to that commit's existing images without rebuilding them. There is no `latest` tag. The packages are public.
 
@@ -157,6 +159,15 @@ On `git commit`, the commit-stage hooks run ruff (backend), eslint (frontend), a
 
 On `git push`, the pre-push hook runs Playwright through an isolated Compose stack and a real KLEE container under gVisor, but only when the push touches `frontend/`, `backend/`, or `runner/`. It needs Docker, a registered gVisor runtime, and free ports 80 and 443. The hook builds its images, creates a temporary admin credential, and tears the stack down afterward. To skip it in a pinch, push with `--no-verify`.
 
+gVisor does not support macOS. A macOS contributor can explicitly allow Docker's default `runc` runtime for the local E2E launcher:
+
+```bash
+KLEE_E2E_ALLOW_RUNC=1 npm run test:e2e
+KLEE_E2E_ALLOW_RUNC=1 git push
+```
+
+Without that opt-in, the launcher stops before starting containers. It prints a warning when runc is enabled because this mode lacks gVisor's additional isolation. Use it only with trusted checked-out code and test inputs. Linux hosts, including CI, reject this exception and continue to require `runsc` or `runsc-kvm`.
+
 The pre-push hook is local and optional. Without it, or with `--no-verify`, the push still succeeds. The same test runs as a required CI check on the pull request, so a broken contract cannot be merged either way. The hook just gives faster, real-KLEE feedback before you push.
 
 ## Issue agent automation
@@ -170,3 +181,5 @@ request. Use the `Agent task` issue template for issues intended for automation.
 ## Design
 
 [`docs/architecture.md`](docs/architecture.md) is the overview: how the frontend, backend, runner, broker, and store fit together. The ADRs in `docs/adr/` record why each decision was made, one per major choice.
+
+The [thesis source-evidence bundle](docs/thesis-evidence/) records the exact commit ranges, retained patches, and per-file accounting used in the portability evaluation. The thesis remains self-contained. The bundle provides supplementary traceability.

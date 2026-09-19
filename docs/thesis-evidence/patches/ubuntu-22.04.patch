@@ -1,0 +1,75 @@
+diff --git a/deploy/bootstrap-host.sh b/deploy/bootstrap-host.sh
+index e3e21e4..933e348 100755
+--- a/deploy/bootstrap-host.sh
++++ b/deploy/bootstrap-host.sh
+@@ -1,9 +1,9 @@
+ #!/usr/bin/env bash
+ set -euo pipefail
+ 
+-readonly DOCKER_VERSION='5:29.6.2-1~ubuntu.24.04~noble'
+-readonly CONTAINERD_VERSION='2.2.6-1~ubuntu.24.04~noble'
+-readonly COMPOSE_VERSION='5.3.1-1~ubuntu.24.04~noble'
++readonly DOCKER_VERSION='5:29.6.2-1~ubuntu.22.04~jammy'
++readonly CONTAINERD_VERSION='2.2.6-1~ubuntu.22.04~jammy'
++readonly COMPOSE_VERSION='5.3.1-1~ubuntu.22.04~jammy'
+ readonly GVISOR_RELEASE='20260714'
+ readonly PROBE_IMAGE='hello-world@sha256:d1a8d0a4eeb63aff09f5f34d4d80505e0ba81905f36158cc3970d8e07179e59e'
+ readonly DEPLOYMENT_ENV=/etc/klee-web/deployment.env
+@@ -31,7 +31,7 @@ case "$deployment_role" in
+ esac
+ 
+ if [[ ! -r /etc/os-release ]]; then
+-  printf 'bootstrap-host.sh requires Ubuntu 24.04 on AMD64\n' >&2
++  printf 'bootstrap-host.sh requires Ubuntu 22.04 on AMD64\n' >&2
+   exit 1
+ fi
+ 
+@@ -42,8 +42,8 @@ os_id=${ID:-}
+ os_codename=${VERSION_CODENAME:-}
+ architecture=$(dpkg --print-architecture)
+ 
+-if [[ $os_id != ubuntu || $os_codename != noble || $architecture != amd64 ]]; then
+-  printf 'bootstrap-host.sh requires Ubuntu 24.04 Noble on AMD64\n' >&2
++if [[ $os_id != ubuntu || $os_codename != jammy || $architecture != amd64 ]]; then
++  printf 'bootstrap-host.sh requires Ubuntu 22.04 Jammy on AMD64\n' >&2
+   exit 1
+ fi
+ 
+diff --git a/infra/aws/main.tf b/infra/aws/main.tf
+index 67e2ad0..76b839b 100644
+--- a/infra/aws/main.tf
++++ b/infra/aws/main.tf
+@@ -11,7 +11,7 @@ provider "aws" {
+   }
+ }
+ 
+-# Verify the pinned AMI is an available AMD64 Ubuntu 24.04 image owned by Canonical.
++# Verify the pinned AMI is an available AMD64 Ubuntu 22.04 image owned by Canonical.
+ data "aws_ami" "ubuntu" {
+   owners = ["099720109477"]
+ 
+@@ -22,7 +22,7 @@ data "aws_ami" "ubuntu" {
+ 
+   filter {
+     name   = "name"
+-    values = ["ubuntu/images/hvm-ssd-gp3/ubuntu-noble-24.04-amd64-server-*"]
++    values = ["ubuntu/images/hvm-ssd/ubuntu-jammy-22.04-amd64-server-*"]
+   }
+ 
+   filter {
+diff --git a/infra/aws/variables.tf b/infra/aws/variables.tf
+index d672755..e0b7b60 100644
+--- a/infra/aws/variables.tf
++++ b/infra/aws/variables.tf
+@@ -11,9 +11,9 @@ variable "availability_zone" {
+ }
+ 
+ variable "ubuntu_ami_id" {
+-  description = "Pinned Canonical Ubuntu 24.04 AMD64 AMI in the selected Region."
++  description = "Pinned Canonical Ubuntu 22.04 AMD64 AMI in the selected Region."
+   type        = string
+-  default     = "ami-01029182857b20417"
++  default     = "ami-0418de08332592482"
+ 
+   validation {
+     condition     = can(regex("^ami-[0-9a-f]+$", var.ubuntu_ami_id))

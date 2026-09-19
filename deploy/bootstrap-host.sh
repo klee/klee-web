@@ -1,9 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-readonly DOCKER_VERSION='5:29.6.2-1~ubuntu.24.04~noble'
-readonly CONTAINERD_VERSION='2.2.6-1~ubuntu.24.04~noble'
-readonly COMPOSE_VERSION='5.3.1-1~ubuntu.24.04~noble'
 readonly GVISOR_RELEASE='20260714'
 readonly PROBE_IMAGE='hello-world@sha256:d1a8d0a4eeb63aff09f5f34d4d80505e0ba81905f36158cc3970d8e07179e59e'
 readonly DEPLOYMENT_ENV=/etc/klee-web/deployment.env
@@ -31,7 +28,7 @@ case "$deployment_role" in
 esac
 
 if [[ ! -r /etc/os-release ]]; then
-  printf 'bootstrap-host.sh requires Ubuntu 24.04 on AMD64\n' >&2
+  printf 'bootstrap-host.sh requires Ubuntu 22.04 or 24.04 on AMD64\n' >&2
   exit 1
 fi
 
@@ -42,10 +39,28 @@ os_id=${ID:-}
 os_codename=${VERSION_CODENAME:-}
 architecture=$(dpkg --print-architecture)
 
-if [[ $os_id != ubuntu || $os_codename != noble || $architecture != amd64 ]]; then
-  printf 'bootstrap-host.sh requires Ubuntu 24.04 Noble on AMD64\n' >&2
+if [[ $os_id != ubuntu || $architecture != amd64 ]]; then
+  printf 'bootstrap-host.sh requires Ubuntu 22.04 or 24.04 on AMD64\n' >&2
   exit 1
 fi
+
+case "$os_codename" in
+  jammy)
+    DOCKER_VERSION='5:29.6.2-1~ubuntu.22.04~jammy'
+    CONTAINERD_VERSION='2.2.6-1~ubuntu.22.04~jammy'
+    COMPOSE_VERSION='5.3.1-1~ubuntu.22.04~jammy'
+    ;;
+  noble)
+    DOCKER_VERSION='5:29.6.2-1~ubuntu.24.04~noble'
+    CONTAINERD_VERSION='2.2.6-1~ubuntu.24.04~noble'
+    COMPOSE_VERSION='5.3.1-1~ubuntu.24.04~noble'
+    ;;
+  *)
+    printf 'bootstrap-host.sh requires Ubuntu 22.04 Jammy or 24.04 Noble on AMD64\n' >&2
+    exit 1
+    ;;
+esac
+readonly DOCKER_VERSION CONTAINERD_VERSION COMPOSE_VERSION
 
 export DEBIAN_FRONTEND=noninteractive
 export NEEDRESTART_MODE=l

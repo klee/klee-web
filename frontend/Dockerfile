@@ -7,6 +7,10 @@ WORKDIR /app
 COPY package.json package-lock.json .npmrc ./
 RUN npm ci
 
+# KLEE version from the build arg.
+ARG KLEE_VERSION
+RUN : "${KLEE_VERSION:?KLEE_VERSION is required}"
+
 # Source in, tsc -b && vite build emits dist/.
 COPY . .
 RUN npm run build

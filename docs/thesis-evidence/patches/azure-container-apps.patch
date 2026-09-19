@@ -1,0 +1,370 @@
+diff --git a/infra/azure-container-apps-screening/.terraform.lock.hcl b/infra/azure-container-apps-screening/.terraform.lock.hcl
+new file mode 100644
+index 0000000000000000000000000000000000000000..a398007fff80eca554a8c32cf395d6f1c129338e
+--- /dev/null
++++ b/infra/azure-container-apps-screening/.terraform.lock.hcl
+@@ -0,0 +1,22 @@
++# This file is maintained automatically by "terraform init".
++# Manual edits may be lost in future updates.
++
++provider "registry.terraform.io/hashicorp/azurerm" {
++  version     = "4.81.0"
++  constraints = "~> 4.81.0"
++  hashes = [
++    "h1:olVprUWhmFTARlydw/r7VIx4fata2gy3zsAWfPGRrhg=",
++    "zh:0732e7b74264ddfa2b90ba69d01c283d3cbae9f72ed3e506c6ac92529fed7fd3",
++    "zh:12afb524e232fe4e3d6161927724af5dfa4831d71edd9c174917ca9b7377bfae",
++    "zh:169d619ae202c4145e02fb706fb7c3679445ab3e3ff722edbf89597517a8c92e",
++    "zh:6beb95a3ef2f2d9c76abaa48e5450e90686a3fb6a47f1cb0ff7c5e94b6960151",
++    "zh:705e075fb5ffc4bf66fd7cbabf1a65007a41621e80030a2c158a4c83b6046216",
++    "zh:78d5eefdd9e494defcb3c68d282b8f96630502cac21d1ea161f53cfe9bb483b3",
++    "zh:79a8d17fefe647040fcb9ee8821a4f09f395427c4fd49493489b9a93a9a1038e",
++    "zh:8cc3f900b3774c0ae37ae42365c4579a199cf9e5edf88e476fdf5ab1048f84ea",
++    "zh:dec373b9390fa95e257291acd018ed65a7d512b428645d35e22cdbe8b245a08b",
++    "zh:e60f1e9fb45df6defade2855ed6e68547409ea75d30655c556adb0c08579749b",
++    "zh:f901d12ec82f3f8b5880a27b5cbcd7bd0d97e60c9367a2d7ed82fdd1157b39ff",
++    "zh:facf68ea5bf0f2b8ba720e7fba5f86492e1d4c591100460bb91c3f79f391f4b6",
++  ]
++}
+diff --git a/infra/azure-container-apps-screening/main.tf b/infra/azure-container-apps-screening/main.tf
+new file mode 100644
+index 0000000000000000000000000000000000000000..96f2f11cd65300ccce600edef93506c4c4916570
+--- /dev/null
++++ b/infra/azure-container-apps-screening/main.tf
+@@ -0,0 +1,162 @@
++terraform {
++  required_version = "~> 1.15.0"
++
++  required_providers {
++    azurerm = {
++      source  = "hashicorp/azurerm"
++      version = "~> 4.81.0"
++    }
++  }
++}
++
++provider "azurerm" {
++  resource_provider_registrations = "none"
++
++  features {}
++}
++
++locals {
++  resource_name = "klee-web-runner-screening"
++  runner_image  = "ghcr.io/finnleh/klee-web-runner@sha256:25ba8f02cbc4d497213f874fc3c11f4111cb455e796d121d2527dc29eee7b670"
++
++  tags = {
++    Environment = "serverless-runner-screening"
++    ManagedBy   = "Terraform"
++    Project     = "klee-web-runner-screening"
++  }
++
++  workloads = {
++    compile-error = {
++      max_time           = "60"
++      source_gzip_base64 = base64gzip(file("${path.module}/../../backend/tests/fixtures/klee_output_sample/compile_error/input.c"))
++    }
++    get-sign = {
++      max_time           = "60"
++      source_gzip_base64 = base64gzip(file("${path.module}/../../frontend/src/data/examples/get_sign.c"))
++    }
++    maze = {
++      max_time           = "60"
++      source_gzip_base64 = base64gzip(file("${path.module}/../../frontend/src/data/examples/maze.c"))
++    }
++    regexp = {
++      max_time           = "60"
++      source_gzip_base64 = base64gzip(file("${path.module}/../../frontend/src/data/examples/regexp.c"))
++    }
++    max-time = {
++      max_time           = "3"
++      source_gzip_base64 = base64gzip(file("${path.module}/../../backend/tests/fixtures/klee_output_sample/max_time/input.c"))
++    }
++  }
++
++  task_command = <<-SCRIPT
++    set -eu
++    printf 'HARNESS_START=%s\n' "$(date --utc +%Y-%m-%dT%H:%M:%S.%NZ)"
++    printf '%s' "$SOURCE_GZIP_BASE64" | base64 --decode | gzip --decompress | python3 /home/klee/entrypoint.py > /tmp/result.tar
++    python3 -c 'import hashlib, json, os, tarfile; archive = "/tmp/result.tar"; tar = tarfile.open(archive); names = tar.getnames(); read = lambda suffix: next((tar.extractfile(name).read().decode(errors="replace") for name in names if name.endswith(suffix)), ""); print(json.dumps({"archive_bytes": os.path.getsize(archive), "archive_sha256": hashlib.sha256(open(archive, "rb").read()).hexdigest(), "compile_error": bool(read("compile_error.txt")), "ktests": sum(name.endswith(".ktest") for name in names), "max_time": "HaltTimer invoked" in read("messages.txt"), "workload": os.environ["WORKLOAD_NAME"]}, sort_keys=True))'
++    printf 'HARNESS_DONE=%s\n' "$(date --utc +%Y-%m-%dT%H:%M:%S.%NZ)"
++  SCRIPT
++}
++
++resource "azurerm_resource_group" "runner" {
++  name     = local.resource_name
++  location = "Poland Central"
++  tags     = local.tags
++}
++
++resource "azurerm_log_analytics_workspace" "runner" {
++  name                = local.resource_name
++  location            = azurerm_resource_group.runner.location
++  resource_group_name = azurerm_resource_group.runner.name
++  sku                 = "PerGB2018"
++  retention_in_days   = 30
++  tags                = local.tags
++}
++
++resource "azurerm_container_app_environment" "runner" {
++  name                       = local.resource_name
++  location                   = azurerm_resource_group.runner.location
++  resource_group_name        = azurerm_resource_group.runner.name
++  logs_destination           = "log-analytics"
++  log_analytics_workspace_id = azurerm_log_analytics_workspace.runner.id
++  tags                       = local.tags
++}
++
++resource "azurerm_container_app_job" "runner" {
++  for_each = local.workloads
++
++  name                         = "klee-runner-${each.key}"
++  location                     = azurerm_resource_group.runner.location
++  resource_group_name          = azurerm_resource_group.runner.name
++  container_app_environment_id = azurerm_container_app_environment.runner.id
++  replica_timeout_in_seconds   = 900
++  replica_retry_limit          = 0
++  tags                         = local.tags
++
++  manual_trigger_config {
++    parallelism              = 1
++    replica_completion_count = 1
++  }
++
++  template {
++    container {
++      name    = "runner"
++      image   = local.runner_image
++      command = ["/bin/bash", "-lc"]
++      args    = [local.task_command]
++      cpu     = 2
++      memory  = "4Gi"
++
++      env {
++        name  = "KLEE_EXTRA_FLAGS"
++        value = ""
++      }
++
++      env {
++        name  = "KLEE_MAX_MEMORY"
++        value = "512"
++      }
++
++      env {
++        name  = "KLEE_MAX_TIME"
++        value = each.value.max_time
++      }
++
++      env {
++        name  = "KLEE_POSIX_ARGS"
++        value = ""
++      }
++
++      env {
++        name  = "KLEE_QUERY_FORMAT"
++        value = "none"
++      }
++
++      env {
++        name  = "SOURCE_GZIP_BASE64"
++        value = each.value.source_gzip_base64
++      }
++
++      env {
++        name  = "TMPDIR"
++        value = "/tmp"
++      }
++
++      env {
++        name  = "WORKLOAD_NAME"
++        value = each.key
++      }
++    }
++  }
++}
++
++output "job_names" {
++  value = { for workload, job in azurerm_container_app_job.runner : workload => job.name }
++}
++
++output "resource_group_name" {
++  value = azurerm_resource_group.runner.name
++}
++
++output "workspace_customer_id" {
++  value = azurerm_log_analytics_workspace.runner.workspace_id
++}
+diff --git a/infra/azure-container-apps-screening/run-job.sh b/infra/azure-container-apps-screening/run-job.sh
+new file mode 100755
+index 0000000000000000000000000000000000000000..fe3b2c80a2767df8f58f4b2b2608fe7f7d601465
+--- /dev/null
++++ b/infra/azure-container-apps-screening/run-job.sh
+@@ -0,0 +1,168 @@
++#!/usr/bin/env bash
++set -euo pipefail
++
++if [[ $# -ne 2 ]]; then
++  printf 'Usage: %s WORKLOAD OUTPUT_DIR\n' "$0" >&2
++  exit 2
++fi
++
++workload=$1
++output_dir=$2
++
++case $workload in
++  compile-error | get-sign | maze | regexp | max-time) ;;
++  *)
++    printf 'Unknown workload: %s\n' "$workload" >&2
++    exit 2
++    ;;
++esac
++
++if [[ $(az account show --query name --output tsv) != "Azure for Students" ]]; then
++  printf 'The active Azure subscription is not Azure for Students.\n' >&2
++  exit 2
++fi
++
++script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
++mkdir -p -- "$output_dir"
++
++subscription_id=$(az account show --query id --output tsv)
++resource_group=$(terraform -chdir="$script_dir" output -raw resource_group_name)
++workspace=$(terraform -chdir="$script_dir" output -raw workspace_customer_id)
++job_name=$(terraform -chdir="$script_dir" output -json job_names | jq -r --arg workload "$workload" '.[$workload] // empty')
++if [[ -z $job_name ]]; then
++  printf 'Terraform has no Job output for workload: %s\n' "$workload" >&2
++  exit 2
++fi
++
++api_base="https://management.azure.com/subscriptions/$subscription_id/resourceGroups/$resource_group/providers/Microsoft.App/jobs/$job_name"
++requested_at=$(date --utc +%Y-%m-%dT%H:%M:%S.%NZ)
++stem="$(date --utc +%Y%m%dT%H%M%SZ)-$workload"
++start_file="$output_dir/$stem-start.json"
++execution_file="$output_dir/$stem-execution.json"
++log_file="$output_dir/$stem-logs.json"
++
++start_response=$(az rest \
++  --method post \
++  --url "$api_base/start?api-version=2025-07-01" \
++  --output json)
++if [[ -z $start_response ]]; then
++  start_response='{}'
++fi
++
++jq --arg requested_at "$requested_at" \
++  '. + {harness: {requestedAt: $requested_at}}' \
++  <<<"$start_response" >"$start_file"
++
++execution_name=$(jq -r '.name // empty' <<<"$start_response")
++for _ in $(seq 1 30); do
++  if [[ -n $execution_name ]]; then
++    break
++  fi
++  executions=$(az rest \
++    --method get \
++    --url "$api_base/executions?api-version=2025-07-01" \
++    --output json)
++  execution_name=$(jq -r --arg requested_at "$requested_at" \
++    '[.value[] | select(.properties.startTime >= $requested_at)] | sort_by(.properties.startTime) | last | .name // empty' \
++    <<<"$executions")
++  sleep 2
++done
++
++if [[ -z $execution_name ]]; then
++  printf 'Azure did not expose an execution identity for %s.\n' "$job_name" >&2
++  exit 1
++fi
++
++previous_status=""
++execution=""
++for _ in $(seq 1 180); do
++  executions=$(az rest \
++    --method get \
++    --url "$api_base/executions?api-version=2025-07-01" \
++    --output json)
++  execution=$(jq -c --arg execution_name "$execution_name" \
++    '.value[] | select(.name == $execution_name)' \
++    <<<"$executions")
++  status="Pending"
++  if [[ -n $execution ]]; then
++    status=$(jq -r '.properties.status // "Pending"' <<<"$execution")
++  fi
++  if [[ $status != "$previous_status" ]]; then
++    printf '%s execution=%s status=%s\n' "$(date --utc +%Y-%m-%dT%H:%M:%SZ)" "$execution_name" "$status"
++    previous_status=$status
++  fi
++  case $status in
++    Succeeded | Failed | Stopped | Degraded)
++      printf '%s\n' "$execution" | jq . >"$execution_file"
++      break
++      ;;
++  esac
++  sleep 5
++done
++
++if [[ ! -f $execution_file ]]; then
++  printf 'Azure execution did not reach a terminal state: %s\n' "$execution_name" >&2
++  exit 1
++fi
++
++log_query="ContainerAppConsoleLogs_CL
++| where ContainerJobName_s == '$job_name'
++| where TimeGenerated >= datetime($requested_at)
++| where Log_s startswith 'HARNESS_' or Log_s startswith '{\"archive_bytes\"'
++| project TimeGenerated, ContainerGroupName_s, ContainerImage_s, Log_s
++| order by TimeGenerated asc"
++
++logs=""
++for attempt in $(seq 1 30); do
++  if logs=$(az monitor log-analytics query \
++    --workspace "$workspace" \
++    --analytics-query "$log_query" \
++    --output json 2>/dev/null) && \
++    jq -e 'map(.Log_s // "") | any(startswith("HARNESS_DONE="))' >/dev/null <<<"$logs"; then
++    printf '%s\n' "$logs" | jq . >"$log_file"
++    break
++  fi
++  if ((attempt % 6 == 0)); then
++    printf 'Waiting for Log Analytics ingestion: %s minutes\n' "$((attempt / 6))"
++  fi
++  sleep 10
++done
++
++if [[ ! -f $log_file ]]; then
++  printf 'Harness logs did not reach Log Analytics for execution: %s\n' "$execution_name" >&2
++  exit 1
++fi
++
++jq '{
++  name,
++  status: .properties.status,
++  startTime: .properties.startTime,
++  endTime: .properties.endTime,
++  image: .properties.template.containers[0].image
++}' "$execution_file"
++jq -r '.[].Log_s' "$log_file"
++
++status=$(jq -r '.properties.status' "$execution_file")
++summary=$(jq -r '[.[].Log_s | select(startswith("{\"archive_bytes\""))][0] // empty' "$log_file")
++if [[ $status != "Succeeded" || -z $summary ]]; then
++  printf 'Azure Job did not return a successful Runner summary.\n' >&2
++  exit 1
++fi
++
++case $workload in
++  compile-error)
++    jq -e '.compile_error == true and .ktests == 0 and .max_time == false' >/dev/null <<<"$summary"
++    ;;
++  get-sign)
++    jq -e '.compile_error == false and .ktests == 3 and .max_time == false' >/dev/null <<<"$summary"
++    ;;
++  maze)
++    jq -e '.compile_error == false and .ktests == 309 and .max_time == false' >/dev/null <<<"$summary"
++    ;;
++  regexp)
++    jq -e '.compile_error == false and .ktests > 0 and .max_time == false' >/dev/null <<<"$summary"
++    ;;
++  max-time)
++    jq -e '.compile_error == false and .ktests > 0 and .max_time == true' >/dev/null <<<"$summary"
++    ;;
++esac

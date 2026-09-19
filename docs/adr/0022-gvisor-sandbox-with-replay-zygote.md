@@ -2,6 +2,8 @@
 
 **Status:** Accepted, 2026-07-09
 
+> **Amendment, 2026-08-09:** Per-path replay remains enabled by default but users may disable it. gVisor remains mandatory because KLEE's concrete external calls execute attacker-influenced native code even without replay.
+
 ## Context
 
 Stage 3 sandboxes the runner, which executes untrusted C. KLEE runs the code symbolically, and per-path replay (ADR-0020) runs it natively once per test case, so attacker-influenced native code runs on both paths. The sandbox has to hold. The choice is constrained by three things at once: isolation strength, performance, and how much each deployment target must provide. That last one is the portability question the thesis is trying to answer, so a sandbox that needs a lot of per-machine setup is a worse answer even when it is faster.

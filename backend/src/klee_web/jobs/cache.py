@@ -7,8 +7,28 @@ from redis.asyncio import Redis
 from klee_web.models import JobRequest, JobResult
 
 
-def cache_key(request: JobRequest) -> str:
-    payload = json.dumps(request.model_dump(mode="json"), sort_keys=True, separators=(",", ":"))
+def _job_result_schema_hash() -> str:
+    canonical_schema = json.dumps(
+        JobResult.model_json_schema(),
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+    return hashlib.sha256(canonical_schema.encode()).hexdigest()
+
+
+_JOB_RESULT_SCHEMA_HASH = _job_result_schema_hash()
+
+
+def cache_key(request: JobRequest, runner_image: str) -> str:
+    payload = json.dumps(
+        {
+            "request": request.model_dump(mode="json"),
+            "runner_image": runner_image,
+            "result_schema_hash": _JOB_RESULT_SCHEMA_HASH,
+        },
+        sort_keys=True,
+        separators=(",", ":"),
+    )
     return hashlib.sha256(payload.encode()).hexdigest()
 
 
@@ -17,7 +37,7 @@ class ResultCache(Protocol):
     async def set(self, key: str, result: JobResult) -> None: ...
 
 
-_CACHE_TTL_SECONDS = 24 * 60 * 60
+_CACHE_TTL_SECONDS = 48 * 60 * 60
 
 
 def _key(key: str) -> str:

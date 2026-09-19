@@ -152,7 +152,7 @@ class FakeKleeRunner:
         return self._cancel_returns
 
 
-def get_sign_result() -> JobResult:
+def get_sign_result(klee_version: str | None = None) -> JobResult:
     return JobResult(
         test_cases=[
             TestCase(
@@ -171,4 +171,5 @@ def get_sign_result() -> JobResult:
         warnings="",
         stats={"Instructions": 100, "NumStates": 1, "FullBranches": 2, "WallTime": 0},
         halt_reason=HaltReason.completed,
+        klee_version=klee_version,
     )
