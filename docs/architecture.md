@@ -159,6 +159,12 @@ Compose is the one full-application topology for local verification, browser CI,
 - **`infra/aws/`, `infra/aws-multi-vm/`, and `infra/azure/`** are independent provider roots. Each creates its provider's networking and compute resources, then renders the shared lifecycle with a provider-specific TLS adapter.
 - **`infra/doc/`** records the host-specific certificate and Redis-firewall additions for the maintained institutional deployment. The institution allocates those VMs outside Terraform.
 
+Web-serving hosts can explicitly enable `deploy/compose.acme.yml` through
+`ACME_WEBROOT_DIRECTORY`. It adds HTTP-01 challenge files and directory-mounted
+certificate generations without changing the default deployment path. The DoC
+renewal timer is installed and enabled separately after webroot validation
+passes. See the [institutional procedure](deployment/institutional.md#automatic-tls-renewal).
+
 Local operation uses the automatic build override:
 
 - **`make deploy`** builds the Runner, backend, and frontend images, then starts nginx, FastAPI, Redis, and one Celery Worker in detached mode.

@@ -1,0 +1,10 @@
+[Unit]
+Description=Check the KLEE Web TLS certificate twice daily
+
+[Timer]
+OnCalendar=*-*-* 00,12:00:00
+RandomizedDelaySec=1h
+Persistent=true
+
+[Install]
+WantedBy=timers.target

@@ -1,4 +1,4 @@
-.PHONY: install runner admin-password deploy logs down
+.PHONY: install runner admin-password deploy logs down test-tls test-tls-nginx
 
 KLEE_VERSION := $(shell cat .klee-version)
 RUNNER_IMAGE ?= klee-web-runner
@@ -6,6 +6,7 @@ WORKER_CONCURRENCY_MAX ?= 4
 WORKER_REPLICAS ?= 1
 KLEE_RUNTIME ?= $(if $(wildcard /dev/kvm),runsc-kvm,runsc)
 ADMIN_HTPASSWD_FILE ?= $(CURDIR)/.secrets/admin.htpasswd
+TLS_NGINX_IMAGE ?= klee-web-frontend
 export WORKER_CONCURRENCY_MAX WORKER_REPLICAS KLEE_RUNTIME ADMIN_HTPASSWD_FILE KLEE_VERSION RUNNER_IMAGE
 
 install:
@@ -35,3 +36,9 @@ admin-password:
 
 runner:
 	docker build --build-arg KLEE_VERSION=$(KLEE_VERSION) -t klee-web-runner ./runner
+
+test-tls:
+	PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s infra/doc/tests -v
+
+test-tls-nginx:
+	TLS_NGINX_IMAGE="$(TLS_NGINX_IMAGE)" python3 infra/doc/tests/nginx_smoke.py
