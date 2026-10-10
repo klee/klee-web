@@ -356,20 +356,16 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-"""Main function of the issue agent"""
 def main() -> int:
+    """Run the issue agent for one issue."""
     args = parse_args()
-    # GITHUB REPOSITORY is automatically defined, should always be available when running as github action
     if not args.repo:
         raise SystemExit("Set GITHUB_REPOSITORY or pass --repo owner/name.")
 
-    # defined in issue-agent.yml, enables this agent to make PR to the repo
     token = os.environ.get("GH_TOKEN") or os.environ.get("GITHUB_TOKEN")
     if not token:
         raise SystemExit("Set GH_TOKEN or GITHUB_TOKEN.")
 
-
-    # construct the toke and get the issue in the argument
     client = GitHubClient(args.repo, token)
     issue = client.get_issue(args.issue)
     if "pull_request" in issue:

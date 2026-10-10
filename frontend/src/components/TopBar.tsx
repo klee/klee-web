@@ -60,7 +60,7 @@ export function TopBar({
           >
             {(descriptionId) => (
               <a
-                href="https://github.com/FinnLeh/klee-web/issues/new?template=user_report.yml"
+                href="https://github.com/klee/klee-web/issues/new?template=user_report.yml"
                 target="_blank"
                 rel="noreferrer"
                 aria-label="Report an issue on GitHub (opens in a new tab)"

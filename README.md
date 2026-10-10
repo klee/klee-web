@@ -1,6 +1,6 @@
 # KLEE Web
 
-[![CI](https://github.com/FinnLeh/klee-web/actions/workflows/ci.yml/badge.svg)](https://github.com/FinnLeh/klee-web/actions/workflows/ci.yml)
+[![CI](https://github.com/klee/klee-web/actions/workflows/ci.yml/badge.svg)](https://github.com/klee/klee-web/actions/workflows/ci.yml)
 
 Browser-accessible interface for the [KLEE](https://klee.llvm.org/) symbolic execution engine. MSc thesis project, Imperial College London, supervised by Prof. Cristian Cadar.
 
@@ -8,9 +8,9 @@ Browser-accessible interface for the [KLEE](https://klee.llvm.org/) symbolic exe
 
 KLEE today requires users to build LLVM, STP, and a chain of other dependencies before running a single test. Many give up. KLEE Web removes that barrier: write C in a browser, get test cases back.
 
-## Current stage
+## Current system
 
-**Stage 3: hardening and portability.** Stages 1 and 2 are done: the synchronous monolith (React frontend, FastAPI backend, Docker runner), then the split (Celery workers, a Redis broker and result cache, a worker pool). Stage 3 adds the production edge (nginx, TLS, rate limiting), stronger sandboxing (gVisor), observability, and an admin UI. The edge, the gVisor sandbox, fleet telemetry, usage statistics, and authenticated per-Worker capacity control are already in place. It also answers the thesis portability question: redeploy the stack across providers and count what has to change.
+The three development stages are complete. Stage 1 established the React frontend, FastAPI API, and Docker Runner behind an asynchronous HTTP contract. Stage 2 moved execution onto Celery Workers with Redis-backed state and caching. Stage 3 added the nginx edge, TLS, rate limiting, gVisor containment, fleet telemetry, usage statistics, and authenticated per-Worker capacity control. The portability evaluation then redeployed the system across VM providers, topologies, host systems, a managed Redis service, serverless per-Job services, and institutional VMs. It recorded source changes and operator actions for each transition.
 
 The whole stack runs locally through the same Compose topology used for deployment. `make deploy` starts nginx, the API, Redis, and the Celery Worker fleet. `make logs` follows them, and `make down` stops them.
 
@@ -23,7 +23,7 @@ klee-web/
 ├── runner/         Docker image and entrypoint that actually runs KLEE.
 ├── bot/            Label-gated issue agent automation (see below).
 ├── deploy/         Provider-neutral VM bootstrap and service lifecycle.
-├── infra/          Provider-specific infrastructure roots.
+├── infra/          Provider-specific roots and the institutional adapter.
 ├── docs/           architecture.md overview, and the ADRs in docs/adr/.
 └── Makefile        install, credential, Runner build, deployment, logs, and teardown commands.
 ```
@@ -51,7 +51,7 @@ The local defaults name these images `klee-web-runner`, `klee-web-backend`, and 
 
 `.klee-version` is the single KLEE version lever. It selects the Runner base image and is baked into the backend result metadata and frontend status bar. It is a build input, not per-host deployment configuration. Result-cache keys combine the complete submission, exact Runner image identity, and `JobResult` schema. Job records and cached results expire after 48 hours. Reads do not refresh either TTL.
 
-After all six checks pass in a `main` CI run, CI calls the reusable `Publish images` workflow. It builds `linux/amd64` frontend, backend, and Runner images under `ghcr.io/finnleh/`. Each image receives an immutable `sha-<full-commit>` tag and a GitHub/Sigstore-signed provenance attestation. Once all three exist, the workflow updates their moving `main` tags sequentially. Publishing a stable GitHub Release first verifies all three attestations, then adds its `vMAJOR.MINOR.PATCH` tag to that commit's existing images without rebuilding them. There is no `latest` tag. The packages are public.
+Every push to `main`, including a documentation-only change, runs all six checks and calls the reusable `Publish images` workflow. It builds `linux/amd64` frontend, backend, and Runner images under `ghcr.io/klee/`. Images published through commit `4a7a6f2` remain available under `ghcr.io/finnleh/` and retain their original `FinnLeh/klee-web` attestation identity. Each image receives an immutable `sha-<full-commit>` tag and a GitHub/Sigstore-signed provenance attestation. Once all three exist, the workflow updates their moving `main` tags sequentially. Publishing a stable GitHub Release first verifies all three attestations, then adds its CalVer tag (`vYYYY.MM.DD`, with optional `.N` for another release that day) to that commit's existing images without rebuilding them. There is no `latest` tag. New packages in the organisation namespace must be made public after their first publication.
 
 The self-signed local certificate produces a browser warning. App at <https://localhost>. OpenAPI surface at <https://localhost/api/docs>.
 
@@ -70,7 +70,8 @@ inputs can be re-decoded per variable through a type dropdown. A timeout reads
 as an amber `Stopped at max time` badge under the tab bar, a user cancel reads
 `Cancelled by user`, and a clean run reads `Explored all paths`. The bottom
 status bar shows a backend-connected indicator (5 s poll of `/health`),
-the current source byte count, and the pinned KLEE version. Theme (system /
+the current source byte count, a warning not to submit confidential source,
+and the pinned KLEE version. Theme (system /
 light / dark) and results-position (right / below) settings persist across
 reloads via the settings popover.
 
@@ -92,7 +93,7 @@ With two replicas and a maximum of four processes per Worker, at most eight Runn
 ignored credential with a mode `0700` parent directory, while the mode `0644`
 file remains readable inside nginx's isolated, read-only secret mount. The
 username is `admin`. Run the target again to rotate the credential. The
-`make deploy` fails if the file is absent.
+`make deploy` command fails if the file is absent.
 
 nginx serves the built frontend and reverse-proxies `/api` over TLS on a single
 origin, Redis persists to a named volume (AOF, bounded by `maxmemory` with `volatile-lru`
@@ -113,13 +114,17 @@ Docker. Only execution hosts install and probe gVisor.
 `infra/aws/` and `infra/azure/` are independent single-VM provider roots. Each
 provisions one provider network and VM around the shared lifecycle while
 retaining its own TLS adapter. The independent `infra/aws-multi-vm/` root
-provisions one public web/state VM and one or two private Worker VMs. See the
+provisions one public web/state VM and one or two private Worker VMs.
+`infra/doc/` records the host-specific additions for the maintained
+institutional deployment on manually allocated VMs. See the
 [single-VM AWS guide](docs/deployment/aws.md),
 [role-separated AWS guide](docs/deployment/aws-multi-vm.md), and
 [Azure deployment guide](docs/deployment/azure.md) for planning, activation,
 operation, rollback, and teardown. Use the shared
 [host-maintenance procedure](docs/deployment/host-maintenance.md) for controlled
-Ubuntu security updates.
+Ubuntu security updates. The [institutional deployment notes](docs/deployment/institutional.md)
+explain the checked-in DoC adapter and its fixed host assumptions.
+They include the one-time setup and verification of automatic TLS renewal.
 
 ## Regenerating the API contract
 

@@ -16,6 +16,11 @@ if (($# != 1)); then
 fi
 readonly action=$1
 
+if [[ $action == up || $action == down ]]; then
+  exec 9>/run/lock/klee-web-deployment.lock
+  flock -n 9 || { printf 'Another deployment or TLS operation is already running\n' >&2; exit 1; }
+fi
+
 for required_file in \
   "$DEPLOYMENT_ENV" \
   "$RUNTIME_ENV" \
@@ -59,6 +64,10 @@ case "$deployment_role" in
     ;;
 esac
 
+if [[ -n ${ACME_WEBROOT_DIRECTORY:-} && $deployment_role != worker ]]; then
+  compose_options+=(-f "$DEPLOYMENT_DIRECTORY/compose.acme.yml")
+fi
+
 for compose_file in "${compose_options[@]}"; do
   if [[ $compose_file == /* && ! -f $compose_file ]]; then
     printf 'Required Compose file is missing: %s\n' "$compose_file" >&2
@@ -84,6 +93,9 @@ case "$action" in
         exit 1
       fi
       "$provision_tls"
+      if [[ -n ${ACME_WEBROOT_DIRECTORY:-} ]]; then
+        "$provision_tls" prepare-webroot
+      fi
     fi
     systemctl daemon-reload
     if [[ $deployment_role == worker ]]; then

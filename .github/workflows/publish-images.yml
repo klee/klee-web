@@ -31,7 +31,7 @@ jobs:
           - package: klee-web-runner
             context: ./runner
     env:
-      IMAGE: ghcr.io/finnleh/${{ matrix.package }}
+      IMAGE: ghcr.io/klee/${{ matrix.package }}
       COMMIT_TAG: sha-${{ inputs.commit_sha }}
     steps:
       - uses: actions/checkout@v7
@@ -129,15 +129,15 @@ jobs:
         if: steps.current-main.outputs.promote == 'true'
         run: |
           for package in $PACKAGES; do
-            docker buildx imagetools inspect "ghcr.io/finnleh/$package:$COMMIT_TAG" > /dev/null
+            docker buildx imagetools inspect "ghcr.io/klee/$package:$COMMIT_TAG" > /dev/null
           done
       - name: Point the image set at main
         if: steps.current-main.outputs.promote == 'true'
         run: |
           for package in $PACKAGES; do
             docker buildx imagetools create \
-              --tag "ghcr.io/finnleh/$package:main" \
-              "ghcr.io/finnleh/$package:$COMMIT_TAG"
+              --tag "ghcr.io/klee/$package:main" \
+              "ghcr.io/klee/$package:$COMMIT_TAG"
           done
 
   publish-release-tags:
@@ -160,11 +160,28 @@ jobs:
       - name: Resolve the stable release commit
         id: release
         run: |
-          if [[ ! "$RELEASE_TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "Release tag must use stable semantic version form vMAJOR.MINOR.PATCH" >&2
+          if [[ ! "$RELEASE_TAG" =~ ^v[0-9]{4}\.(0[1-9]|1[0-2])\.(0[1-9]|[12][0-9]|3[01])(\.[1-9][0-9]*)?$ ]]; then
+            echo "Release tag must use CalVer form vYYYY.MM.DD or vYYYY.MM.DD.N" >&2
             exit 1
           fi
           echo "commit=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+      - name: Select the package namespace and attestation identity
+        env:
+          RELEASE_COMMIT: ${{ steps.release.outputs.commit }}
+        run: |
+          transfer_boundary="4a7a6f26d7ee25292f4943746044937446e44803"
+          git cat-file -e "$RELEASE_COMMIT^{commit}"
+          git cat-file -e "$transfer_boundary^{commit}"
+          if git merge-base --is-ancestor "$RELEASE_COMMIT" "$transfer_boundary"; then
+            echo "IMAGE_NAMESPACE=finnleh" >> "$GITHUB_ENV"
+            echo "ATTESTATION_REPOSITORY=FinnLeh/klee-web" >> "$GITHUB_ENV"
+          elif git merge-base --is-ancestor "$transfer_boundary" "$RELEASE_COMMIT"; then
+            echo "IMAGE_NAMESPACE=klee" >> "$GITHUB_ENV"
+            echo "ATTESTATION_REPOSITORY=klee/klee-web" >> "$GITHUB_ENV"
+          else
+            echo "Release commit does not share the repository transfer history" >&2
+            exit 1
+          fi
       - uses: docker/login-action@v4
         with:
           registry: ghcr.io
@@ -179,11 +196,11 @@ jobs:
           missing=()
           unattested=()
           for package in $PACKAGES; do
-            image="ghcr.io/finnleh/$package:$COMMIT_TAG"
+            image="ghcr.io/$IMAGE_NAMESPACE/$package:$COMMIT_TAG"
             if ! docker buildx imagetools inspect "$image" > /dev/null 2>&1; then
               missing+=("$package")
             elif ! gh attestation verify "oci://$image" \
-              --repo "$GITHUB_REPOSITORY" --bundle-from-oci > /dev/null 2>&1; then
+              --repo "$ATTESTATION_REPOSITORY" --bundle-from-oci > /dev/null 2>&1; then
               unattested+=("$package")
             fi
           done
@@ -202,6 +219,6 @@ jobs:
         run: |
           for package in $PACKAGES; do
             docker buildx imagetools create \
-              --tag "ghcr.io/finnleh/$package:$RELEASE_TAG" \
-              "ghcr.io/finnleh/$package:$COMMIT_TAG"
+              --tag "ghcr.io/$IMAGE_NAMESPACE/$package:$RELEASE_TAG" \
+              "ghcr.io/$IMAGE_NAMESPACE/$package:$COMMIT_TAG"
           done

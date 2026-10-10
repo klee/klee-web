@@ -124,6 +124,18 @@ jobs:
           WORKER_REPLICAS: '1'
         run: |
           docker compose -f docker-compose.yml -f deploy/compose.production.yml config --quiet
+          acme_config=$(
+            ACME_WEBROOT_DIRECTORY=/var/lib/klee-web/acme \
+            TLS_CERTIFICATE_DIRECTORY=/etc/klee-web/tls/nginx \
+              docker compose -f docker-compose.yml \
+                -f deploy/compose.production.yml -f deploy/compose.acme.yml \
+                config --format json
+          )
+          jq -e '
+            .services.nginx.volumes | length == 2 and
+            all(.read_only and .bind.create_host_path != true) and
+            (map(.target) | sort == ["/etc/nginx/certs", "/var/www/certbot"])
+          ' <<<"$acme_config"
           worker_config=$(
             WORKER_NAME=celery@klee-worker-1 \
             WORKER_CONCURRENCY_MAX=1 \
@@ -146,11 +158,18 @@ jobs:
           install -m 0644 deploy/klee-web.service "$unit_directory/klee-web.service"
           install -m 0644 infra/doc/klee-web-redis-firewall.service \
             "$unit_directory/klee-web-redis-firewall.service"
+          install -m 0644 infra/doc/klee-web-tls-renew.service \
+            "$unit_directory/klee-web-tls-renew.service"
+          install -m 0644 infra/doc/klee-web-tls-renew.timer \
+            "$unit_directory/klee-web-tls-renew.timer"
           install -d "$unit_directory/klee-web.service.d"
           install -m 0644 infra/doc/klee-web-redis-firewall.conf \
             "$unit_directory/klee-web.service.d/redis-firewall.conf"
           SYSTEMD_UNIT_PATH="$unit_directory:" \
-            systemd-analyze verify klee-web.service klee-web-redis-firewall.service
+            systemd-analyze verify klee-web.service klee-web-redis-firewall.service \
+              klee-web-tls-renew.service klee-web-tls-renew.timer
+      - name: Test TLS renewal and activation failure paths
+        run: make test-tls
       - uses: actions/setup-python@v7
         with:
           python-version: '3.x'
@@ -290,6 +309,8 @@ jobs:
         run: docker compose up -d --build --wait nginx
       - name: HTTP redirects to HTTPS
         run: curl -fsSI http://localhost/ | grep -q https://localhost
+      - name: ACME routing and certificate directory rotation
+        run: TLS_NGINX_IMAGE="$(docker compose images -q nginx)" make test-tls-nginx
       - name: The built app is served over HTTPS
         run: curl -fsSk https://localhost/ | grep -q /assets/
       - name: The API is reachable and prefix-stripped under /api

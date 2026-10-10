@@ -2,14 +2,7 @@
 
 **Status:** Accepted, 2026-05-21
 
-> **Superseded in part (2026-07-08).** ADR-0021 replaces the bind-mount transport
-> described below: the source now enters on stdin and the output leaves as a tar on
-> stdout, so there is no `-v <tmpdir>:/work` and no `--user`. The per-job container
-> lifetime this ADR decides is unchanged. The Positive "Stage 3 gVisor swap is a flag
-> change, no application code" no longer holds: gVisor needs `--kdalloc=false`, and the
-> sandbox pillar has since moved to Firecracker.
-
-> **Correction, 2026-07-09.** ADR-0022 chose gVisor rather than Firecracker. The per-Job container lifetime remains unchanged, and gVisor requires `--kdalloc=false` plus the replay zygote recorded there.
+> **Amended 2026-07-09.** ADR-0021 replaced the bind mount with stdin and stdout streams and removed `--user`. ADR-0022 retained the per-Job container lifetime, selected gVisor, disabled KDAlloc, and added the replay zygote. The commands below record the original transport decision.
 
 ## Context
 

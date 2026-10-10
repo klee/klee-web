@@ -3,8 +3,8 @@
  * KLEE models sleep away during symbolic execution, so replay should too. Per-path
  * output is about what a path printed, not timing, and without this a program that
  * sleeps per iteration (the maze demo) spends real seconds sleeping per replay for no
- * benefit, burning the whole replay budget. Returning 0 is the success return of a
- * completed sleep, so control flow and output are unchanged. */
+ * benefit, burning the whole replay budget. Returning 0 preserves the normal success
+ * result of these calls, but timing-dependent behaviour intentionally changes. */
 #include <time.h>
 #include <unistd.h>
 

@@ -7,8 +7,8 @@
  * prebuilt in the image from /home/klee/klee_src/tools/klee-replay/), and
  * libkleeBasic for the ktest reader. Invoked as: replay.out <klee-out-dir>.
  *
- * Linking once and forking per test removes the per-test process creation
- * and dynamic linking that made replay an order of magnitude slower under a
+ * Linking once and forking per test removes the per-test exec and dynamic
+ * linking that made replay an order of magnitude slower under a
  * syscall-intercepting sandbox. The POSIX setup (klee_init_env +
  * replay_create_files) runs per fork, so symbolic stdin, files and argv
  * replay exactly as under klee-replay. The klee_* stubs mirror
@@ -233,7 +233,7 @@ static void run_one_test(const char *ktest, const char *binpath) {
     klee_init_env(&argc, &argv);
     replay_create_files(&__exe_fs);
     if (chdir(replay_dir) != 0) {
-        /* Only programs opening symbolic files would notice; keep going. */
+        /* Relative-path access may fail. Keep replaying programs that do not need it. */
     }
 
     /* exit(), not _exit(): a returning main must run atexit handlers and

@@ -4,14 +4,13 @@ ARG KLEE_VERSION
 RUN : "${KLEE_VERSION:?KLEE_VERSION is required}"
 
 USER root
-# Make the KLEE home tree readable/traversable by any uid so the container can run
-# as the host user (docker run --user), not only as the image's klee user. The
-# runner must not assume host uid == klee's uid (see runner.py --user).
+# Prepare the writable workspace and retain read access to the KLEE source and build
+# trees before dropping back to the image's non-root klee user.
 RUN mkdir -p /work && chown klee:klee /work && chmod -R o+rX /home/klee
 
 # Preloaded into native ktest replays to neutralise sleep/usleep/nanosleep (see
-# entrypoint.py), so replay never spends real time sleeping. World-readable so the
-# container running as the host user can load it.
+# entrypoint.py). The stubs avoid real delays and return each call's normal success
+# value. Keep the library readable by the non-root replay process.
 COPY replay_nosleep.c /tmp/replay_nosleep.c
 RUN clang -shared -fPIC -o /usr/local/lib/replay_nosleep.so /tmp/replay_nosleep.c \
     && chmod 0644 /usr/local/lib/replay_nosleep.so \
@@ -22,7 +21,7 @@ RUN clang -shared -fPIC -o /usr/local/lib/replay_nosleep.so /tmp/replay_nosleep.
 # entrypoint.py only compiles the user's source and links it against these.
 # The KLEE build dir name is not stable across image rebuilds, so the
 # generated-headers include dir is located via config.h rather than hardcoded
-# (same reason entrypoint.py globs for libkleeRuntest).
+# (same reason entrypoint.py globs for libkleeBasic).
 # file-creator hardcodes /tmp, so compile a copy whose per-replay temporary
 # directory lives on the bounded /work filesystem when the root is read-only.
 COPY replay_driver.c /tmp/replay_driver.c

@@ -2,6 +2,8 @@
 
 **Status:** Accepted, 2026-05-27
 
+> **Amendment, 2026-08-27:** The workspace still uses the layers below. The later administration page is a separate route and calls `api/admin.ts` through React Query directly at page level.
+
 ## Context
 
 ADR-0010 chose the three dependencies that form the frontend data stack: `openapi-typescript`, `openapi-fetch`, and `@tanstack/react-query`. This ADR records how the code that uses them is organised across `src/api/`, `src/hooks/`, `src/context/`, and `src/components/`.

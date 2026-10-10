@@ -1,6 +1,6 @@
 # Patch-Based Source Transitions
 
-All patches apply to baseline [`0fb7942`](https://github.com/FinnLeh/klee-web/commit/0fb794282143206af18a78ca6d1f79ec7bba3a3b). Counts are additions plus deletions.
+All patches apply to baseline [`0fb7942`](https://github.com/klee/klee-web/commit/0fb794282143206af18a78ca6d1f79ec7bba3a3b). Counts are additions plus deletions.
 
 | ID | Scope | Patch | Files | Additions | Deletions | Changed lines | SHA-256 |
 |---|---|---|---:|---:|---:|---:|---|

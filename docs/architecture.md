@@ -49,7 +49,8 @@ The runtime architecture above has two VM placements through the same Compose
 service definitions. Local development and the single-VM deployment start
 Redis, FastAPI, nginx, and the Worker together. The role-separated deployment
 starts Redis, FastAPI, and nginx on one web/state VM, then starts one Worker on
-each private execution VM.
+each private execution VM. The maintained institutional deployment uses this
+placement with three Worker VMs.
 
 Each remote Worker receives private `REDIS_URL` and `CELERY_BROKER_URL` values
 for the web/state VM. Its Docker socket and gVisor runtime remain local, so a Job
@@ -81,7 +82,7 @@ Each unit has one job, is reached through an interface, and can be swapped witho
 | **FleetTelemetry** (`jobs/telemetry.py`, `Protocol`) | Live fleet view: Worker pool sizes, active/reserved Jobs, queue depth (Celery `inspect` + a broker `LLEN`). | `snapshot()`. | Celery + Redis broker. |
 | **FleetControl** (`jobs/telemetry.py`, `Protocol`) | Changes one Worker's autoscaler maximum, bounded by the deployment setting. | `set_max_concurrency(worker_name, maximum)`. | Celery remote control. |
 | **UsageStatsStore** (`jobs/usage.py`, `Protocol`) | Cumulative counters: outcomes per kind, cache hits, aggregate KLEE totals. | `record_execution`, `record_cache_hit`, `snapshot`. | Redis `INCR`. |
-| **Runner image** (`runner/`) | The Docker image (based on the `klee/klee` tag selected by `.klee-version`) and `entrypoint.py`: compile C to LLVM bitcode with clang, run KLEE (`--kdalloc=false`), capture whole-run output, and optionally replay each test case through the fork-per-ktest zygote for per-path output (ADR-0020, ADR-0022). | Built locally by `make runner` or selected through `RUNNER_IMAGE`. One container per job, launched under the `KLEE_RUNTIME` sandbox with no network, blocked setuid privilege escalation, a read-only root, and bounded temporary storage at `/work` (ADR-0023). | KLEE, clang, Docker. |
+| **Runner image** (`runner/`) | The Docker image (based on the `klee/klee` tag selected by `.klee-version`) and `entrypoint.py`: compile C to LLVM bitcode with clang, run KLEE (`--kdalloc=false`), capture whole-run output, and optionally replay each test case through the fork-per-ktest zygote for per-path output (ADR-0020, ADR-0022). A container-owned watchdog bounds the complete lifecycle at the requested KLEE limit plus 60 seconds. | Built locally by `make runner` or selected through `RUNNER_IMAGE`. One container per job, launched under the `KLEE_RUNTIME` sandbox with no network, blocked setuid privilege escalation, a read-only root, and bounded temporary storage at `/work` (ADR-0023). | KLEE, clang, Docker. |
 | **Broker** (`celery_app.py`) | The queue between the API and Workers. Carries the `run_klee_job` task. | `CeleryDispatcher` publishes and Workers consume. | Redis. |
 | **Settings** (`config.py`) | Validates infrastructure URLs, KLEE version metadata, immutable Runner identity, sandbox runtime, Runner Caps, and Worker-capacity bound. | Required `REDIS_URL`, `CELERY_BROKER_URL`, and `RUNNER_IMAGE`. The backend image supplies `KLEE_VERSION`. `KLEE_RUNTIME`, the Runner Caps, and `WORKER_CONCURRENCY_MAX` have deployment defaults. | pydantic-settings. |
 
@@ -150,12 +151,19 @@ The `Protocol`s separate HTTP and core Job logic from infrastructure. FastAPI en
 
 ## Deployment shape
 
-Compose is the one full-application topology for local verification, browser CI, and deployment. Four layers adapt that topology without adding application modes:
+Compose is the one full-application topology for local verification, browser CI, and deployment. The following layers adapt that topology without adding application modes:
 
 - **`docker-compose.yml`** is the runtime topology. It names images, services, health checks, persistence, resource limits, and restart behavior without containing build contexts.
 - **`docker-compose.override.yml`** restores the backend and frontend build contexts automatically for local use.
 - **`deploy/`** is the provider-neutral VM lifecycle. It adds production certificate mounts, installs pinned Docker and gVisor releases, probes the sandbox runtimes, pulls exact images, and installs the systemd unit.
-- **`infra/aws/` and `infra/azure/`** are independent provider roots. Each creates its provider's networking and compute resources, then renders the shared lifecycle with a provider-specific TLS adapter.
+- **`infra/aws/`, `infra/aws-multi-vm/`, and `infra/azure/`** are independent provider roots. Each creates its provider's networking and compute resources, then renders the shared lifecycle with a provider-specific TLS adapter.
+- **`infra/doc/`** records the host-specific certificate and Redis-firewall additions for the maintained institutional deployment. The institution allocates those VMs outside Terraform.
+
+Web-serving hosts can explicitly enable `deploy/compose.acme.yml` through
+`ACME_WEBROOT_DIRECTORY`. It adds HTTP-01 challenge files and directory-mounted
+certificate generations without changing the default deployment path. The DoC
+renewal timer is installed and enabled separately after webroot validation
+passes. See the [institutional procedure](deployment/institutional.md#automatic-tls-renewal).
 
 Local operation uses the automatic build override:
 
@@ -170,7 +178,7 @@ Compose defaults to the local `klee-web-backend`, `klee-web-frontend`, and `klee
 
 Cloud-init prepares a VM but does not start KLEE Web. The administrator helper first creates the Basic Auth hash, then enables and starts the systemd unit. systemd reconciles the Compose project on start and reload, restores it after reboot, and preserves the Redis named volume when stopping the service.
 
-After all six checks pass in a `main` CI run, CI calls the reusable `Publish images` workflow. It builds the three `linux/amd64` images in GHCR under immutable `sha-<full-commit>` tags and signs their provenance with GitHub's Sigstore identity. Main CI runs complete independently, but only the commit that remains the tip of `main` can update the three moving `main` tags. Publishing a stable GitHub Release verifies all three attestations before adding its `vMAJOR.MINOR.PATCH` tag to those existing manifests without rebuilding. No `latest` tag is published.
+Every push to `main`, including a documentation-only change, calls the reusable `Publish images` workflow after all six checks pass. It builds the three `linux/amd64` images under `ghcr.io/klee/` with immutable `sha-<full-commit>` tags and signs their provenance with GitHub's Sigstore identity. Images published through commit `4a7a6f2` remain under `ghcr.io/finnleh/` with their original `FinnLeh/klee-web` attestation identity. Main CI runs complete independently, but only the commit that remains the tip of `main` can update the three moving `main` tags. Publishing a stable GitHub Release verifies all three attestations before adding its CalVer tag (`vYYYY.MM.DD`, with optional `.N` for another release that day) to those existing manifests without rebuilding. No `latest` tag is published.
 
 Make selects `runsc-kvm` locally when the host exposes `/dev/kvm` and `runsc` otherwise. VM bootstrap is stricter. It requires a successful systrap container first, then selects `runsc-kvm` only after a separate KVM container succeeds. `runc` remains available only as a comparative integration-test control. The Worker launches each Job as a sibling Runner container through the host Docker socket. nginx serves the built frontend and reverse-proxies `/api` over TLS. Redis persists through AOF on a named volume, bounded by `maxmemory` with `volatile-lru` eviction.
 
