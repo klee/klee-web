@@ -6,7 +6,7 @@
 >
 > **Amendment, 2026-08-11:** The key now includes the exact Runner image identity and a hash of the `JobResult` schema alongside the canonical `JobRequest`. This invalidates entries when KLEE, Runner code, or the result contract changes. The cache TTL is 48 hours and reads do not refresh it.
 
-> **Amendment, 2026-08-22:** Successful Redis cache reads now refresh the result's 48-hour retention window. Job-record reads retain their existing fixed-expiry behavior.
+> **Amendment, 2026-08-22:** Successful Redis cache reads now refresh the result's 48-hour retention window. Job-record reads retain their existing fixed-expiry behaviour.
 
 ## Context
 
@@ -26,9 +26,9 @@ The read sits in `POST /jobs` before dispatch, the write in `run_job` after a co
 
 A `ResultCache` Protocol with `get` and `set` defines the cache boundary. `get_cache` constructs `RedisResultCache` using the required `REDIS_URL`, the same shape as `get_job_store` (ADR-0014). ADR-0024 retired the in-memory runtime cache; test doubles remain under `tests/`.
 
-The result-cache TTL is a sliding 48-hour retention window. A write starts the window, and every successful read restores it to the full 48 hours. `RedisResultCache.get` uses Redis `GETEX`, so retrieving the value and refreshing its expiry are one atomic cache operation; a miss returns no value and does not create a key. Because `GETEX` updates expiry metadata, a cache hit is also a Redis write and the expiry update is recorded in Redis's append-only file (AOF).
+The result-cache TTL is a sliding 48-hour retention window. A write starts the window, and every successful read restores it to the full 48 hours. `RedisResultCache.get` uses Redis `GETEX`, so retrieving the value and refreshing its expiry are one atomic cache operation. A miss returns no value and does not create a key. Because `GETEX` updates expiry metadata, a cache hit is also a Redis write and the expiry update is recorded in Redis's append-only file (AOF).
 
-This sliding policy applies only to result-cache entries. `RedisJobStore.get` continues to read a job record without changing its expiry, so job-record reads retain their fixed-expiry behavior; job-record writes keep their existing TTL refresh semantics from ADR-0014.
+This sliding policy applies only to result-cache entries. `RedisJobStore.get` continues to read a job record without changing its expiry, so job-record reads retain their fixed-expiry behaviour. Job-record writes keep their existing TTL refresh semantics from ADR-0014.
 
 ## Consequences
 
