@@ -124,6 +124,7 @@ operation, rollback, and teardown. Use the shared
 [host-maintenance procedure](docs/deployment/host-maintenance.md) for controlled
 Ubuntu security updates. The [institutional deployment notes](docs/deployment/institutional.md)
 explain the checked-in DoC adapter and its fixed host assumptions.
+They include the one-time setup and verification of automatic TLS renewal.
 
 ## Regenerating the API contract
 

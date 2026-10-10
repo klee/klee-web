@@ -1,0 +1,12 @@
+[Unit]
+Description=Check and activate the KLEE Web TLS certificate
+Requires=docker.service
+After=docker.service network-online.target klee-web.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+EnvironmentFile=/etc/klee-web/deployment.env
+ExecStart=/bin/bash /opt/klee-web/provision-tls.sh renew
+TimeoutStartSec=10min
+UMask=0077
