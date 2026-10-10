@@ -133,7 +133,7 @@ jobs:
           )
           jq -e '
             .services.nginx.volumes | length == 2 and
-            all(.read_only and .bind.create_host_path == false) and
+            all(.read_only and .bind.create_host_path != true) and
             (map(.target) | sort == ["/etc/nginx/certs", "/var/www/certbot"])
           ' <<<"$acme_config"
           worker_config=$(
