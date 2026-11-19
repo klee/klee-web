@@ -9,7 +9,7 @@ authors = [
     { name = "Software Reliability Group, Imperial College London" },
 ]
 dependencies = [
-    "celery>=5.6.3",
+    "celery[redis]>=5.6.3",
     "fastapi>=0.139.2",
     "pydantic>=2.0",
     "pydantic-settings>=2.14.2",
