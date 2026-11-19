@@ -17,7 +17,7 @@ RUN npm run build
 
 # Serve stage: nginx serves dist/ and reverse-proxies /api. Multi-stage
 # discards node and node_modules, so the image is just nginx plus static files.
-FROM nginx:1.31-alpine
+FROM nginx:1.31.9-alpine
 
 # Self-signed cert for local TLS. openssl is only needed at build, so it is
 # dropped after. In production a real CA cert (e.g. Let's Encrypt) replaces
